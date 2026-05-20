@@ -1,56 +1,66 @@
-# Návrh RAP/Fiori – vyhledání Business Partnerů (MDG)
+# Návrh RAP/Fiori - vyhledání Business Partnerů (MDG)
 
-Níže je návrh **basic/interface CDS** + **consumption CDS** pro generování OData služby pro Fiori Elements (List Report).
+Níže je upravený návrh **basic/interface CDS** + **consumption CDS** pro generování OData služby pro Fiori Elements List Report.
 
-> Poznámka: Používám moderní VDM styl (`ZI_*`, `ZC_*`), read-only scénář a fulltext přes `contains` + parametr `P_SEARCH`.
+Hlavní změna proti první variantě: ve VDM vrstvě nepoužíváme explicitní `join`, ale modelujeme vztahy přes **CDS asociace**. Databázový join si HANA/CDS runtime samozřejmě technicky vygeneruje při použití polí z asociace, ale v modelu zůstává jasná semantika: `ZMDG_BP` je root a adresa, systémová data i agregovaná daňová čísla jsou připojené objekty.
+
+> Poznámka: Agregace všech daňových čísel do jednoho textového pole je výpočetní logika. Tam je nejčistší použít CDS table function s AMDP a `STRING_AGG`.
 
 ## 1) Interface/BASIC CDS
 
-### 1.1 BP root
+### 1.1 Address interface
 
 ```abap
-@EndUserText.label: 'MDG BP Root Interface'
+@EndUserText.label: 'MDG BP Address Interface'
 @AccessControl.authorizationCheck: #CHECK
 @Metadata.ignorePropagatedAnnotations: true
 @VDM.viewType: #BASIC
-@ObjectModel.usageType: {
-  serviceQuality: #A,
-  sizeCategory: #L,
-  dataClass: #MASTER
-}
-define root view entity ZI_MDG_BP
-  as select from zmdg_bp as bp
-    left outer join zmdg_bpadr as adr
-      on  adr.partner_gid = bp.partner_gid
-      and adr.nation      = 'I'
+define view entity ZI_MDG_BP_ADDRESS
+  as select from zmdg_bpadr
 {
-  key bp.partner_gid                                       as PartnerGID,
-      bp.lei_code                                          as LeiCode,
-      bp.duns                                              as Duns,
-      adr.country                                          as Country,
-      adr.city1                                            as City,
-      adr.city2                                            as District,
-      adr.street                                           as Street,
-      adr.house_num1                                       as HouseNo,
-      adr.house_num2                                       as HouseNoSuppl,
-      adr.post_code1                                       as CityPostal,
-
-      adr.name_org1                                        as CompanyName,
-      adr.name_first                                       as FirstName,
-      adr.name_last                                        as LastName,
-
-      cast(
-        case
-          when adr.name_org1 is not initial then '2'
-          else '1'
-        end as abap.char(1)
-      )                                                    as PartnerCategory
+  key partner_gid as PartnerGID,
+  key nation      as Nation,
+      name_org1   as CompanyName,
+      name_org2   as CompanyName2,
+      name_org3   as CompanyName3,
+      name_org4   as CompanyName4,
+      name_first  as FirstName,
+      name_last   as LastName,
+      bu_sort1    as SearchTerm1,
+      street      as Street,
+      house_num1  as HouseNo,
+      house_num2  as HouseNoSuppl,
+      city1       as City,
+      city2       as District,
+      post_code1  as CityPostal,
+      country     as Country
 }
 ```
 
-### 1.2 Tax numbers aggregation (all taxtypes do jednoho pole)
+### 1.2 System-dependent BP data interface
 
-> Na S/4HANA je nejčistší použít CDS table function a agregaci v AMDP (`STRING_AGG`).
+```abap
+@EndUserText.label: 'MDG BP System Data Interface'
+@AccessControl.authorizationCheck: #CHECK
+@Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_BP_SYSTEM
+  as select from zmdg_bpsys
+{
+  key partner_gid as PartnerGID,
+  key extsys      as ExternalSystem,
+      partner_id  as PartnerId,
+      type        as PartnerType,
+      bu_group    as BusinessPartnerGroup,
+      legal_form  as LegalForm,
+      tel_number  as Telephone,
+      mob_number  as MobilePhone,
+      smtpadress  as EmailAddress,
+      inactive    as IsInactive
+}
+```
+
+### 1.3 Tax numbers aggregation
 
 ```abap
 @EndUserText.label: 'MDG BP Tax Numbers Aggregated'
@@ -87,64 +97,129 @@ CLASS zcl_mdg_bp_tax_agg IMPLEMENTATION.
     RETURN
       SELECT mandt,
              partner_gid,
-             STRING_AGG( taxnum, ',' ORDER BY taxtype ) AS tax_number
+             STRING_AGG( taxnum, ', ' ORDER BY taxtype ) AS tax_number
         FROM zmdg_bptax
        WHERE taxnum IS NOT NULL
+         AND taxnum <> ''
        GROUP BY mandt, partner_gid;
 
   ENDMETHOD.
 ENDCLASS.
 ```
 
-### 1.3 Composite search interface (join root + sys + tax agg)
+Wrapper interface nad table function:
+
+```abap
+@EndUserText.label: 'MDG BP Tax Numbers Aggregated Interface'
+@AccessControl.authorizationCheck: #CHECK
+@Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_BP_TAX_AGG
+  as select from ZTF_MDG_BP_TAX_AGG( )
+{
+  key partner_gid as PartnerGID,
+      tax_number  as TaxNumber
+}
+```
+
+### 1.4 BP root interface s asociacemi
+
+```abap
+@EndUserText.label: 'MDG BP Root Interface'
+@AccessControl.authorizationCheck: #CHECK
+@Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #BASIC
+@ObjectModel.usageType: {
+  serviceQuality: #A,
+  sizeCategory: #L,
+  dataClass: #MASTER
+}
+define root view entity ZI_MDG_BP
+  as select from zmdg_bp as BP
+  association [0..1] to ZI_MDG_BP_ADDRESS       as _Address
+    on  _Address.PartnerGID = BP.partner_gid
+    and _Address.Nation     = 'I'
+  association [0..*] to ZI_MDG_BP_SYSTEM        as _System
+    on  _System.PartnerGID = BP.partner_gid
+  association [0..1] to ZI_MDG_BP_TAX_AGG       as _TaxAgg
+    on  _TaxAgg.PartnerGID = BP.partner_gid
+{
+  key BP.partner_gid  as PartnerGID,
+      BP.parent_gid1  as ParentGID1,
+      BP.parent_gid2  as ParentGID2,
+      BP.found_date   as FoundDate,
+      BP.lei_code     as LeiCode,
+      BP.duns         as Duns,
+
+      _Address,
+      _System,
+      _TaxAgg
+}
+```
+
+> `Nation = 'I'` ponechávám jako ukázku výběru jedné adresy pro list report. Pokud v datech existuje přesnější pravidlo pro hlavní adresu nebo mezinárodní verzi adresy, doporučuji ho dát sem, aby asociace zůstala kardinality `[0..1]`.
+
+## 2) Search interface přes path expressions
+
+Tato vrstva připraví plochý dataset pro Fiori Elements. Pořád není napsaná jako explicitní `join`; pole z adresy a tax agregace se čtou přes asociace.
 
 ```abap
 @EndUserText.label: 'MDG BP Search Interface'
 @AccessControl.authorizationCheck: #CHECK
 @Metadata.ignorePropagatedAnnotations: true
 @VDM.viewType: #COMPOSITE
+@Search.searchable: true
 define view entity ZI_MDG_BP_SEARCH
-  with parameters
-    P_SEARCH : abap.char(100)
-  as select from ZI_MDG_BP as bp
-    left outer join zmdg_bpsys as sys
-      on sys.partner_gid = bp.PartnerGID
-    left outer join ZTF_MDG_BP_TAX_AGG( ) as tax
-      on tax.partner_gid = bp.PartnerGID
+  as select from ZI_MDG_BP as BP
 {
-  key bp.PartnerGID,
-      bp.PartnerCategory,
-      bp.Country,
-      tax.tax_number                                         as TaxNumber,
-      bp.CompanyName,
-      bp.FirstName,
-      bp.LastName,
-      bp.City,
-      bp.District,
-      bp.Street,
-      bp.HouseNo,
-      bp.HouseNoSuppl,
-      bp.CityPostal,
-      bp.LeiCode,
-      bp.Duns,
-      sys.partner_id                                         as PartnerId,
-      sys.type                                               as PartnerType
+  @Search.defaultSearchElement: true
+  key BP.PartnerGID,
+
+  cast(
+    case
+      when BP._Address.CompanyName is not initial then '2'
+      else '1'
+    end as abap.char(1)
+  )                               as PartnerCategory,
+
+  @Search.defaultSearchElement: true
+  BP._Address.Country             as Country,
+
+  @Search.defaultSearchElement: true
+  BP._TaxAgg.TaxNumber            as TaxNumber,
+
+  @Search.defaultSearchElement: true
+  BP._Address.CompanyName         as CompanyName,
+
+  @Search.defaultSearchElement: true
+  BP._Address.FirstName           as FirstName,
+
+  @Search.defaultSearchElement: true
+  BP._Address.LastName            as LastName,
+
+  @Search.defaultSearchElement: true
+  BP._Address.City                as City,
+
+  BP._Address.District            as District,
+
+  @Search.defaultSearchElement: true
+  BP._Address.Street              as Street,
+
+  BP._Address.HouseNo             as HouseNo,
+  BP._Address.HouseNoSuppl        as HouseNoSuppl,
+  BP._Address.CityPostal          as CityPostal,
+  BP.LeiCode,
+  BP.Duns,
+
+  BP._Address,
+  BP._System,
+  BP._TaxAgg
 }
-where
-      :P_SEARCH is initial
-   or bp.PartnerGID   like '%' || :P_SEARCH || '%'
-   or bp.CompanyName  like '%' || :P_SEARCH || '%'
-   or bp.FirstName    like '%' || :P_SEARCH || '%'
-   or bp.LastName     like '%' || :P_SEARCH || '%'
-   or bp.Country      like '%' || :P_SEARCH || '%'
-   or bp.City         like '%' || :P_SEARCH || '%'
-   or bp.Street       like '%' || :P_SEARCH || '%'
-   or tax.tax_number  like '%' || :P_SEARCH || '%'
 ```
 
----
+Pokud chceš kromě standardního `$search` ještě jedno samostatné pole `Fulltext`, dá se doplnit parametrická varianta. Pro Fiori Elements List Report ale preferuji `@Search.searchable` + `@Search.defaultSearchElement`, protože to lépe zapadá do standardního search field v aplikaci.
 
-## 2) Consumption CDS pro Fiori Elements
+## 3) Consumption CDS pro Fiori Elements
 
 ```abap
 @EndUserText.label: 'MDG BP Search Consumption'
@@ -172,6 +247,7 @@ define root view entity ZC_MDG_BP_SEARCH
 
   @UI.lineItem: [{ position: 30 }]
   @UI.selectionField: [{ position: 30 }]
+  @Search.defaultSearchElement: true
   Country,
 
   @UI.lineItem: [{ position: 40 }]
@@ -194,6 +270,7 @@ define root view entity ZC_MDG_BP_SEARCH
 
   @UI.lineItem: [{ position: 80 }]
   @UI.selectionField: [{ position: 50 }]
+  @Search.defaultSearchElement: true
   City,
 
   @UI.lineItem: [{ position: 90 }]
@@ -201,6 +278,7 @@ define root view entity ZC_MDG_BP_SEARCH
 
   @UI.lineItem: [{ position: 100 }]
   @UI.selectionField: [{ position: 60 }]
+  @Search.defaultSearchElement: true
   Street,
 
   @UI.lineItem: [{ position: 110 }]
@@ -220,9 +298,7 @@ define root view entity ZC_MDG_BP_SEARCH
 }
 ```
 
----
-
-## 3) Service definition + binding
+## 4) Service definition + binding
 
 ```abap
 @EndUserText.label: 'MDG BP Search Service Definition'
@@ -233,25 +309,29 @@ define service ZUI_MDG_BP_SEARCH {
 
 Pak vytvořit **Service Binding** typu **OData V4 - UI** nad `ZUI_MDG_BP_SEARCH`.
 
----
+## 5) Filtrování a vyhledávání
 
-## 4) Jak splnit požadavky na filtrování
+- `PARTNER_GID` je klíč a zároveň selection field.
+- `TAX_NUMBER` je agregované pole `TaxNumber`, které obsahuje všechny dostupné typy daňových čísel oddělené čárkou.
+- `NAME` je pokryté přes `CompanyName`, `FirstName`, `LastName` v default search. Uživatel tak může zadat název firmy i celé jméno osoby.
+- `COUNTRY`, `CITY`, `STREET` jsou přímá selection fields.
+- Fulltext ve Fiori Elements standardně použije `$search` nad poli označenými `@Search.defaultSearchElement`.
 
-- `PARTNER_GID` – přes `@UI.selectionField` + `@Search.defaultSearchElement`.
-- `TAX_NUMBER` – agregované pole `TaxNumber` (všechna DIČ/IČ/ostatní taxtype oddělené čárkou).
-- `NAME` – jednotné chování přes `CompanyName`, `FirstName`, `LastName` v default search.
-- `COUNTRY`, `CITY`, `STREET` – přímá selection fields.
-- Fulltext – buď parametr `P_SEARCH` (v interface view), nebo Fiori `$search` (díky `@Search.searchable`).
+## 6) Proč asociace
 
----
+Asociace jsou lepší volba pro tento návrh, protože:
 
-## 5) Doporučení k výkonu (best practice)
+1. Root `ZI_MDG_BP` zůstává čistý a stabilní.
+2. Spotřební view si bere jen ta pole, která opravdu potřebuje.
+3. Kardinalita vztahů je vidět přímo v modelu (`[0..1]` adresa, `[0..*]` systémová data).
+4. Pokud později přibude object page nebo navigace na detail daňových čísel/systémů, asociace se dají přirozeně vystavit.
 
-1. Přidat indexy:
+## 7) Doporučení k výkonu
+
+1. Přidat nebo ověřit indexy:
    - `zmdg_bpadr(partner_gid, nation)`
    - `zmdg_bptax(partner_gid, taxtype, taxnum)`
    - `zmdg_bpsys(partner_gid)`
-2. Pokud je objem dat velký, preferovat `contains( ... )` nad `%like%` (HANA fulltext index).
-3. U adres zvážit pravidlo pro výběr „primární“ adresy místo natvrdo `nation = 'I'`.
-4. U `TaxNumber` zvážit limit délky (UI) + tooltip/full object page detail.
-
+2. U velkých objemů dat preferovat HANA fulltext indexy pro jmenná a adresní pole.
+3. Agregované `TaxNumber` je praktické pro výsledkový list, ale pro velmi velká data může být výhodné doplnit samostatnou neagregovanou search help/query variantu nad `ZMDG_BPTAX`.
+4. Pravidlo pro výběr adresy (`Nation = 'I'`) ber jako placeholder, který by měl odpovídat reálnému MDG pravidlu pro hlavní/display adresu.
