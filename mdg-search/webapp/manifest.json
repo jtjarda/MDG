@@ -1,0 +1,301 @@
+{
+  "_version": "1.73.1",
+  "sap.app": {
+    "id": "c4s.mdg.mdgsearch",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "0.0.1"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:lrop",
+      "version": "1.24.0",
+      "toolsId": "d4331764-346c-4045-8e3f-3ae72e716251"
+    },
+    "dataSources": {
+      "annotation": {
+        "type": "ODataAnnotation",
+        "uri": "annotations/annotation.xml",
+        "settings": {
+          "localUri": "annotations/annotation.xml"
+        }
+      },
+      "mainService": {
+        "uri": "/sap/opu/odata4/sap/zui_mdg_bp_search_o4ui/srvd/sap/zui_mdg_bp_search/0001/",
+        "type": "OData",
+        "settings": {
+          "annotations": [
+            "annotation"
+          ],
+          "localUri": "localService/mainService/metadata.xml",
+          "odataVersion": "4.0"
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "flexEnabled": true,
+    "dependencies": {
+      "minUI5Version": "1.136.10",
+      "libs": {
+        "sap.m": {},
+        "sap.f": {},
+        "sap.ui.core": {},
+        "sap.fe.templates": {}
+      }
+    },
+    "rootView": {
+      "viewName": "sap.fe.templates.RootContainer.view.Fcl",
+      "type": "XML",
+      "async": true,
+      "id": "appRootView"
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "c4s.mdg.mdgsearch.i18n.i18n"
+        }
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true
+        }
+      },
+      "@i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "uri": "i18n/i18n.properties"
+      }
+    },
+    "resources": {
+      "css": []
+    },
+    "routing": {
+      "config": {
+        "routerClass": "sap.f.routing.Router",
+        "flexibleColumnLayout": {
+          "defaultTwoColumnLayoutType": "TwoColumnsMidExpanded",
+          "defaultThreeColumnLayoutType": "ThreeColumnsMidExpanded"
+        }
+      },
+      "routes": [
+        {
+          "pattern": ":?query:",
+          "name": "BusinessPartnerSearchList",
+          "target": [
+            "BusinessPartnerSearchList"
+          ]
+        },
+        {
+          "pattern": "BusinessPartnerSearch({key}):?query:",
+          "name": "BusinessPartnerSearchObjectPage",
+          "target": [
+            "BusinessPartnerSearchList",
+            "BusinessPartnerSearchObjectPage"
+          ]
+        },
+        {
+          "pattern": "BusinessPartnerSearch({key})/_AddressVariants({key2}):?query:",
+          "name": "BusinessPartnerAddressObjectPage",
+          "target": [
+            "BusinessPartnerSearchList",
+            "BusinessPartnerSearchObjectPage",
+            "BusinessPartnerAddressObjectPage"
+          ]
+        }
+      ],
+      "targets": {
+        "BusinessPartnerSearchList": {
+          "type": "Component",
+          "id": "BusinessPartnerSearchList",
+          "name": "sap.fe.templates.ListReport",
+          "controlAggrSegation": "beginColumnPages",
+          "contextPattern": "",
+          "options": {
+            "settings": {
+              "contextPath": "/BusinessPartnerSearch",
+              "variantManagement": "Page",
+              "content": {
+                "header": {
+                  "actions": {
+                    "showShare": {
+                      "visible": false
+                    },
+                    "Share": {
+                      "visible": false
+                    }
+                  }
+                }
+              },
+              "share": {
+                "showSendEmail": false,
+                "showShareInWorkzone": false,
+                "showShare": false,
+                "showSaveAsTile": false,
+                "teams": {
+                  "showMsTeamsOptions": false
+                },
+                "showCollaborationManager": false
+              },
+              "navigation": {
+                "BusinessPartnerSearch": {
+                  "detail": {
+                    "route": "BusinessPartnerSearchObjectPage"
+                  }
+                }
+              },
+              "controlConfiguration": {
+                "@com.sap.vocabularies.UI.v1.SelectionFields": {
+                  "filterFields": {
+                    "AddressNameSearch": {
+                      "label": "{i18n>addressNameSearch}",
+                      "property": "_AllAddresses/CompanyName",
+                      "availability": "Default",
+                      "template": "c4s.mdg.mdgsearch.ext.AddressNameSearch",
+                      "position": {
+                        "placement": "After",
+                        "anchor": "PartnerGID"
+                      }
+                    }
+                  }
+                },
+                "@com.sap.vocabularies.UI.v1.LineItem": {
+                  "tableSettings": {
+                    "type": "ResponsiveTable",
+                    "personalization": {
+                      "column": true,
+                      "sort": true,
+                      "filter": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "controlAggregation": "beginColumnPages"
+        },
+        "BusinessPartnerSearchObjectPage": {
+          "type": "Component",
+          "id": "BusinessPartnerSearchObjectPage",
+          "name": "sap.fe.templates.ObjectPage",
+          "controlAggregation": "midColumnPages",
+          "contextPattern": "/BusinessPartnerSearch({key})",
+          "options": {
+            "settings": {
+              "editableHeaderContent": false,
+              "contextPath": "/BusinessPartnerSearch",
+              "content": {
+                "header": {
+                  "actions": {
+                    "showShare": {
+                      "visible": false
+                    },
+                    "Share": {
+                      "visible": false
+                    }
+                  }
+                }
+              },
+              "share": {
+                "showSendEmail": false,
+                "showShareInWorkzone": false,
+                "showShare": false,
+                "showSaveAsTile": false,
+                "teams": {
+                  "showMsTeamsOptions": false
+                },
+                "showCollaborationManager": false
+              },
+              "navigation": {
+                "_AddressVariants": {
+                  "detail": {
+                    "route": "BusinessPartnerAddressObjectPage"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BusinessPartnerAddressObjectPage": {
+          "type": "Component",
+          "id": "BusinessPartnerAddressObjectPage",
+          "name": "sap.fe.templates.ObjectPage",
+          "controlAggregation": "endColumnPages",
+          "contextPattern": "/BusinessPartnerSearch({key})/_AddressVariants({key2})",
+          "options": {
+            "settings": {
+              "editableHeaderContent": false,
+              "contextPath": "/BusinessPartnerSearch/_AddressVariants",
+              "showRelatedApps": false,
+              "share": {
+                "showSendEmail": false,
+                "showShareInWorkzone": false,
+                "showShare": false,
+                "showSaveAsTile": false,
+                "teams": {
+                  "showMsTeamsOptions": false
+                },
+                "showCollaborationManager": false
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "sap.fiori": {
+    "registrationIds": [],
+    "archeType": "transactional"
+  },
+  "sap.fe": {
+    "macros": {
+      "filter": {
+        "customFilterOperators": [
+          {
+            "name": "c4s.mdg.mdgsearch.ext.AddressNameSearch.onAddressNameContains"
+          }
+        ]
+      }
+    },
+    "app": {
+      "enableLazyLoading": true,
+      "share": {
+        "showSendEmail": false,
+        "showShareInWorkzone": false,
+        "showShare": false,
+        "showSaveAsTile": false,
+        "teams": {
+          "showMsTeamsOptions": false
+        },
+        "showCollaborationManager": false
+      }
+    }
+  }
+}

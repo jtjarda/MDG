@@ -1,0 +1,32 @@
+{
+  "generationParameters": {
+    "generationDate": "Mon May 25 2026 06:57:59 GMT+0200 (Central European Summer Time)",
+    "generatorPlatform": "Visual Studio Code",
+    "serviceType": "SAP System (ABAP On-Premise)",
+    "metadataFilename": "",
+    "serviceUrl": "https://hsr.con4pas.cz/sap/opu/odata4/sap/zui_mdg_bp_search_o4ui/srvd/sap/zui_mdg_bp_search/0001/",
+    "appName": "mdg-search",
+    "appTitle": "Business Partner Search",
+    "appDescription": "Search business partners in MDG",
+    "appNamespace": "c4s.mdg",
+    "ui5Theme": "sap_horizon",
+    "ui5Version": "1.136.10",
+    "enableEslint": true,
+    "enableTypeScript": false,
+    "showMockDataInfo": true,
+    "generatorVersion": "1.24.0",
+    "template": "List Report Page V4",
+    "generatorName": "SAP Fiori Application Generator",
+    "entityRelatedConfig": [
+      {
+        "type": "Main Entity",
+        "value": "BusinessPartnerSearch"
+      },
+      {
+        "type": "Navigation Entity",
+        "value": "None"
+      }
+    ],
+    "launchText": "To launch the generated application, run the following from the generated application root folder:\n\n```\n    npm start\n```"
+  }
+}
