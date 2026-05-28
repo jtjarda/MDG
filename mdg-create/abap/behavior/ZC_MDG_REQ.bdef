@@ -30,10 +30,14 @@ define behavior for ZC_MDG_REQADR alias Address
 {
   use update;
   use delete;
+
+  use association _Request { with draft; }
 }
 
 define behavior for ZC_MDG_REQTAX alias Tax
 {
   use update;
   use delete;
+
+  use association _Request { with draft; }
 }

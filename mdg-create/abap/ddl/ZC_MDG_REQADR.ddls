@@ -21,5 +21,7 @@ define view entity ZC_MDG_REQADR
       PostalCode,
       Country,
       OrganizationName,
-      PersonName
+      PersonName,
+
+      _Request : redirected to parent ZC_MDG_REQ
 }

@@ -6,14 +6,15 @@ define behavior for ZI_MDG_REQ alias Request
 persistent table zmdg_req
 draft table zmdg_req_d
 lock master total etag ChangedAt
-authorization master ( instance )
+authorization master ( global, instance )
 etag master ChangedAt
+early numbering
 {
   create;
   update;
   delete;
 
-  field ( readonly : update ) RequestId;
+  field ( readonly ) RequestId;
   field ( readonly ) CreatedBy, CreatedAt, ChangedBy, ChangedAt;
   field ( readonly ) PartnerId, Vendor, Customer;
 

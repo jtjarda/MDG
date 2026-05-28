@@ -9,8 +9,14 @@ annotate entity ZC_MDG_REQ with
 {
   @UI.facet: [
     {
+      id: 'General',
+      type: #COLLECTION,
+      label: 'General',
+      position: 10
+    },
+    {
       id: 'GlobalData',
-      purpose: #STANDARD,
+      parentId: 'General',
       type: #FIELDGROUP_REFERENCE,
       label: 'Global Data',
       position: 10,
@@ -18,7 +24,7 @@ annotate entity ZC_MDG_REQ with
     },
     {
       id: 'MainData',
-      purpose: #STANDARD,
+      parentId: 'General',
       type: #FIELDGROUP_REFERENCE,
       label: 'Main Data',
       position: 20,
@@ -26,7 +32,7 @@ annotate entity ZC_MDG_REQ with
     },
     {
       id: 'IdentificationData',
-      purpose: #STANDARD,
+      parentId: 'General',
       type: #FIELDGROUP_REFERENCE,
       label: 'Identification Data',
       position: 30,
@@ -34,80 +40,131 @@ annotate entity ZC_MDG_REQ with
     },
     {
       id: 'CountrySpecificData',
-      purpose: #STANDARD,
       type: #FIELDGROUP_REFERENCE,
       label: 'Country Specific Data Detail',
-      position: 40,
+      position: 20,
       targetQualifier: 'CountrySpecificData'
     },
     {
-      id: 'TaxNumbers',
-      purpose: #STANDARD,
-      type: #LINEITEM_REFERENCE,
-      label: 'Additional Tax Data',
-      position: 50,
-      targetElement: '_Tax'
-    },
-    {
       id: 'AddressVariants',
-      purpose: #STANDARD,
       type: #LINEITEM_REFERENCE,
       label: 'Address Variants',
-      position: 60,
+      position: 30,
       targetElement: '_Address'
+    },
+    {
+      id: 'TaxNumbers',
+      type: #LINEITEM_REFERENCE,
+      label: 'Additional Tax Data',
+      position: 40,
+      targetElement: '_Tax'
     }
   ]
 
-  @UI.lineItem: [{ position: 10 }]
-  @UI.identification: [{ position: 10 }]
+  @UI.lineItem: [{ position: 10, label: 'Request ID' }]
+  @UI.identification: [{ position: 10, label: 'Request ID' }]
+  @UI.selectionField: [{ position: 10 }]
   RequestId;
 
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 10 }]
+  @UI.lineItem: [{ position: 20, label: 'Request Type' }]
+  @UI.identification: [{ position: 20, label: 'Request Type' }]
+  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 10, label: 'Request Type' }]
+  @UI.selectionField: [{ position: 20 }]
   RequestType;
 
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 20 }]
+  @UI.lineItem: [{ position: 30, label: 'External System' }]
+  @UI.identification: [{ position: 30, label: 'External System' }]
+  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 20, label: 'External System' }]
+  @UI.selectionField: [{ position: 30 }]
   ExternalSystem;
 
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 30 }]
+  @UI.lineItem: [{ position: 40, label: 'Status' }]
+  @UI.identification: [{ position: 40, label: 'Status' }]
+  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 30, label: 'Status' }]
+  @UI.selectionField: [{ position: 40 }]
   Status;
 
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 40 }]
+  @UI.lineItem: [{ position: 50, label: 'Created By' }]
+  @UI.identification: [{ position: 50, label: 'Created By' }]
+  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 40, label: 'Created By' }]
   CreatedBy;
 
-  @UI.fieldGroup: [{ qualifier: 'MainData', position: 10 }]
+  @UI.identification: [{ position: 60, label: 'Created At' }]
+  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 50, label: 'Created At' }]
+  CreatedAt;
+
+  @UI.lineItem: [{ position: 60, label: 'Partner GID' }]
+  @UI.identification: [{ position: 70, label: 'Partner GID' }]
+  @UI.fieldGroup: [{ qualifier: 'MainData', position: 10, label: 'Partner GID' }]
   PartnerGid;
 
-  @UI.fieldGroup: [{ qualifier: 'MainData', position: 20 }]
+  @UI.identification: [{ position: 80, label: 'Parent GID 1' }]
+  @UI.fieldGroup: [{ qualifier: 'MainData', position: 20, label: 'Parent GID 1' }]
   ParentGid1;
 
-  @UI.fieldGroup: [{ qualifier: 'MainData', position: 30 }]
+  @UI.identification: [{ position: 90, label: 'Parent GID 2' }]
+  @UI.fieldGroup: [{ qualifier: 'MainData', position: 30, label: 'Parent GID 2' }]
   ParentGid2;
 
-  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 10 }]
+  @UI.identification: [{ position: 100, label: 'Found Date' }]
+  @UI.fieldGroup: [{ qualifier: 'MainData', position: 40, label: 'Found Date' }]
+  FoundDate;
+
+  @UI.identification: [{ position: 110, label: 'Partner ID' }]
+  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 10, label: 'Partner ID' }]
   PartnerId;
 
-  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 20 }]
+  @UI.identification: [{ position: 120, label: 'LEI Code' }]
+  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 20, label: 'LEI Code' }]
   LeiCode;
 
-  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 30 }]
+  @UI.lineItem: [{ position: 70, label: 'DUNS Number' }]
+  @UI.identification: [{ position: 130, label: 'DUNS Number' }]
+  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 30, label: 'DUNS Number' }]
   Duns;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 10 }]
+  @UI.identification: [{ position: 140, label: 'EUID' }]
+  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 40, label: 'EUID' }]
+  Euid;
+
+  @UI.identification: [{ position: 150, label: 'Partner Group' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 10, label: 'Partner Group' }]
   BusinessPartnerGroup;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 20 }]
+  @UI.identification: [{ position: 160, label: 'Partner Category' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 20, label: 'Partner Category' }]
   BusinessPartnerType;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 30 }]
+  @UI.identification: [{ position: 170, label: 'Legal Form' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 30, label: 'Legal Form' }]
   LegalForm;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 40 }]
+  @UI.identification: [{ position: 180, label: 'Telephone No' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 40, label: 'Telephone No' }]
   TelephoneNumber;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 50 }]
+  @UI.identification: [{ position: 190, label: 'Mobile Tel. No' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 50, label: 'Mobile Tel. No' }]
   MobileNumber;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 60 }]
+  @UI.identification: [{ position: 200, label: 'E-mail Address' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 60, label: 'E-mail Address' }]
   EmailAddress;
+
+  @UI.identification: [{ position: 210, label: 'Vendor' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 70, label: 'Vendor' }]
+  Vendor;
+
+  @UI.identification: [{ position: 220, label: 'Customer' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 80, label: 'Customer' }]
+  Customer;
+
+  @UI.identification: [{ position: 230, label: 'Inactive' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 90, label: 'Inactive' }]
+  IsInactive;
+
+  @UI.identification: [{ position: 240, label: 'Inactive Reason' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 100, label: 'Inactive Reason' }]
+  InactiveReason;
 }
 

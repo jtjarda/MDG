@@ -18,41 +18,49 @@ annotate entity ZC_MDG_REQADR with
     }
   ]
 
-  @UI.lineItem: [{ position: 10 }]
-  @UI.identification: [{ position: 10 }]
-  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 10 }]
+  @UI.lineItem: [{ position: 10, label: 'Nation' }]
+  @UI.identification: [{ position: 10, label: 'Nation' }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 10, label: 'Nation' }]
   Nation;
 
-  @UI.lineItem: [{ position: 20 }]
-  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 20 }]
+  @UI.lineItem: [{ position: 20, label: 'Company Name' }]
+  @UI.identification: [{ position: 20, label: 'Company Name' }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 20, label: 'Company Name' }]
   OrganizationName1;
 
-  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 30 }]
+  @UI.identification: [{ position: 30, label: 'Search Term' }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 30, label: 'Search Term' }]
   SearchTerm1;
 
-  @UI.lineItem: [{ position: 30 }]
-  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 40 }]
+  @UI.lineItem: [{ position: 30, label: 'Country' }]
+  @UI.identification: [{ position: 40, label: 'Country' }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 40, label: 'Country' }]
   Country;
 
-  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 50 }]
+  @UI.identification: [{ position: 50, label: 'District' }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 50, label: 'District' }]
   District;
 
-  @UI.lineItem: [{ position: 40 }]
-  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 60 }]
+  @UI.lineItem: [{ position: 40, label: 'City' }]
+  @UI.identification: [{ position: 60, label: 'City' }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 60, label: 'City' }]
   City;
 
-  @UI.lineItem: [{ position: 50 }]
-  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 70 }]
+  @UI.lineItem: [{ position: 50, label: 'Postal Code' }]
+  @UI.identification: [{ position: 70, label: 'Postal Code' }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 70, label: 'Postal Code' }]
   PostalCode;
 
-  @UI.lineItem: [{ position: 60 }]
-  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 80 }]
+  @UI.lineItem: [{ position: 60, label: 'Street' }]
+  @UI.identification: [{ position: 80, label: 'Street' }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 80, label: 'Street' }]
   Street;
 
-  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 90 }]
+  @UI.identification: [{ position: 90, label: 'House No' }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 90, label: 'House No' }]
   HouseNumber;
 
-  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 100 }]
+  @UI.identification: [{ position: 100, label: 'House No Suppl.' }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 100, label: 'House No Suppl.' }]
   HouseNumberSupplement;
 }
-
