@@ -2,7 +2,6 @@
 @AccessControl.authorizationCheck: #CHECK
 @Metadata.allowExtensions: true
 define view entity ZC_MDG_REQADR
-  provider contract transactional_query
   as projection on ZI_MDG_REQADR
 {
   key RequestId,
@@ -22,8 +21,5 @@ define view entity ZC_MDG_REQADR
       PostalCode,
       Country,
       OrganizationName,
-      PersonName,
-
-      _Request : redirected to parent ZC_MDG_REQ
+      PersonName
 }
-

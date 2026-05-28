@@ -2,13 +2,9 @@
 @AccessControl.authorizationCheck: #CHECK
 @Metadata.allowExtensions: true
 define view entity ZC_MDG_REQTAX
-  provider contract transactional_query
   as projection on ZI_MDG_REQTAX
 {
   key RequestId,
   key TaxType,
-      TaxNumber,
-
-      _Request : redirected to parent ZC_MDG_REQ
+      TaxNumber
 }
-

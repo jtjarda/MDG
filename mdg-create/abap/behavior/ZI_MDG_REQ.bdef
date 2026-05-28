@@ -5,7 +5,7 @@ with draft;
 define behavior for ZI_MDG_REQ alias Request
 persistent table zmdg_req
 draft table zmdg_req_d
-lock master
+lock master total etag ChangedAt
 authorization master ( instance )
 etag master ChangedAt
 {
@@ -13,30 +13,15 @@ etag master ChangedAt
   update;
   delete;
 
+  field ( readonly : update ) RequestId;
   field ( readonly ) CreatedBy, CreatedAt, ChangedBy, ChangedAt;
   field ( readonly ) PartnerId, Vendor, Customer;
-
-  determination SetDefaults on modify { create; }
-  determination SetAuditFields on save { create; update; }
-
-  validation ValidateOnSave on save { create; update; }
-
-  action Submit result [1] $self;
-  action Approve result [1] $self;
-  action Reject result [1] $self;
-  action Cancel result [1] $self;
-  action SendToExternal result [1] $self;
-  action RetrySend result [1] $self;
-  action Validate result [1] $self;
 
   draft action Edit;
   draft action Activate optimized;
   draft action Discard;
   draft action Resume;
-  draft determine action Prepare
-  {
-    validation ValidateOnSave;
-  }
+  draft determine action Prepare;
 
   association _Address { create; with draft; }
   association _Tax { create; with draft; }
@@ -82,6 +67,9 @@ etag dependent by _Request
   update;
   delete;
 
+  field ( readonly ) RequestId;
+  field ( readonly : update ) Nation;
+
   association _Request { with draft; }
 
   mapping for zmdg_reqadr
@@ -117,6 +105,9 @@ etag dependent by _Request
   update;
   delete;
 
+  field ( readonly ) RequestId;
+  field ( readonly : update ) TaxType;
+
   association _Request { with draft; }
 
   mapping for zmdg_reqtax
@@ -126,4 +117,3 @@ etag dependent by _Request
     TaxNumber = taxnum;
   }
 }
-

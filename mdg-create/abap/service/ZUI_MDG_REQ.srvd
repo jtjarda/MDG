@@ -1,7 +1,4 @@
 @EndUserText.label: 'MDG BP Request Service'
 define service ZUI_MDG_REQ {
   expose ZC_MDG_REQ    as Requests;
-  expose ZC_MDG_REQADR as Addresses;
-  expose ZC_MDG_REQTAX as TaxNumbers;
 }
-
