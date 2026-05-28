@@ -1,0 +1,58 @@
+@Metadata.layer: #CUSTOMER
+@UI.headerInfo: {
+  typeName: 'Address Variant',
+  typeNamePlural: 'Address Variants',
+  title: { type: #STANDARD, value: 'Nation' },
+  description: { type: #STANDARD, value: 'OrganizationName1' }
+}
+annotate entity ZC_MDG_REQADR with
+{
+  @UI.facet: [
+    {
+      id: 'AddressVariantDetail',
+      purpose: #STANDARD,
+      type: #FIELDGROUP_REFERENCE,
+      label: 'Address Variant Detail',
+      position: 10,
+      targetQualifier: 'AddressVariantDetail'
+    }
+  ]
+
+  @UI.lineItem: [{ position: 10 }]
+  @UI.identification: [{ position: 10 }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 10 }]
+  Nation;
+
+  @UI.lineItem: [{ position: 20 }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 20 }]
+  OrganizationName1;
+
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 30 }]
+  SearchTerm1;
+
+  @UI.lineItem: [{ position: 30 }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 40 }]
+  Country;
+
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 50 }]
+  District;
+
+  @UI.lineItem: [{ position: 40 }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 60 }]
+  City;
+
+  @UI.lineItem: [{ position: 50 }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 70 }]
+  PostalCode;
+
+  @UI.lineItem: [{ position: 60 }]
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 80 }]
+  Street;
+
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 90 }]
+  HouseNumber;
+
+  @UI.fieldGroup: [{ qualifier: 'AddressVariantDetail', position: 100 }]
+  HouseNumberSupplement;
+}
+

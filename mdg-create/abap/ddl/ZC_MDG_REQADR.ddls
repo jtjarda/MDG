@@ -1,0 +1,29 @@
+@EndUserText.label: 'MDG BP Request Address'
+@AccessControl.authorizationCheck: #CHECK
+@Metadata.allowExtensions: true
+define view entity ZC_MDG_REQADR
+  provider contract transactional_query
+  as projection on ZI_MDG_REQADR
+{
+  key RequestId,
+  key Nation,
+      OrganizationName1,
+      OrganizationName2,
+      OrganizationName3,
+      OrganizationName4,
+      FirstName,
+      LastName,
+      SearchTerm1,
+      Street,
+      HouseNumber,
+      HouseNumberSupplement,
+      City,
+      District,
+      PostalCode,
+      Country,
+      OrganizationName,
+      PersonName,
+
+      _Request : redirected to parent ZC_MDG_REQ
+}
+

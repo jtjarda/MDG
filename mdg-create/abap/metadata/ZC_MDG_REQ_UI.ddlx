@@ -1,0 +1,113 @@
+@Metadata.layer: #CUSTOMER
+@UI.headerInfo: {
+  typeName: 'BP Request',
+  typeNamePlural: 'BP Requests',
+  title: { type: #STANDARD, value: 'RequestId' },
+  description: { type: #STANDARD, value: 'Status' }
+}
+annotate entity ZC_MDG_REQ with
+{
+  @UI.facet: [
+    {
+      id: 'GlobalData',
+      purpose: #STANDARD,
+      type: #FIELDGROUP_REFERENCE,
+      label: 'Global Data',
+      position: 10,
+      targetQualifier: 'GlobalData'
+    },
+    {
+      id: 'MainData',
+      purpose: #STANDARD,
+      type: #FIELDGROUP_REFERENCE,
+      label: 'Main Data',
+      position: 20,
+      targetQualifier: 'MainData'
+    },
+    {
+      id: 'IdentificationData',
+      purpose: #STANDARD,
+      type: #FIELDGROUP_REFERENCE,
+      label: 'Identification Data',
+      position: 30,
+      targetQualifier: 'IdentificationData'
+    },
+    {
+      id: 'CountrySpecificData',
+      purpose: #STANDARD,
+      type: #FIELDGROUP_REFERENCE,
+      label: 'Country Specific Data Detail',
+      position: 40,
+      targetQualifier: 'CountrySpecificData'
+    },
+    {
+      id: 'TaxNumbers',
+      purpose: #STANDARD,
+      type: #LINEITEM_REFERENCE,
+      label: 'Additional Tax Data',
+      position: 50,
+      targetElement: '_Tax'
+    },
+    {
+      id: 'AddressVariants',
+      purpose: #STANDARD,
+      type: #LINEITEM_REFERENCE,
+      label: 'Address Variants',
+      position: 60,
+      targetElement: '_Address'
+    }
+  ]
+
+  @UI.lineItem: [{ position: 10 }]
+  @UI.identification: [{ position: 10 }]
+  RequestId;
+
+  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 10 }]
+  RequestType;
+
+  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 20 }]
+  ExternalSystem;
+
+  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 30 }]
+  Status;
+
+  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 40 }]
+  CreatedBy;
+
+  @UI.fieldGroup: [{ qualifier: 'MainData', position: 10 }]
+  PartnerGid;
+
+  @UI.fieldGroup: [{ qualifier: 'MainData', position: 20 }]
+  ParentGid1;
+
+  @UI.fieldGroup: [{ qualifier: 'MainData', position: 30 }]
+  ParentGid2;
+
+  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 10 }]
+  PartnerId;
+
+  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 20 }]
+  LeiCode;
+
+  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 30 }]
+  Duns;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 10 }]
+  BusinessPartnerGroup;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 20 }]
+  BusinessPartnerType;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 30 }]
+  LegalForm;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 40 }]
+  TelephoneNumber;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 50 }]
+  MobileNumber;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 60 }]
+  EmailAddress;
+}
+

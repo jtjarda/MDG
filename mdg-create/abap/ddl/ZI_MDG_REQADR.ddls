@@ -1,0 +1,30 @@
+@EndUserText.label: 'MDG BP Request Address'
+@AccessControl.authorizationCheck: #CHECK
+@Metadata.ignorePropagatedAnnotations: true
+define view entity ZI_MDG_REQADR
+  as select from zmdg_reqadr
+  association to parent ZI_MDG_REQ as _Request
+    on $projection.RequestId = _Request.RequestId
+{
+  key request_id as RequestId,
+  key nation     as Nation,
+      name_org1  as OrganizationName1,
+      name_org2  as OrganizationName2,
+      name_org3  as OrganizationName3,
+      name_org4  as OrganizationName4,
+      name_first as FirstName,
+      name_last  as LastName,
+      bu_sort1   as SearchTerm1,
+      street     as Street,
+      house_num1 as HouseNumber,
+      house_num2 as HouseNumberSupplement,
+      city1      as City,
+      city2      as District,
+      post_code1 as PostalCode,
+      country    as Country,
+      name_org   as OrganizationName,
+      name_person as PersonName,
+
+      _Request
+}
+

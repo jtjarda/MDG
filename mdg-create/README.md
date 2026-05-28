@@ -22,3 +22,4 @@ Aplikace má umožnit založit požadavek na nového Business Partnera, uložit 
 - [field-control.md](field-control.md) - návrh řízení dostupnosti, povinnosti a viditelnosti polí.
 - [ui-design.md](ui-design.md) - návrh single-page formuláře podle referenční obrazovky.
 - [open-questions.md](open-questions.md) - rozhodnutí, která je potřeba doplnit.
+- [abap/README.md](abap/README.md) - první návrh CDS, behavior definitions a service definition pro RAP/OData V4.

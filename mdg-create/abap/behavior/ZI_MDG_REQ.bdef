@@ -1,0 +1,129 @@
+managed implementation in class ZBP_I_MDG_REQ unique;
+strict ( 2 );
+with draft;
+
+define behavior for ZI_MDG_REQ alias Request
+persistent table zmdg_req
+draft table zmdg_req_d
+lock master
+authorization master ( instance )
+etag master ChangedAt
+{
+  create;
+  update;
+  delete;
+
+  field ( readonly ) CreatedBy, CreatedAt, ChangedBy, ChangedAt;
+  field ( readonly ) PartnerId, Vendor, Customer;
+
+  determination SetDefaults on modify { create; }
+  determination SetAuditFields on save { create; update; }
+
+  validation ValidateOnSave on save { create; update; }
+
+  action Submit result [1] $self;
+  action Approve result [1] $self;
+  action Reject result [1] $self;
+  action Cancel result [1] $self;
+  action SendToExternal result [1] $self;
+  action RetrySend result [1] $self;
+  action Validate result [1] $self;
+
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare
+  {
+    validation ValidateOnSave;
+  }
+
+  association _Address { create; with draft; }
+  association _Tax { create; with draft; }
+
+  mapping for zmdg_req
+  {
+    RequestId            = request_id;
+    RequestType          = request_type;
+    ExternalSystem       = extsys;
+    PartnerGid           = partner_gid;
+    Status               = status;
+    ParentGid1           = parent_gid1;
+    ParentGid2           = parent_gid2;
+    FoundDate            = found_date;
+    Duns                 = duns;
+    LeiCode              = lei_code;
+    Euid                 = euid;
+    PartnerId            = partner_id;
+    BusinessPartnerType  = type;
+    BusinessPartnerGroup = bu_group;
+    LegalForm            = legal_form;
+    TelephoneNumber      = tel_number;
+    MobileNumber         = mob_number;
+    EmailAddress         = smtpadress;
+    IsInactive           = inactive;
+    InactiveReason       = inactive_reason;
+    Vendor               = vendor;
+    Customer             = customer;
+    CreatedBy            = created_by;
+    CreatedAt            = created_at;
+    ChangedBy            = changed_by;
+    ChangedAt            = changed_at;
+  }
+}
+
+define behavior for ZI_MDG_REQADR alias Address
+persistent table zmdg_reqadr
+draft table zmdg_reqadr_d
+lock dependent by _Request
+authorization dependent by _Request
+etag dependent by _Request
+{
+  update;
+  delete;
+
+  association _Request { with draft; }
+
+  mapping for zmdg_reqadr
+  {
+    RequestId              = request_id;
+    Nation                 = nation;
+    OrganizationName1      = name_org1;
+    OrganizationName2      = name_org2;
+    OrganizationName3      = name_org3;
+    OrganizationName4      = name_org4;
+    FirstName              = name_first;
+    LastName               = name_last;
+    SearchTerm1            = bu_sort1;
+    Street                 = street;
+    HouseNumber            = house_num1;
+    HouseNumberSupplement  = house_num2;
+    City                   = city1;
+    District               = city2;
+    PostalCode             = post_code1;
+    Country                = country;
+    OrganizationName       = name_org;
+    PersonName             = name_person;
+  }
+}
+
+define behavior for ZI_MDG_REQTAX alias Tax
+persistent table zmdg_reqtax
+draft table zmdg_reqtax_d
+lock dependent by _Request
+authorization dependent by _Request
+etag dependent by _Request
+{
+  update;
+  delete;
+
+  association _Request { with draft; }
+
+  mapping for zmdg_reqtax
+  {
+    RequestId = request_id;
+    TaxType   = taxtype;
+    TaxNumber = taxnum;
+  }
+}
+
