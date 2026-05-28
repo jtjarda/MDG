@@ -50,14 +50,16 @@ annotate entity ZC_MDG_REQ with
       type: #LINEITEM_REFERENCE,
       label: 'Address Variants',
       position: 30,
-      targetElement: '_Address'
+      targetElement: '_Address',
+      targetQualifier: 'AddressVariants'
     },
     {
       id: 'TaxNumbers',
       type: #LINEITEM_REFERENCE,
       label: 'Additional Tax Data',
       position: 40,
-      targetElement: '_Tax'
+      targetElement: '_Tax',
+      targetQualifier: 'TaxNumbers'
     }
   ]
 
@@ -167,4 +169,3 @@ annotate entity ZC_MDG_REQ with
   @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 100, label: 'Inactive Reason' }]
   InactiveReason;
 }
-
