@@ -8,7 +8,6 @@ define root view entity ZC_MDG_REQ
   key RequestId,
       RequestType,
       ExternalSystem,
-      ExternalSystemDescription,
       PartnerGid,
       Status,
       ParentGid1,

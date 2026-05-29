@@ -81,15 +81,12 @@ annotate entity ZC_MDG_REQ with
   @UI.selectionField: [{ position: 20 }]
   RequestType;
 
+  @UI.textArrangement: #TEXT_LAST
   @UI.lineItem: [{ position: 30, label: 'External System' }]
   @UI.identification: [{ position: 30, label: 'External System' }]
   @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 20, label: 'External System' }]
   @UI.selectionField: [{ position: 30 }]
   ExternalSystem;
-
-  @UI.identification: [{ position: 35, label: 'External System Description' }]
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 25, label: 'External System Description' }]
-  ExternalSystemDescription;
 
   @UI.lineItem: [{ position: 40, label: 'Status' }]
   @UI.identification: [{ position: 40, label: 'Status' }]

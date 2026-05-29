@@ -110,6 +110,17 @@ CLASS lhc_Request IMPLEMENTATION.
               Status         = 'DRA'
               CreatedBy      = sy-uname )
           )
+          CREATE BY \_Address
+          FIELDS ( Nation OrganizationName1 SearchTerm1 )
+          WITH VALUE #(
+            ( %cid_ref = ls_key-%cid
+              %target = VALUE #(
+                ( %cid   = |{ ls_key-%cid }_ADR|
+                  Nation = ''
+                  OrganizationName1 = ''
+                  SearchTerm1 = '' )
+              ) )
+          )
         MAPPED DATA(ls_mapped)
         FAILED failed
         REPORTED reported.

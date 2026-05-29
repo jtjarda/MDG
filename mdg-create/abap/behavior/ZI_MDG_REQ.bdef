@@ -112,6 +112,7 @@ etag dependent by _Request
 
   field ( readonly ) RequestId;
   field ( readonly : update ) TaxType;
+  field ( mandatory ) TaxNumber;
 
   association _Request { with draft; }
 
