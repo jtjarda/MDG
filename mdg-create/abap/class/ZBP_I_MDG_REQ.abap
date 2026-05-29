@@ -115,10 +115,10 @@ CLASS lhc_Request IMPLEMENTATION.
           WITH VALUE #(
             ( %cid_ref = ls_key-%cid
               %target = VALUE #(
-                ( %cid   = |{ ls_key-%cid }_ADR|
-                  Nation = ''
+                ( %cid             = |{ ls_key-%cid }_ADR|
+                  Nation           = ''
                   OrganizationName1 = ''
-                  SearchTerm1 = '' )
+                  SearchTerm1      = '' )
               ) )
           )
         MAPPED DATA(ls_mapped)
