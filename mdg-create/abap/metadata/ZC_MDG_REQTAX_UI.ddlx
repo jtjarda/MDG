@@ -7,11 +7,11 @@
 }
 annotate entity ZC_MDG_REQTAX with
 {
-  @UI.lineItem: [{ qualifier: 'TaxNumbers', position: 10, label: 'Tax Type' }]
+  @UI.lineItem: [{ position: 10, label: 'Tax Type' }]
   @UI.identification: [{ position: 10, label: 'Tax Type' }]
   TaxType;
 
-  @UI.lineItem: [{ qualifier: 'TaxNumbers', position: 20, label: 'Tax Number' }]
+  @UI.lineItem: [{ position: 20, label: 'Tax Number' }]
   @UI.identification: [{ position: 20, label: 'Tax Number' }]
   TaxNumber;
 }

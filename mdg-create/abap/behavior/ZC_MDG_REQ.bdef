@@ -8,19 +8,13 @@ define behavior for ZC_MDG_REQ alias Request
   use update;
   use delete;
 
+  use action CreateForSystem;
+
   use action Edit;
   use action Activate;
   use action Discard;
   use action Resume;
   use action Prepare;
-
-  use action Submit;
-  use action Approve;
-  use action Reject;
-  use action Cancel;
-  use action SendToExternal;
-  use action RetrySend;
-  use action Validate;
 
   use association _Address { create; with draft; }
   use association _Tax { create; with draft; }

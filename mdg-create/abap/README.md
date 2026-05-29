@@ -25,7 +25,7 @@ Prvni navrh zdrojaku pro RAP/OData V4 sluzbu nad request tabulkami.
    - behavior implementation class `ZBP_I_MDG_REQ`
 5. Service definition:
    - `ZUI_MDG_REQ`
-   - expose pouze root entity `ZC_MDG_REQ`; child entity jsou dostupne pres composition/navigation `_Address` a `_Tax`.
+   - expose root i child projekce, aby se child `@UI.lineItem` anotace dostaly do OData metadata.
 6. Service binding:
    - vytvorit v ADT jako OData V4 - UI nad `ZUI_MDG_REQ`
 

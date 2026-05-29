@@ -26,6 +26,9 @@ CLASS lhc_Request DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS earlynumbering_create FOR NUMBERING
       IMPORTING entities FOR CREATE Request.
 
+    METHODS createforsystem FOR MODIFY
+      IMPORTING keys FOR ACTION Request~CreateForSystem.
+
 ENDCLASS.
 
 CLASS lhc_Request IMPLEMENTATION.
@@ -61,6 +64,33 @@ CLASS lhc_Request IMPLEMENTATION.
       <mapped>-RequestId = lv_request_id.
 
     ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD createforsystem.
+
+    DATA lt_create TYPE TABLE FOR CREATE zi_mdg_req\Request.
+
+    LOOP AT keys INTO DATA(ls_key).
+
+      APPEND VALUE #(
+        %cid           = ls_key-%cid
+        ExternalSystem = ls_key-%param-ExternalSystem
+        Status         = 'DRAFT'
+        CreatedBy      = sy-uname
+      ) TO lt_create.
+
+    ENDLOOP.
+
+    MODIFY ENTITIES OF zi_mdg_req IN LOCAL MODE
+      ENTITY Request
+        CREATE FIELDS ( ExternalSystem Status CreatedBy )
+        WITH lt_create
+      MAPPED DATA(ls_mapped)
+      FAILED failed
+      REPORTED reported.
+
+    mapped-request = ls_mapped-request.
 
   ENDMETHOD.
 

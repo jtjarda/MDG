@@ -50,21 +50,35 @@ annotate entity ZC_MDG_REQ with
       type: #LINEITEM_REFERENCE,
       label: 'Address Variants',
       position: 30,
-      targetElement: '_Address',
-      targetQualifier: 'AddressVariants'
+      targetElement: '_Address'
     },
     {
       id: 'TaxNumbers',
       type: #LINEITEM_REFERENCE,
       label: 'Additional Tax Data',
       position: 40,
-      targetElement: '_Tax',
-      targetQualifier: 'TaxNumbers'
+      targetElement: '_Tax'
     }
   ]
 
-  @UI.lineItem: [{ position: 10, label: 'Request ID' }]
-  @UI.identification: [{ position: 10, label: 'Request ID' }]
+  @UI.lineItem: [
+    {
+      position: 5,
+      type: #FOR_ACTION,
+      dataAction: 'CreateForSystem',
+      label: 'Create for System'
+    },
+    { position: 10, label: 'Request ID' }
+  ]
+  @UI.identification: [
+    {
+      position: 5,
+      type: #FOR_ACTION,
+      dataAction: 'CreateForSystem',
+      label: 'Create for System'
+    },
+    { position: 10, label: 'Request ID' }
+  ]
   @UI.selectionField: [{ position: 10 }]
   RequestId;
 

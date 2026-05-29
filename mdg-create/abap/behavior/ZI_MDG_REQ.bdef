@@ -14,6 +14,8 @@ early numbering
   update;
   delete;
 
+  static factory action CreateForSystem parameter ZI_MDG_REQ_CREATE_P [1];
+
   field ( readonly ) RequestId;
   field ( readonly ) CreatedBy, CreatedAt, ChangedBy, ChangedAt;
   field ( readonly ) PartnerId, Vendor, Customer;

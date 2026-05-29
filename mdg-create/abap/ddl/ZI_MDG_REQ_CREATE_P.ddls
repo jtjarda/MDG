@@ -1,0 +1,15 @@
+@EndUserText.label: 'Create BP Request Parameters'
+define abstract entity ZI_MDG_REQ_CREATE_P
+{
+  @EndUserText.label: 'External System'
+  @Consumption.valueHelpDefinition: [
+    {
+      entity: {
+        name: 'ZI_MDG_C_SYS_CREATEVH',
+        element: 'ExternalSystem'
+      }
+    }
+  ]
+  ExternalSystem : zmdg_extsys;
+}
+
