@@ -128,3 +128,47 @@ Create Request -> výběr systému -> založení draftu -> object page se systé
 
 Do první technické verze lze dočasně ponechat standardní `Create`, ale před cílovým předáním bych ho nahradil vlastním create flow.
 
+## Prototyp: Dvě Tlačítka
+
+V prototypu mohou být současně:
+
+- standardní `Create`,
+- vlastní `Create for System`.
+
+`Create for System` má být pouze v list report toolbaru. Nemá být v object page hlavičce/detailu, protože na už existujícím požadavku nedává smysl.
+
+Proto v metadata extension používat pouze:
+
+```abap
+@UI.lineItem: [
+  {
+    position: 5,
+    type: #FOR_ACTION,
+    dataAction: 'CreateForSystem',
+    label: 'Create for System'
+  }
+]
+```
+
+Nepřidávat tuto akci do `@UI.identification`.
+
+## Drop-down Pro Výběr Systému
+
+Pro malý seznam systémů je vhodnější drop-down než velký value help dialog.
+
+Value help view označit jako malý číselník:
+
+```abap
+@ObjectModel.resultSet.sizeCategory: #XS
+define view entity ZI_MDG_C_SYS_CREATEVH
+  as select from zmdg_c_sys
+{
+  key extsys      as ExternalSystem,
+      description as Description,
+      type        as SystemType,
+      def_alpha   as DefaultAlphabet
+}
+where xcrea = 'X'
+```
+
+Fiori Elements z toho může vygenerovat fixed-values value help/drop-down podle použitého UI5/SAP release. Pokud i potom zůstane velký value help dialog, bude pro přesné menu/drop-down chování potřeba UI extension.

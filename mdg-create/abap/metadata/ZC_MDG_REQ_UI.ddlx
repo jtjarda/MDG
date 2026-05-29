@@ -70,15 +70,7 @@ annotate entity ZC_MDG_REQ with
     },
     { position: 10, label: 'Request ID' }
   ]
-  @UI.identification: [
-    {
-      position: 5,
-      type: #FOR_ACTION,
-      dataAction: 'CreateForSystem',
-      label: 'Create for System'
-    },
-    { position: 10, label: 'Request ID' }
-  ]
+  @UI.identification: [{ position: 10, label: 'Request ID' }]
   @UI.selectionField: [{ position: 10 }]
   RequestId;
 

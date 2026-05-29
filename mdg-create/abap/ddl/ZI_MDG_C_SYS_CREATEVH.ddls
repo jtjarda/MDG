@@ -1,7 +1,8 @@
 @EndUserText.label: 'MDG Systems for Create'
-@AccessControl.authorizationCheck: #CHECK
+@AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.ignorePropagatedAnnotations: true
 @VDM.viewType: #BASIC
+@ObjectModel.resultSet.sizeCategory: #XS
 define view entity ZI_MDG_C_SYS_CREATEVH
   as select from zmdg_c_sys
 {
@@ -11,4 +12,3 @@ define view entity ZI_MDG_C_SYS_CREATEVH
       def_alpha   as DefaultAlphabet
 }
 where xcrea = 'X'
-
