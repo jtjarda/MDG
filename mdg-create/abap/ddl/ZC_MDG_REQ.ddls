@@ -8,6 +8,7 @@ define root view entity ZC_MDG_REQ
   key RequestId,
       RequestType,
       ExternalSystem,
+      ExternalSystemDescription,
       PartnerGid,
       Status,
       ParentGid1,
@@ -36,4 +37,3 @@ define root view entity ZC_MDG_REQ
       _Address : redirected to composition child ZC_MDG_REQADR,
       _Tax     : redirected to composition child ZC_MDG_REQTAX
 }
-

@@ -7,7 +7,9 @@ define view entity ZI_MDG_REQADR
     on $projection.RequestId = _Request.RequestId
 {
   key request_id as RequestId,
+  @UI.lineItem: [{ position: 10, label: 'Nation' }]
   key nation     as Nation,
+  @UI.lineItem: [{ position: 20, label: 'Company Name' }]
       name_org1  as OrganizationName1,
       name_org2  as OrganizationName2,
       name_org3  as OrganizationName3,
@@ -15,16 +17,19 @@ define view entity ZI_MDG_REQADR
       name_first as FirstName,
       name_last  as LastName,
       bu_sort1   as SearchTerm1,
+  @UI.lineItem: [{ position: 60, label: 'Street' }]
       street     as Street,
       house_num1 as HouseNumber,
       house_num2 as HouseNumberSupplement,
+  @UI.lineItem: [{ position: 40, label: 'City' }]
       city1      as City,
       city2      as District,
+  @UI.lineItem: [{ position: 50, label: 'Postal Code' }]
       post_code1 as PostalCode,
+  @UI.lineItem: [{ position: 30, label: 'Country' }]
       country    as Country,
       name_org   as OrganizationName,
       name_person as PersonName,
 
       _Request
 }
-

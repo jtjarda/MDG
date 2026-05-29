@@ -17,6 +17,7 @@ early numbering
   static factory action CreateForSystem parameter ZI_MDG_REQ_CREATE_P [1];
 
   field ( readonly ) RequestId;
+  field ( readonly ) RequestType, ExternalSystem, PartnerGid;
   field ( readonly ) CreatedBy, CreatedAt, ChangedBy, ChangedAt;
   field ( readonly ) PartnerId, Vendor, Customer;
 
@@ -72,6 +73,7 @@ etag dependent by _Request
 
   field ( readonly ) RequestId;
   field ( readonly : update ) Nation;
+  field ( mandatory ) OrganizationName1, SearchTerm1;
 
   association _Request { with draft; }
 

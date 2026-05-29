@@ -7,9 +7,10 @@ define view entity ZI_MDG_REQTAX
     on $projection.RequestId = _Request.RequestId
 {
   key request_id as RequestId,
+  @UI.lineItem: [{ position: 10, label: 'Tax Type' }]
   key taxtype    as TaxType,
+  @UI.lineItem: [{ position: 20, label: 'Tax Number' }]
       taxnum     as TaxNumber,
 
       _Request
 }
-

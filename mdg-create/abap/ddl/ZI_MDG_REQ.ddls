@@ -10,7 +10,10 @@ define root view entity ZI_MDG_REQ
 {
   key request_id      as RequestId,
       request_type    as RequestType,
+      @ObjectModel.text.element: ['ExternalSystemDescription']
       extsys          as ExternalSystem,
+      @Semantics.text: true
+      _ConnectedSystem.Description as ExternalSystemDescription,
       partner_gid     as PartnerGid,
       status          as Status,
       parent_gid1     as ParentGid1,
@@ -39,4 +42,3 @@ define root view entity ZI_MDG_REQ
       _Address,
       _Tax
 }
-
