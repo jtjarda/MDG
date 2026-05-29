@@ -1,0 +1,14 @@
+﻿@EndUserText.label: 'MDG BP Request Tax Number'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.allowExtensions: true
+@VDM.viewType: #CONSUMPTION
+define view entity ZC_MDG_REQTAX
+  as projection on ZI_MDG_REQTAX
+{
+  key RequestUuid,
+  key TaxType,
+      TaxNumber,
+
+      _Request : redirected to parent ZC_MDG_REQ
+}
+

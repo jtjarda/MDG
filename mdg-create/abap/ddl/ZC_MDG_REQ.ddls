@@ -1,0 +1,58 @@
+﻿@EndUserText.label: 'MDG BP Request'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.allowExtensions: true
+@VDM.viewType: #CONSUMPTION
+define root view entity ZC_MDG_REQ
+  provider contract transactional_query
+  as projection on ZI_MDG_REQ
+{
+  key RequestUuid,
+      RequestId,
+      RequestType,
+      ExternalSystem,
+      PartnerGid,
+      Status,
+      ParentGid1,
+      ParentGid2,
+      FoundDate,
+      Duns,
+      LeiCode,
+      Euid,
+      PartnerId,
+      BusinessPartnerType,
+      BusinessPartnerGroup,
+      LegalForm,
+      TelephoneNumber,
+      MobileNumber,
+      EmailAddress,
+      IsInactive,
+      InactiveReason,
+      Vendor,
+      Customer,
+      OrganizationName1,
+      OrganizationName2,
+      OrganizationName3,
+      OrganizationName4,
+      FirstName,
+      LastName,
+      SearchTerm1,
+      Street,
+      HouseNumber,
+      HouseNumberSupplement,
+      City,
+      District,
+      PostalCode,
+      Country,
+      OrganizationName,
+      PersonName,
+      CreatedBy,
+      CreatedAt,
+      LastChangedBy,
+      LastChangedAt,
+      LocalLastChangedAt,
+
+      _ConnectedSystem,
+      _Address : redirected to composition child ZC_MDG_REQADR,
+      _Tax     : redirected to composition child ZC_MDG_REQTAX
+}
+

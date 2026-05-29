@@ -1,0 +1,17 @@
+﻿@EndUserText.label: 'MDG BP Request Tax Number'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.allowExtensions: true
+@Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_REQTAX
+  as select from zmdg_reqtax
+  association to parent ZI_MDG_REQ as _Request
+    on $projection.RequestUuid = _Request.RequestUuid
+{
+  key request_uuid as RequestUuid,
+  key taxtype      as TaxType,
+      taxnum       as TaxNumber,
+
+      _Request
+}
+

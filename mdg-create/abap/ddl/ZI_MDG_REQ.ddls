@@ -1,0 +1,64 @@
+﻿@EndUserText.label: 'MDG BP Request'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.allowExtensions: true
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.semanticKey: [ 'RequestId' ]
+@VDM.viewType: #BASIC
+define root view entity ZI_MDG_REQ
+  as select from zmdg_req
+  composition [0..*] of ZI_MDG_REQADR as _Address
+  composition [0..*] of ZI_MDG_REQTAX as _Tax
+  association [0..1] to ZI_MDG_C_SYS as _ConnectedSystem
+    on _ConnectedSystem.ExternalSystem = $projection.ExternalSystem
+{
+  key request_uuid         as RequestUuid,
+      request_id           as RequestId,
+      request_type         as RequestType,
+      @ObjectModel.text.association: '_ConnectedSystem'
+      extsys               as ExternalSystem,
+      partner_gid          as PartnerGid,
+      status               as Status,
+      parent_gid1          as ParentGid1,
+      parent_gid2          as ParentGid2,
+      found_date           as FoundDate,
+      duns                 as Duns,
+      lei_code             as LeiCode,
+      euid                 as Euid,
+      partner_id           as PartnerId,
+      type                 as BusinessPartnerType,
+      bu_group             as BusinessPartnerGroup,
+      legal_form           as LegalForm,
+      tel_number           as TelephoneNumber,
+      mob_number           as MobileNumber,
+      smtpadress           as EmailAddress,
+      inactive             as IsInactive,
+      inactive_reason      as InactiveReason,
+      vendor               as Vendor,
+      customer             as Customer,
+      name_org1            as OrganizationName1,
+      name_org2            as OrganizationName2,
+      name_org3            as OrganizationName3,
+      name_org4            as OrganizationName4,
+      name_first           as FirstName,
+      name_last            as LastName,
+      bu_sort1             as SearchTerm1,
+      street               as Street,
+      house_num1           as HouseNumber,
+      house_num2           as HouseNumberSupplement,
+      city1                as City,
+      city2                as District,
+      post_code1           as PostalCode,
+      country              as Country,
+      name_org             as OrganizationName,
+      name_person          as PersonName,
+      created_by           as CreatedBy,
+      created_at           as CreatedAt,
+      last_changed_by      as LastChangedBy,
+      last_changed_at      as LastChangedAt,
+      locl_last_changed_at as LocalLastChangedAt,
+
+      _ConnectedSystem,
+      _Address,
+      _Tax
+}
+

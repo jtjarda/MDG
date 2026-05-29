@@ -1,0 +1,18 @@
+﻿@EndUserText.label: 'MDG Create System Value Help'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.resultSet.sizeCategory: #XS
+@Search.searchable: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_C_SYS_CREATEVH
+  as select from ZI_MDG_C_SYS
+{
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+  key ExternalSystem,
+      Description,
+      SystemType,
+      DefaultAlphabet
+}
+where IsCreateAllowed = 'X'
+

@@ -1,0 +1,21 @@
+﻿@EndUserText.label: 'MDG Connected System'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@Search.searchable: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_C_SYS
+  as select from zmdg_c_sys
+{
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+  key extsys      as ExternalSystem,
+      type        as SystemType,
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      description as Description,
+      comm_class  as CommunicationClass,
+      def_alpha   as DefaultAlphabet,
+      xcrea       as IsCreateAllowed,
+      xenh        as IsEnhanceAllowed
+}
+
