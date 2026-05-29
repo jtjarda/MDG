@@ -5,7 +5,9 @@ define view entity ZC_MDG_REQTAX
   as projection on ZI_MDG_REQTAX
 {
   key RequestId,
+  @UI.lineItem: [{ position: 10, label: 'Tax Type' }]
   key TaxType,
+  @UI.lineItem: [{ position: 20, label: 'Tax Number' }]
       TaxNumber,
 
       _Request : redirected to parent ZC_MDG_REQ
