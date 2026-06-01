@@ -13,6 +13,8 @@ etag master LocalLastChangedAt
   update;
   delete;
 
+  static factory action CreateForSystem parameter ZI_MDG_REQ_CREATE_P [1];
+
   field ( readonly, numbering : managed ) RequestUuid;
   field ( readonly ) RequestId;
   field ( readonly ) PartnerId, Vendor, Customer;
@@ -24,7 +26,7 @@ etag master LocalLastChangedAt
   draft action Resume;
   draft determine action Prepare;
 
-  determination CalculateRequestId on save { create; update; }
+  determination CalculateRequestId on save { create; }
 
   association _Address { create; with draft; }
   association _Tax     { create; with draft; }

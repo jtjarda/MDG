@@ -5,6 +5,7 @@
   title: { type: #STANDARD, value: 'RequestId' },
   description: { type: #STANDARD, value: 'Status' }
 }
+@UI.createHidden: true
 annotate entity ZC_MDG_REQ with
 {
   @UI.hidden: true
@@ -74,7 +75,15 @@ annotate entity ZC_MDG_REQ with
     }
   ]
 
-  @UI.lineItem: [{ position: 10, label: 'Request ID' }]
+  @UI.lineItem: [
+    {
+      position: 5,
+      type: #FOR_ACTION,
+      dataAction: 'CreateForSystem',
+      label: 'Create for System'
+    },
+    { position: 10, label: 'Request ID' }
+  ]
   @UI.identification: [{ position: 10, label: 'Request ID' }]
   @UI.selectionField: [{ position: 10 }]
   RequestId;

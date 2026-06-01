@@ -12,6 +12,9 @@ CLASS lhc_request DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS calculate_request_id FOR DETERMINE ON SAVE
       IMPORTING keys FOR request~CalculateRequestId.
+
+    METHODS create_for_system FOR MODIFY
+      IMPORTING keys FOR ACTION request~CreateForSystem.
 ENDCLASS.
 
 CLASS lhc_request IMPLEMENTATION.
@@ -65,5 +68,23 @@ CLASS lhc_request IMPLEMENTATION.
               RequestId = request_id )
           ).
     ENDLOOP.
+  ENDMETHOD.
+
+  METHOD create_for_system.
+    MODIFY ENTITIES OF zi_mdg_req IN LOCAL MODE
+      ENTITY Request
+        CREATE FIELDS ( RequestType ExternalSystem Status CreatedBy )
+        WITH VALUE #(
+          FOR key IN keys
+          ( %cid           = key-%cid
+            %is_draft      = if_abap_behv=>mk-on
+            RequestType    = 'C'
+            ExternalSystem = key-%param-ExternalSystem
+            Status         = 'DRA'
+            CreatedBy      = cl_abap_context_info=>get_user_technical_name( ) )
+        )
+      MAPPED mapped
+      FAILED failed
+      REPORTED reported.
   ENDMETHOD.
 ENDCLASS.

@@ -148,6 +148,23 @@ define view entity ZI_MDG_C_SYS
 
 ## Behavior Definitions
 
+### ZI_MDG_REQ_CREATE_P.ddls
+
+```abap
+@EndUserText.label: 'Create BP Request Parameters'
+define abstract entity ZI_MDG_REQ_CREATE_P
+{
+  @EndUserText.label: 'External System'
+  @Consumption.valueHelpDefinition: [
+    {
+      entity: { name: 'ZI_MDG_C_SYS_CREATEVH', element: 'ExternalSystem' }
+    }
+  ]
+  ExternalSystem : zmdg_extsys;
+}
+```
+
+
 ### ZI_MDG_REQ.bdef
 
 ```abap
@@ -166,6 +183,8 @@ etag master LocalLastChangedAt
   update;
   delete;
 
+  static factory action CreateForSystem parameter ZI_MDG_REQ_CREATE_P [1];
+
   field ( readonly, numbering : managed ) RequestUuid;
   field ( readonly ) RequestId;
   field ( readonly ) PartnerId, Vendor, Customer;
@@ -177,7 +196,7 @@ etag master LocalLastChangedAt
   draft action Resume;
   draft determine action Prepare;
 
-  determination CalculateRequestId on save { create; update; }
+  determination CalculateRequestId on save { create; }
 
   association _Address { create; with draft; }
   association _Tax     { create; with draft; }
@@ -303,9 +322,10 @@ use draft;
 
 define behavior for ZC_MDG_REQ alias Request
 {
-  use create;
   use update;
   use delete;
+
+  use action CreateForSystem;
 
   use action Edit;
   use action Activate;
@@ -354,6 +374,9 @@ CLASS lhc_request DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS calculate_request_id FOR DETERMINE ON SAVE
       IMPORTING keys FOR request~CalculateRequestId.
+
+    METHODS create_for_system FOR MODIFY
+      IMPORTING keys FOR ACTION request~CreateForSystem.
 ENDCLASS.
 
 CLASS lhc_request IMPLEMENTATION.
@@ -408,6 +431,24 @@ CLASS lhc_request IMPLEMENTATION.
           ).
     ENDLOOP.
   ENDMETHOD.
+
+  METHOD create_for_system.
+    MODIFY ENTITIES OF zi_mdg_req IN LOCAL MODE
+      ENTITY Request
+        CREATE FIELDS ( RequestType ExternalSystem Status CreatedBy )
+        WITH VALUE #(
+          FOR key IN keys
+          ( %cid           = key-%cid
+            %is_draft      = if_abap_behv=>mk-on
+            RequestType    = 'C'
+            ExternalSystem = key-%param-ExternalSystem
+            Status         = 'DRA'
+            CreatedBy      = cl_abap_context_info=>get_user_technical_name( ) )
+        )
+      MAPPED mapped
+      FAILED failed
+      REPORTED reported.
+  ENDMETHOD.
 ENDCLASS.
 ```
 
@@ -438,6 +479,7 @@ define service ZUI_MDG_REQ {
   title: { type: #STANDARD, value: 'RequestId' },
   description: { type: #STANDARD, value: 'Status' }
 }
+@UI.createHidden: true
 annotate entity ZC_MDG_REQ with
 {
   @UI.hidden: true
@@ -507,7 +549,15 @@ annotate entity ZC_MDG_REQ with
     }
   ]
 
-  @UI.lineItem: [{ position: 10, label: 'Request ID' }]
+  @UI.lineItem: [
+    {
+      position: 5,
+      type: #FOR_ACTION,
+      dataAction: 'CreateForSystem',
+      label: 'Create for System'
+    },
+    { position: 10, label: 'Request ID' }
+  ]
   @UI.identification: [{ position: 10, label: 'Request ID' }]
   @UI.selectionField: [{ position: 10 }]
   RequestId;
