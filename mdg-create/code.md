@@ -466,6 +466,65 @@ define service ZUI_MDG_REQ {
 }
 ```
 
+## Fiori App Cross-App Startup
+
+Generated UI project:
+
+```text
+C:\Users\JTikal\Documents\MDG\mdg-create\mdgcreaterequest
+```
+
+Inbound used by `mdg-search`:
+
+```text
+Semantic Object: MDGBpRequest
+Action:          create
+Parameter:       ExternalSystem
+```
+
+`webapp/manifest.json` contains:
+
+```json
+"crossNavigation": {
+  "inbounds": {
+    "MDGBpRequest-create": {
+      "semanticObject": "MDGBpRequest",
+      "action": "create",
+      "title": "{{appTitle}}",
+      "signature": {
+        "parameters": {
+          "ExternalSystem": {
+            "required": false
+          }
+        },
+        "additionalParameters": "allowed"
+      }
+    }
+  }
+}
+```
+
+`webapp/Component.js` reads the startup parameter and invokes the RAP factory action:
+
+```js
+var oRequestsBinding = oModel.bindList("/Requests");
+var oOperation = oModel.bindContext(
+  "com.sap.gateway.srvd.zui_mdg_req.v0001.CreateForSystem(...)",
+  oRequestsBinding.getHeaderContext()
+);
+
+oOperation.setParameter("ExternalSystem", sExternalSystem);
+oOperation.setParameter("ResultIsActiveEntity", false);
+```
+
+After the action returns the draft request data, the app navigates to the draft Object Page by using the returned `RequestUuid` and `IsActiveEntity`.
+
+Local test URL:
+
+```text
+test/flp.html#app-preview?ExternalSystem=S4HCLNT140
+```
+
 
 ## Metadata Extensions
 

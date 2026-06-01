@@ -34,6 +34,23 @@
           "odataVersion": "4.0"
         }
       }
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "MDGBpRequest-create": {
+          "semanticObject": "MDGBpRequest",
+          "action": "create",
+          "title": "{{appTitle}}",
+          "signature": {
+            "parameters": {
+              "ExternalSystem": {
+                "required": false
+              }
+            },
+            "additionalParameters": "allowed"
+          }
+        }
+      }
     }
   },
   "sap.ui": {

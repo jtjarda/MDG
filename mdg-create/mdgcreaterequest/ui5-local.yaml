@@ -29,19 +29,8 @@ server:
     - name: fiori-tools-proxy
       afterMiddleware: compression
       configuration:
-        ignoreCertErrors: false # If set to true, certificate errors will be ignored. E.g. self-signed certificates will be accepted
+        ignoreCertErrors: true # Local development: allow backend certificates not trusted by Node.js
         backend:
           - path: /sap
             url: https://hsr.con4pas.cz
             client: '140'
-    - name: sap-fe-mockserver
-      beforeMiddleware: csp
-      configuration:
-        mountPath: /
-        services:
-          - urlPath: /sap/opu/odata4/sap/zui_mdg_req_o4/srvd/sap/zui_mdg_req/0001
-            metadataPath: ./webapp/localService/mainService/metadata.xml
-            mockdataPath: ./webapp/localService/mainService/data
-            generateMockData: true
-            resolveExternalServiceReferences: true
-        annotations: []

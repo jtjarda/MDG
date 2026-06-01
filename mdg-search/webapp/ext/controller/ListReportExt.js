@@ -11,6 +11,7 @@ sap.ui.define(
     "use strict";
 
     var oCreateForSystemDialog;
+    var sLocalCreateAppUrl = "http://localhost:8080/test/flp.html?sap-ui-xx-viewCache=false#app-preview";
 
     function getCreateSystemModel() {
         return new JSONModel({
@@ -29,6 +30,11 @@ sap.ui.define(
 
     function navigateToCreateApp(sExternalSystem) {
         if (!sExternalSystem) {
+            return;
+        }
+
+        if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+            window.location.href = addExternalSystemParameter(sLocalCreateAppUrl, sExternalSystem);
             return;
         }
 
@@ -52,6 +58,15 @@ sap.ui.define(
             .catch(function () {
                 MessageBox.error("Navigation to BP request creation could not be started.");
             });
+    }
+
+    function addExternalSystemParameter(sUrl, sExternalSystem) {
+        var aParts = sUrl.split("#");
+        var sBaseUrl = aParts[0];
+        var sHash = aParts[1] ? "#" + aParts[1] : "";
+        var sSeparator = sBaseUrl.indexOf("?") === -1 ? "?" : "&";
+
+        return sBaseUrl + sSeparator + "ExternalSystem=" + encodeURIComponent(sExternalSystem) + sHash;
     }
 
     function getView(oController) {

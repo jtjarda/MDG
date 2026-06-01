@@ -1085,7 +1085,8 @@ Handler aktuálně:
 
 1. otevře `sap.m.SelectDialog`,
 2. nechá uživatele vybrat externí systém,
-3. zavolá FLP navigaci:
+3. na `localhost` použije přímou vývojovou URL aplikace `mdg-create`,
+4. mimo lokální běh zavolá FLP navigaci:
 
 ```js
 oCrossAppNavigation.toExternal({
@@ -1102,6 +1103,20 @@ oCrossAppNavigation.toExternal({
 Poznámka: Seznam systémů je v handleru zatím klientský prototyp. Až bude ve službě dostupný entity set pro `ZMDG_C_SYS` / create value help, nahradí se lokální `JSONModel` čtením z OData.
 
 Dialog je vytvořen singleton patternem v proměnné `oCreateForSystemDialog`, takže se při každém kliknutí nezakládá nová instance. Při prvním vytvoření je připojen přes `oView.addDependent(oCreateForSystemDialog)`, aby sdílel lifecycle stránky a UI5 ho korektně uklidil spolu s view.
+
+Lokální fallback používá:
+
+```text
+http://localhost:8080/test/flp.html?sap-ui-xx-viewCache=false#app-preview
+```
+
+Při výběru systému se parametr doplní před hash:
+
+```text
+http://localhost:8080/test/flp.html?sap-ui-xx-viewCache=false&ExternalSystem=S4HCLNT140#app-preview
+```
+
+V reálném FLP se tento fallback nepoužije; tam musí existovat target mapping pro `#MDGBpRequest-create`.
 
 ## i18n
 
