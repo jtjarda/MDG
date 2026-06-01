@@ -187,6 +187,15 @@
                   }
                 },
                 "@com.sap.vocabularies.UI.v1.LineItem": {
+                  "actions": {
+                    "CreateForSystem": {
+                      "press": "c4s.mdg.mdgsearch.ext.controller.ListReportExt.onCreateForSystem",
+                      "visible": true,
+                      "enabled": true,
+                      "requiresSelection": false,
+                      "text": "{i18n>createForSystem}"
+                    }
+                  },
                   "tableSettings": {
                     "type": "ResponsiveTable",
                     "personalization": {
