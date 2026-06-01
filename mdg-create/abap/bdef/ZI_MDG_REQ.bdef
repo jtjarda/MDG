@@ -5,10 +5,9 @@ with draft;
 define behavior for ZI_MDG_REQ alias Request
 persistent table zmdg_req
 draft table zmdg_req_d
-lock master
+lock master total etag LastChangedAt
 authorization master ( global, instance )
 etag master LocalLastChangedAt
-total etag LastChangedAt
 {
   create;
   update;
@@ -24,6 +23,8 @@ total etag LastChangedAt
   draft action Discard;
   draft action Resume;
   draft determine action Prepare;
+
+  determination CalculateRequestId on save { create; update; }
 
   association _Address { create; with draft; }
   association _Tax     { create; with draft; }

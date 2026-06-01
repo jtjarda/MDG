@@ -158,10 +158,9 @@ with draft;
 define behavior for ZI_MDG_REQ alias Request
 persistent table zmdg_req
 draft table zmdg_req_d
-lock master
+lock master total etag LastChangedAt
 authorization master ( global, instance )
 etag master LocalLastChangedAt
-total etag LastChangedAt
 {
   create;
   update;
@@ -177,6 +176,8 @@ total etag LastChangedAt
   draft action Discard;
   draft action Resume;
   draft determine action Prepare;
+
+  determination CalculateRequestId on save { create; update; }
 
   association _Address { create; with draft; }
   association _Tax     { create; with draft; }
@@ -350,6 +351,9 @@ CLASS lhc_request DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING
                 keys REQUEST requested_authorizations FOR request
       RESULT    result.
+
+    METHODS calculate_request_id FOR DETERMINE ON SAVE
+      IMPORTING keys FOR request~CalculateRequestId.
 ENDCLASS.
 
 CLASS lhc_request IMPLEMENTATION.
@@ -367,7 +371,340 @@ CLASS lhc_request IMPLEMENTATION.
         %delete = if_abap_behv=>auth-allowed )
     ).
   ENDMETHOD.
+
+  METHOD calculate_request_id.
+    READ ENTITIES OF zi_mdg_req IN LOCAL MODE
+      ENTITY Request
+        FIELDS ( RequestId )
+        WITH CORRESPONDING #( keys )
+      RESULT DATA(requests).
+
+    LOOP AT requests ASSIGNING FIELD-SYMBOL(<request>)
+         WHERE RequestId IS INITIAL
+            OR RequestId = '0000000000'.
+
+      DATA request_id TYPE zmdg_request_id.
+
+      TRY.
+          cl_numberrange_runtime=>number_get(
+            EXPORTING
+              nr_range_nr = '01'
+              object      = 'ZMDG_REQ'
+            IMPORTING
+              number      = DATA(number)
+          ).
+
+          request_id = |{ number ALPHA = OUT }|.
+        CATCH cx_number_ranges.
+          CONTINUE.
+      ENDTRY.
+
+      MODIFY ENTITIES OF zi_mdg_req IN LOCAL MODE
+        ENTITY Request
+          UPDATE FIELDS ( RequestId )
+          WITH VALUE #(
+            ( %tky      = <request>-%tky
+              RequestId = request_id )
+          ).
+    ENDLOOP.
+  ENDMETHOD.
 ENDCLASS.
+```
+
+
+## Service Definition
+
+### ZUI_MDG_REQ.srvd
+
+```abap
+@EndUserText.label: 'MDG: Create BP Request'
+define service ZUI_MDG_REQ {
+  expose ZC_MDG_REQ    as Requests;
+  expose ZC_MDG_REQADR as AddressVariants;
+  expose ZC_MDG_REQTAX as TaxNumbers;
+}
+```
+
+
+## Metadata Extensions
+
+### ZC_MDG_REQ_UI.ddlx
+
+```abap
+@Metadata.layer: #CUSTOMER
+@UI.headerInfo: {
+  typeName: 'BP Request',
+  typeNamePlural: 'BP Requests',
+  title: { type: #STANDARD, value: 'RequestId' },
+  description: { type: #STANDARD, value: 'Status' }
+}
+annotate entity ZC_MDG_REQ with
+{
+  @UI.hidden: true
+  RequestUuid;
+
+  @UI.hidden: true
+  LocalLastChangedAt;
+
+  @UI.facet: [
+    {
+      id: 'General',
+      type: #COLLECTION,
+      label: 'General',
+      position: 10
+    },
+    {
+      id: 'GlobalData',
+      parentId: 'General',
+      type: #FIELDGROUP_REFERENCE,
+      label: 'Global Data',
+      position: 10,
+      targetQualifier: 'GlobalData'
+    },
+    {
+      id: 'MainData',
+      parentId: 'General',
+      type: #FIELDGROUP_REFERENCE,
+      label: 'Main Data',
+      position: 20,
+      targetQualifier: 'MainData'
+    },
+    {
+      id: 'IdentificationData',
+      parentId: 'General',
+      type: #FIELDGROUP_REFERENCE,
+      label: 'Identification Data',
+      position: 30,
+      targetQualifier: 'IdentificationData'
+    },
+    {
+      id: 'CountrySpecificData',
+      type: #FIELDGROUP_REFERENCE,
+      label: 'Country Specific Data Detail',
+      position: 20,
+      targetQualifier: 'CountrySpecificData'
+    },
+    {
+      id: 'Address',
+      type: #FIELDGROUP_REFERENCE,
+      label: 'Address',
+      position: 30,
+      targetQualifier: 'Address'
+    },
+    {
+      id: 'AddressVariants',
+      type: #LINEITEM_REFERENCE,
+      label: 'Address Variants',
+      position: 40,
+      targetElement: '_Address'
+    },
+    {
+      id: 'TaxNumbers',
+      type: #LINEITEM_REFERENCE,
+      label: 'Additional Tax Data',
+      position: 50,
+      targetElement: '_Tax'
+    }
+  ]
+
+  @UI.lineItem: [{ position: 10, label: 'Request ID' }]
+  @UI.identification: [{ position: 10, label: 'Request ID' }]
+  @UI.selectionField: [{ position: 10 }]
+  RequestId;
+
+  @UI.lineItem: [{ position: 20, label: 'Request Type' }]
+  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 10, label: 'Request Type' }]
+  @UI.selectionField: [{ position: 20 }]
+  RequestType;
+
+  @UI.lineItem: [{ position: 30, label: 'External System' }]
+  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 20, label: 'External System' }]
+  @UI.selectionField: [{ position: 30 }]
+  ExternalSystem;
+
+  @UI.lineItem: [{ position: 40, label: 'Status' }]
+  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 30, label: 'Status' }]
+  @UI.selectionField: [{ position: 40 }]
+  Status;
+
+  @UI.lineItem: [{ position: 50, label: 'Created By' }]
+  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 40, label: 'Created By' }]
+  CreatedBy;
+
+  @UI.lineItem: [{ position: 60, label: 'Partner GID' }]
+  @UI.fieldGroup: [{ qualifier: 'MainData', position: 10, label: 'Partner GID' }]
+  PartnerGid;
+
+  @UI.lineItem: [{ position: 70, label: 'DUNS Number' }]
+  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 30, label: 'DUNS Number' }]
+  Duns;
+
+  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 50, label: 'Created At' }]
+  CreatedAt;
+
+  @UI.fieldGroup: [{ qualifier: 'MainData', position: 20, label: 'Parent GID 1' }]
+  ParentGid1;
+
+  @UI.fieldGroup: [{ qualifier: 'MainData', position: 30, label: 'Parent GID 2' }]
+  ParentGid2;
+
+  @UI.fieldGroup: [{ qualifier: 'MainData', position: 40, label: 'Found Date' }]
+  FoundDate;
+
+  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 10, label: 'Partner ID' }]
+  PartnerId;
+
+  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 20, label: 'LEI Code' }]
+  LeiCode;
+
+  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 40, label: 'EUID' }]
+  Euid;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 10, label: 'Partner Group' }]
+  BusinessPartnerGroup;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 20, label: 'Partner Category' }]
+  BusinessPartnerType;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 30, label: 'Legal Form' }]
+  LegalForm;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 40, label: 'Telephone No' }]
+  TelephoneNumber;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 50, label: 'Mobile Tel. No' }]
+  MobileNumber;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 60, label: 'E-mail Address' }]
+  EmailAddress;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 70, label: 'Vendor' }]
+  Vendor;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 80, label: 'Customer' }]
+  Customer;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 90, label: 'Inactive' }]
+  IsInactive;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 100, label: 'Inactive Reason' }]
+  InactiveReason;
+
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 10, label: 'Company Name' }]
+  OrganizationName1;
+
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 20, label: 'Search Term' }]
+  SearchTerm1;
+
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 30, label: 'Country' }]
+  Country;
+
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 40, label: 'District' }]
+  District;
+
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 50, label: 'City' }]
+  City;
+
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 60, label: 'Postal Code' }]
+  PostalCode;
+
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 70, label: 'Street' }]
+  Street;
+
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 80, label: 'House No' }]
+  HouseNumber;
+
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 90, label: 'House No Suppl.' }]
+  HouseNumberSupplement;
+}
+```
+
+
+### ZC_MDG_REQADR_UI.ddlx
+
+```abap
+@Metadata.layer: #CUSTOMER
+@UI.headerInfo: {
+  typeName: 'Address Variant',
+  typeNamePlural: 'Address Variants',
+  title: { type: #STANDARD, value: 'Nation' },
+  description: { type: #STANDARD, value: 'OrganizationName1' }
+}
+annotate entity ZC_MDG_REQADR with
+{
+  @UI.hidden: true
+  RequestUuid;
+
+  @UI.facet: [
+    {
+      id: 'AddressVariantDetail',
+      purpose: #STANDARD,
+      type: #IDENTIFICATION_REFERENCE,
+      label: 'Address Details',
+      position: 10
+    }
+  ]
+
+  @UI.lineItem: [{ position: 10, label: 'Nation' }]
+  @UI.identification: [{ position: 10, label: 'Nation' }]
+  Nation;
+
+  @UI.lineItem: [{ position: 20, label: 'Company Name' }]
+  @UI.identification: [{ position: 20, label: 'Company Name' }]
+  OrganizationName1;
+
+  @UI.lineItem: [{ position: 30, label: 'Country' }]
+  @UI.identification: [{ position: 30, label: 'Country' }]
+  Country;
+
+  @UI.lineItem: [{ position: 40, label: 'City' }]
+  @UI.identification: [{ position: 40, label: 'City' }]
+  City;
+
+  @UI.lineItem: [{ position: 50, label: 'Postal Code' }]
+  @UI.identification: [{ position: 50, label: 'Postal Code' }]
+  PostalCode;
+
+  @UI.lineItem: [{ position: 60, label: 'Street' }]
+  @UI.identification: [{ position: 60, label: 'Street' }]
+  Street;
+}
+```
+
+
+### ZC_MDG_REQTAX_UI.ddlx
+
+```abap
+@Metadata.layer: #CUSTOMER
+@UI.headerInfo: {
+  typeName: 'Tax Number',
+  typeNamePlural: 'Tax Numbers',
+  title: { type: #STANDARD, value: 'TaxType' },
+  description: { type: #STANDARD, value: 'TaxNumber' }
+}
+annotate entity ZC_MDG_REQTAX with
+{
+  @UI.hidden: true
+  RequestUuid;
+
+  @UI.facet: [
+    {
+      id: 'TaxNumberDetail',
+      purpose: #STANDARD,
+      type: #IDENTIFICATION_REFERENCE,
+      label: 'Tax Number Details',
+      position: 10
+    }
+  ]
+
+  @UI.lineItem: [{ position: 10, label: 'Tax Type' }]
+  @UI.identification: [{ position: 10, label: 'Tax Type' }]
+  TaxType;
+
+  @UI.lineItem: [{ position: 20, label: 'Tax Number' }]
+  @UI.identification: [{ position: 20, label: 'Tax Number' }]
+  TaxNumber;
+}
 ```
 
 

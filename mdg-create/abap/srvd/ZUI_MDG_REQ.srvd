@@ -1,0 +1,6 @@
+@EndUserText.label: 'MDG: Create BP Request'
+define service ZUI_MDG_REQ {
+  expose ZC_MDG_REQ    as Requests;
+  expose ZC_MDG_REQADR as AddressVariants;
+  expose ZC_MDG_REQTAX as TaxNumbers;
+}
