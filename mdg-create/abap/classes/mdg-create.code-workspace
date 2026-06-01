@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"name": "mdg-bpcreate",
+			"path": "../../../mdg-bpcreate"
+		}
+	],
+	"settings": {}
+}
