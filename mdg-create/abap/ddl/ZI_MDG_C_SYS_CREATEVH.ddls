@@ -9,9 +9,17 @@ define view entity ZI_MDG_C_SYS_CREATEVH
 {
       @Search.defaultSearchElement: true
       @Search.fuzzinessThreshold: 0.8
+      @ObjectModel.text.element: ['Description']   
+      @UI.textArrangement: #TEXT_ONLY              
   key ExternalSystem,
+
+      @Semantics.text: true                        
       Description,
+
+      @UI.hidden: true                             
       SystemType,
+
+      @UI.hidden: true                             
       DefaultAlphabet
 }
 where IsCreateAllowed = 'X'
