@@ -1,0 +1,17 @@
+@EndUserText.label: 'MDG Connected System'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.allowExtensions: true
+@VDM.viewType: #CONSUMPTION
+define view entity ZC_MDG_C_SYS
+  as select from ZI_MDG_C_SYS
+{
+      @ObjectModel.text.element: [ 'Description' ]
+  key ExternalSystem,
+      SystemType,
+      @Semantics.text: true
+      Description,
+      CommunicationClass,
+      DefaultAlphabet,
+      IsCreateAllowed,
+      IsEnhanceAllowed
+}

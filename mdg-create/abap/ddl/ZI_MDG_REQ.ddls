@@ -14,6 +14,7 @@ define root view entity ZI_MDG_REQ
   key request_uuid         as RequestUuid,
       request_id           as RequestId,
       request_type         as RequestType,
+      @ObjectModel.foreignKey.association: '_ConnectedSystem'
       @ObjectModel.text.association: '_ConnectedSystem'
       extsys               as ExternalSystem,
       partner_gid          as PartnerGid,

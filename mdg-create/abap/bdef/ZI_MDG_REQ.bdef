@@ -17,16 +17,21 @@ etag master LocalLastChangedAt
 
   field ( readonly, numbering : managed ) RequestUuid;
   field ( readonly ) RequestId;
-  field ( readonly ) PartnerId, Vendor, Customer;
+  field ( readonly ) PartnerId, Vendor, Customer, ExternalSystem, PartnerGID;
   field ( readonly ) CreatedBy, CreatedAt, LastChangedBy, LastChangedAt, LocalLastChangedAt;
+  field ( mandatory ) OrganizationName1, SearchTerm1, Country, City, PostalCode, Street;
 
   draft action Edit;
   draft action Activate optimized;
   draft action Discard;
   draft action Resume;
-  draft determine action Prepare;
+  draft determine action Prepare
+  {
+    validation ValidateRequest;
+  }
 
   determination CalculateRequestId on save { create; }
+  validation ValidateRequest on save { create; update; }
 
   association _Address { create; with draft; }
   association _Tax     { create; with draft; }
