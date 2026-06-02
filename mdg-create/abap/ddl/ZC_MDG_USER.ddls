@@ -1,0 +1,12 @@
+@EndUserText.label: 'MDG User'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.allowExtensions: true
+@VDM.viewType: #CONSUMPTION
+define view entity ZC_MDG_USER
+  as select from ZI_MDG_USER
+{
+      @ObjectModel.text.element: [ 'UserDescription' ]
+  key UserID,
+      @Semantics.text: true
+      UserDescription
+}

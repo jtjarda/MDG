@@ -36,9 +36,16 @@ CLASS zcl_mdg_req_service DEFINITION
       IMPORTING is_request         TYPE ty_request
       RETURNING VALUE(rs_result)  TYPE ty_save_result.
 
+    CLASS-METHODS get_next_request_id
+      RETURNING VALUE(rv_request_id) TYPE zmdg_request_id
+      RAISING   cx_number_ranges.
+
     CLASS-METHODS request_created
       IMPORTING is_request         TYPE ty_request
       RETURNING VALUE(rs_result)  TYPE ty_save_result.
+
+    CLASS-METHODS request_saved_async
+      IMPORTING iv_request_uuid TYPE sysuuid_x16.
 
   PRIVATE SECTION.
     CLASS-METHODS add_error
@@ -182,9 +189,66 @@ CLASS zcl_mdg_req_service IMPLEMENTATION.
     ENDIF.
   ENDMETHOD.
 
+  METHOD get_next_request_id.
+    cl_numberrange_runtime=>number_get(
+      EXPORTING
+        nr_range_nr = '01'
+        object      = 'ZMDG_REQ'
+      IMPORTING
+        number      = DATA(number)
+    ).
+
+    rv_request_id = |{ number ALPHA = OUT }|.
+  ENDMETHOD.
+
   METHOD request_created.
     rs_result-request = is_request.
     rs_result-return_code = 0.
+  ENDMETHOD.
+
+  METHOD request_saved_async.
+    TRY.
+        TRY.
+            cl_bgmc_process_factory=>get_default(
+              )->create(
+              )->set_name( 'MDG BP request outbound'
+              )->set_operation( NEW zcl_mdg_send_api_op( iv_request_uuid = iv_request_uuid )
+              )->save_for_execution( ).
+
+          CATCH cx_bgmc INTO DATA(bgmc_error).
+            TRY.
+                DATA(log) = cl_bali_log=>create_with_header(
+                  header = cl_bali_header_setter=>create(
+                    object      = 'ZMDG'
+                    subobject   = 'INTEGRATION'
+                    external_id = 'MDG BP request outbound'
+                  )
+                ).
+
+                log->add_item(
+                  item = cl_bali_exception_setter=>create(
+                    severity  = if_bali_constants=>c_severity_error
+                    exception = bgmc_error
+                  )
+                ).
+
+                log->add_item(
+                  item = cl_bali_free_text_setter=>create(
+                    severity = if_bali_constants=>c_severity_error
+                    text     = 'BGPF scheduling for MDG BP request outbound failed.'
+                  )
+                ).
+
+                cl_bali_log_db=>get_instance( )->save_log( log = log ).
+
+              CATCH cx_bali_runtime.
+                " Never block the RAP save if application logging is unavailable.
+            ENDTRY.
+        ENDTRY.
+
+      CATCH cx_root.
+        " Outbound scheduling must not block the RAP save.
+    ENDTRY.
   ENDMETHOD.
 
   METHOD add_error.

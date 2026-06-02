@@ -10,6 +10,8 @@ define root view entity ZI_MDG_REQ
   composition [0..*] of ZI_MDG_REQTAX as _Tax
   association [0..1] to ZI_MDG_C_SYS as _ConnectedSystem
     on _ConnectedSystem.ExternalSystem = $projection.ExternalSystem
+  association [0..1] to ZI_MDG_USER as _CreatedByUser
+    on _CreatedByUser.UserID = $projection.CreatedBy
 {
   key request_uuid         as RequestUuid,
       request_id           as RequestId,
@@ -52,6 +54,7 @@ define root view entity ZI_MDG_REQ
       country              as Country,
       name_org             as OrganizationName,
       name_person          as PersonName,
+      @ObjectModel.text.association: '_CreatedByUser'
       created_by           as CreatedBy,
       created_at           as CreatedAt,
       last_changed_by      as LastChangedBy,
@@ -59,6 +62,7 @@ define root view entity ZI_MDG_REQ
       locl_last_changed_at as LocalLastChangedAt,
 
       _ConnectedSystem,
+      _CreatedByUser,
       _Address,
       _Tax
 }

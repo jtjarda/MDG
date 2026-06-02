@@ -8,6 +8,7 @@ draft table zmdg_req_d
 lock master total etag LastChangedAt
 authorization master ( global, instance )
 etag master LocalLastChangedAt
+with additional save
 {
   create;
   update;

@@ -106,6 +106,7 @@ annotate entity ZC_MDG_REQ with
 
   @UI.lineItem: [{ position: 50, label: 'Created By' }]
   @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 40, label: 'Created By' }]
+  @UI.textArrangement: #TEXT_ONLY
   CreatedBy;
 
   @UI.lineItem: [{ position: 60, label: 'Partner GID' }]

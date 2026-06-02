@@ -170,6 +170,40 @@ define view entity ZC_MDG_C_SYS
 }
 ```
 
+### ZI_MDG_USER.ddls
+
+```abap
+@EndUserText.label: 'MDG User'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_USER
+  as select from I_User
+{
+      @ObjectModel.text.element: [ 'UserDescription' ]
+  key UserID,
+      @Semantics.text: true
+      UserDescription
+}
+```
+
+### ZC_MDG_USER.ddls
+
+```abap
+@EndUserText.label: 'MDG User'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.allowExtensions: true
+@VDM.viewType: #CONSUMPTION
+define view entity ZC_MDG_USER
+  as select from ZI_MDG_USER
+{
+      @ObjectModel.text.element: [ 'UserDescription' ]
+  key UserID,
+      @Semantics.text: true
+      UserDescription
+}
+```
+
 
 ## Behavior Definitions
 
@@ -203,6 +237,7 @@ draft table zmdg_req_d
 lock master total etag LastChangedAt
 authorization master ( global, instance )
 etag master LocalLastChangedAt
+with additional save
 {
   create;
   update;
@@ -428,9 +463,16 @@ CLASS zcl_mdg_req_service DEFINITION
       IMPORTING is_request         TYPE ty_request
       RETURNING VALUE(rs_result)  TYPE ty_save_result.
 
+    CLASS-METHODS get_next_request_id
+      RETURNING VALUE(rv_request_id) TYPE zmdg_request_id
+      RAISING   cx_number_ranges.
+
     CLASS-METHODS request_created
       IMPORTING is_request         TYPE ty_request
       RETURNING VALUE(rs_result)  TYPE ty_save_result.
+
+    CLASS-METHODS request_saved_async
+      IMPORTING iv_request_uuid TYPE sysuuid_x16.
 
   PRIVATE SECTION.
     CLASS-METHODS add_error
@@ -486,9 +528,66 @@ CLASS zcl_mdg_req_service IMPLEMENTATION.
     ENDIF.
   ENDMETHOD.
 
+  METHOD get_next_request_id.
+    cl_numberrange_runtime=>number_get(
+      EXPORTING
+        nr_range_nr = '01'
+        object      = 'ZMDG_REQ'
+      IMPORTING
+        number      = DATA(number)
+    ).
+
+    rv_request_id = |{ number ALPHA = OUT }|.
+  ENDMETHOD.
+
   METHOD request_created.
     rs_result-request = is_request.
     rs_result-return_code = 0.
+  ENDMETHOD.
+
+  METHOD request_saved_async.
+    TRY.
+        TRY.
+            cl_bgmc_process_factory=>get_default(
+              )->create(
+              )->set_name( 'MDG BP request outbound'
+              )->set_operation( NEW zcl_mdg_send_api_op( iv_request_uuid = iv_request_uuid )
+              )->save_for_execution( ).
+
+          CATCH cx_bgmc INTO DATA(bgmc_error).
+            TRY.
+                DATA(log) = cl_bali_log=>create_with_header(
+                  header = cl_bali_header_setter=>create(
+                    object      = 'ZMDG'
+                    subobject   = 'INTEGRATION'
+                    external_id = 'MDG BP request outbound'
+                  )
+                ).
+
+                log->add_item(
+                  item = cl_bali_exception_setter=>create(
+                    severity  = if_bali_constants=>c_severity_error
+                    exception = bgmc_error
+                  )
+                ).
+
+                log->add_item(
+                  item = cl_bali_free_text_setter=>create(
+                    severity = if_bali_constants=>c_severity_error
+                    text     = 'BGPF scheduling for MDG BP request outbound failed.'
+                  )
+                ).
+
+                cl_bali_log_db=>get_instance( )->save_log( log = log ).
+
+              CATCH cx_bali_runtime.
+                " Never block the RAP save if application logging is unavailable.
+            ENDTRY.
+        ENDTRY.
+
+      CATCH cx_root.
+        " Outbound scheduling must not block the RAP save.
+    ENDTRY.
   ENDMETHOD.
 
   METHOD add_error.
@@ -546,93 +645,52 @@ CLASS lhc_request IMPLEMENTATION.
   METHOD calculate_request_id.
     READ ENTITIES OF zi_mdg_req IN LOCAL MODE
       ENTITY Request
-        FIELDS (
-          RequestUuid RequestId RequestType ExternalSystem PartnerGid Status
-          ParentGid1 ParentGid2 FoundDate Duns LeiCode Euid PartnerId
-          BusinessPartnerType BusinessPartnerGroup LegalForm TelephoneNumber MobileNumber EmailAddress
-          IsInactive InactiveReason Vendor Customer
-          OrganizationName1 OrganizationName2 OrganizationName3 OrganizationName4 FirstName LastName
-          SearchTerm1 Country District City PostalCode Street HouseNumber HouseNumberSupplement
-          OrganizationName PersonName CreatedBy CreatedAt LastChangedBy LastChangedAt
-        )
+        FIELDS ( RequestId )
         WITH CORRESPONDING #( keys )
       RESULT DATA(requests).
+
+    DATA update_requests TYPE TABLE FOR UPDATE zi_mdg_req.
 
     LOOP AT requests ASSIGNING FIELD-SYMBOL(<request>)
          WHERE RequestId IS INITIAL
             OR RequestId = '0000000000'.
 
-      DATA(save_result) = zcl_mdg_req_service=>save_request(
-        VALUE #(
-          request_uuid       = <request>-RequestUuid
-          request_id         = <request>-RequestId
-          request_type       = <request>-RequestType
-          extsys             = <request>-ExternalSystem
-          partner_gid        = <request>-PartnerGid
-          status             = <request>-Status
-          parent_gid1        = <request>-ParentGid1
-          parent_gid2        = <request>-ParentGid2
-          found_date         = <request>-FoundDate
-          duns               = <request>-Duns
-          lei_code           = <request>-LeiCode
-          euid               = <request>-Euid
-          partner_id         = <request>-PartnerId
-          type               = <request>-BusinessPartnerType
-          bu_group           = <request>-BusinessPartnerGroup
-          legal_form         = <request>-LegalForm
-          tel_number         = <request>-TelephoneNumber
-          mob_number         = <request>-MobileNumber
-          smtpadress         = <request>-EmailAddress
-          inactive           = <request>-IsInactive
-          inactive_reason    = <request>-InactiveReason
-          vendor             = <request>-Vendor
-          customer           = <request>-Customer
-          name_org1          = <request>-OrganizationName1
-          name_org2          = <request>-OrganizationName2
-          name_org3          = <request>-OrganizationName3
-          name_org4          = <request>-OrganizationName4
-          name_first         = <request>-FirstName
-          name_last          = <request>-LastName
-          bu_sort1           = <request>-SearchTerm1
-          country            = <request>-Country
-          city2              = <request>-District
-          city1              = <request>-City
-          post_code1         = <request>-PostalCode
-          street             = <request>-Street
-          house_num1         = <request>-HouseNumber
-          house_num2         = <request>-HouseNumberSupplement
-          name_org           = <request>-OrganizationName
-          name_person        = <request>-PersonName
-          created_by         = <request>-CreatedBy
-          created_at         = <request>-CreatedAt
-          last_changed_by    = <request>-LastChangedBy
-          last_changed_at    = <request>-LastChangedAt
-        )
-      ).
+      TRY.
+          DATA(request_id) = zcl_mdg_req_service=>get_next_request_id( ).
+        CATCH cx_number_ranges.
+          APPEND VALUE #(
+            %tky = <request>-%tky
+            %msg = new_message_with_text(
+              severity = if_abap_behv_message=>severity-error
+              text     = 'Request ID could not be generated.' )
+            %element-RequestId = if_abap_behv=>mk-on
+          ) TO reported-request.
+          CONTINUE.
+      ENDTRY.
 
-      LOOP AT save_result-messages ASSIGNING FIELD-SYMBOL(<message>) WHERE field_name = 'RequestId'.
+      IF request_id IS INITIAL.
         APPEND VALUE #(
           %tky = <request>-%tky
           %msg = new_message_with_text(
-            severity = <message>-severity
-            text     = <message>-text )
+            severity = if_abap_behv_message=>severity-error
+            text     = 'Request ID could not be generated.' )
           %element-RequestId = if_abap_behv=>mk-on
         ) TO reported-request.
-      ENDLOOP.
-
-      IF save_result-messages IS NOT INITIAL
-         OR save_result-request-request_id IS INITIAL.
         CONTINUE.
       ENDIF.
 
+      APPEND VALUE #(
+        %tky      = <request>-%tky
+        RequestId = request_id
+      ) TO update_requests.
+    ENDLOOP.
+
+    IF update_requests IS NOT INITIAL.
       MODIFY ENTITIES OF zi_mdg_req IN LOCAL MODE
         ENTITY Request
           UPDATE FIELDS ( RequestId )
-          WITH VALUE #(
-            ( %tky      = <request>-%tky
-              RequestId = save_result-request-request_id )
-          ).
-    ENDLOOP.
+          WITH update_requests.
+    ENDIF.
   ENDMETHOD.
 
   METHOD validate_request.
@@ -657,104 +715,49 @@ CLASS lhc_request IMPLEMENTATION.
       RESULT DATA(tax_numbers).
 
     LOOP AT requests ASSIGNING FIELD-SYMBOL(<request>).
-      DATA(request_context) = VALUE zcl_mdg_req_service=>ty_request(
-        mandt              = sy-mandt
-        request_uuid       = <request>-RequestUuid
-        request_id         = <request>-RequestId
-        request_type       = <request>-RequestType
-        extsys             = <request>-ExternalSystem
-        partner_gid        = <request>-PartnerGid
-        status             = <request>-Status
-        parent_gid1        = <request>-ParentGid1
-        parent_gid2        = <request>-ParentGid2
-        found_date         = <request>-FoundDate
-        duns               = <request>-Duns
-        lei_code           = <request>-LeiCode
-        euid               = <request>-Euid
-        partner_id         = <request>-PartnerId
-        type               = <request>-BusinessPartnerType
-        bu_group           = <request>-BusinessPartnerGroup
-        legal_form         = <request>-LegalForm
-        tel_number         = <request>-TelephoneNumber
-        mob_number         = <request>-MobileNumber
-        smtpadress         = <request>-EmailAddress
-        inactive           = <request>-IsInactive
-        inactive_reason    = <request>-InactiveReason
-        vendor             = <request>-Vendor
-        customer           = <request>-Customer
-        name_org1          = <request>-OrganizationName1
-        name_org2          = <request>-OrganizationName2
-        name_org3          = <request>-OrganizationName3
-        name_org4          = <request>-OrganizationName4
-        name_first         = <request>-FirstName
-        name_last          = <request>-LastName
-        bu_sort1           = <request>-SearchTerm1
-        country            = <request>-Country
-        city2              = <request>-District
-        city1              = <request>-City
-        post_code1         = <request>-PostalCode
-        street             = <request>-Street
-        house_num1         = <request>-HouseNumber
-        house_num2         = <request>-HouseNumberSupplement
-        name_org           = <request>-OrganizationName
-        name_person        = <request>-PersonName
-        created_by         = <request>-CreatedBy
-        created_at         = <request>-CreatedAt
-        last_changed_by    = <request>-LastChangedBy
-        last_changed_at    = <request>-LastChangedAt
-      ).
+      DATA(request_data) =
+        CORRESPONDING zmdg_req(
+          <request> MAPPING FROM ENTITY
+        ).
+
+      DATA(request_context) =
+        CORRESPONDING zcl_mdg_req_service=>ty_request(
+          request_data
+        ).
+      request_context-mandt = sy-mandt.
 
       LOOP AT addresses ASSIGNING FIELD-SYMBOL(<address>) USING KEY entity WHERE RequestUuid = <request>-RequestUuid.
-        APPEND VALUE #(
-          mandt        = sy-mandt
-          request_uuid = <address>-RequestUuid
-          nation       = <address>-Nation
-          name_org1    = <address>-OrganizationName1
-          name_org2    = <address>-OrganizationName2
-          name_org3    = <address>-OrganizationName3
-          name_org4    = <address>-OrganizationName4
-          name_first   = <address>-FirstName
-          name_last    = <address>-LastName
-          bu_sort1     = <address>-SearchTerm1
-          street       = <address>-Street
-          house_num1   = <address>-HouseNumber
-          house_num2   = <address>-HouseNumberSupplement
-          city1        = <address>-City
-          city2        = <address>-District
-          post_code1   = <address>-PostalCode
-          country      = <address>-Country
-          name_org     = <address>-OrganizationName
-          name_person  = <address>-PersonName
-        ) TO request_context-address.
+        DATA(address_context) =
+          CORRESPONDING zmdg_reqadr(
+            <address> MAPPING FROM ENTITY
+          ).
+        address_context-mandt = sy-mandt.
+        APPEND address_context TO request_context-address.
       ENDLOOP.
 
       LOOP AT tax_numbers ASSIGNING FIELD-SYMBOL(<tax_number>) USING KEY entity WHERE RequestUuid = <request>-RequestUuid.
-        APPEND VALUE #(
-          mandt        = sy-mandt
-          request_uuid = <tax_number>-RequestUuid
-          taxtype      = <tax_number>-TaxType
-          taxnum       = <tax_number>-TaxNumber
-        ) TO request_context-tax.
+        DATA(tax_context) =
+          CORRESPONDING zmdg_reqtax(
+            <tax_number> MAPPING FROM ENTITY
+          ).
+        tax_context-mandt = sy-mandt.
+        APPEND tax_context TO request_context-tax.
       ENDLOOP.
 
       DATA(messages) = zcl_mdg_req_service=>check_request( request_context ).
 
       LOOP AT messages ASSIGNING FIELD-SYMBOL(<message>).
-        APPEND VALUE #(
-          %tky = <request>-%tky
-          %msg = new_message_with_text(
-            severity = <message>-severity
-            text     = <message>-text )
-          %element-RequestType       = COND #( WHEN <message>-field_name = 'RequestType' THEN if_abap_behv=>mk-on ELSE if_abap_behv=>mk-off )
-          %element-ExternalSystem    = COND #( WHEN <message>-field_name = 'ExternalSystem' THEN if_abap_behv=>mk-on ELSE if_abap_behv=>mk-off )
-          %element-Status            = COND #( WHEN <message>-field_name = 'Status' THEN if_abap_behv=>mk-on ELSE if_abap_behv=>mk-off )
-          %element-OrganizationName1 = COND #( WHEN <message>-field_name = 'OrganizationName1' THEN if_abap_behv=>mk-on ELSE if_abap_behv=>mk-off )
-          %element-SearchTerm1       = COND #( WHEN <message>-field_name = 'SearchTerm1' THEN if_abap_behv=>mk-on ELSE if_abap_behv=>mk-off )
-          %element-Country           = COND #( WHEN <message>-field_name = 'Country' THEN if_abap_behv=>mk-on ELSE if_abap_behv=>mk-off )
-          %element-City              = COND #( WHEN <message>-field_name = 'City' THEN if_abap_behv=>mk-on ELSE if_abap_behv=>mk-off )
-          %element-PostalCode        = COND #( WHEN <message>-field_name = 'PostalCode' THEN if_abap_behv=>mk-on ELSE if_abap_behv=>mk-off )
-          %element-Street            = COND #( WHEN <message>-field_name = 'Street' THEN if_abap_behv=>mk-on ELSE if_abap_behv=>mk-off )
-        ) TO reported-request.
+        APPEND INITIAL LINE TO reported-request ASSIGNING FIELD-SYMBOL(<reported_request>).
+        <reported_request>-%tky = <request>-%tky.
+        <reported_request>-%msg = new_message_with_text(
+          severity = <message>-severity
+          text     = <message>-text
+        ).
+
+        ASSIGN COMPONENT <message>-field_name OF STRUCTURE <reported_request>-%element TO FIELD-SYMBOL(<element>).
+        IF sy-subrc = 0.
+          <element> = if_abap_behv=>mk-on.
+        ENDIF.
       ENDLOOP.
 
       IF messages IS NOT INITIAL.
@@ -781,8 +784,197 @@ CLASS lhc_request IMPLEMENTATION.
       REPORTED reported.
   ENDMETHOD.
 ENDCLASS.
+
+CLASS lsc_zi_mdg_req DEFINITION INHERITING FROM cl_abap_behavior_saver.
+  PROTECTED SECTION.
+    METHODS save_modified REDEFINITION.
+ENDCLASS.
+
+CLASS lsc_zi_mdg_req IMPLEMENTATION.
+  METHOD save_modified.
+    LOOP AT create-request ASSIGNING FIELD-SYMBOL(<created_request>).
+      zcl_mdg_req_service=>request_saved_async(
+        iv_request_uuid = <created_request>-RequestUuid
+      ).
+    ENDLOOP.
+
+    LOOP AT update-request ASSIGNING FIELD-SYMBOL(<updated_request>).
+      zcl_mdg_req_service=>request_saved_async(
+        iv_request_uuid = <updated_request>-RequestUuid
+      ).
+    ENDLOOP.
+  ENDMETHOD.
+ENDCLASS.
 ```
 
+### ZCL_MDG_SEND_API_OP
+
+```abap
+CLASS zcl_mdg_send_api_op DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC.
+
+  PUBLIC SECTION.
+    INTERFACES if_bgmc_op_single.
+
+    METHODS constructor
+      IMPORTING
+        iv_request_uuid TYPE sysuuid_x16.
+
+  PRIVATE SECTION.
+    DATA mv_request_uuid TYPE sysuuid_x16.
+
+    TYPES:
+      BEGIN OF ty_api_payload,
+        id     TYPE string,
+        system TYPE string,
+        type   TYPE string,
+        status TYPE string,
+      END OF ty_api_payload.
+
+    METHODS build_payload
+      IMPORTING
+        is_request     TYPE zmdg_req
+      RETURNING
+        VALUE(rv_json) TYPE string.
+
+    METHODS send_payload
+      IMPORTING
+        iv_json TYPE string
+      RAISING
+        cx_bgmc_operation.
+ENDCLASS.
+
+CLASS zcl_mdg_send_api_op IMPLEMENTATION.
+  METHOD constructor.
+    mv_request_uuid = iv_request_uuid.
+  ENDMETHOD.
+
+  METHOD if_bgmc_op_single~execute.
+    SELECT SINGLE *
+      FROM zmdg_req
+      WHERE request_uuid = @mv_request_uuid
+      INTO @DATA(request).
+
+    IF sy-subrc <> 0.
+      RETURN.
+    ENDIF.
+
+    SELECT *
+      FROM zmdg_reqadr
+      WHERE request_uuid = @mv_request_uuid
+      INTO TABLE @DATA(addresses).
+
+    SELECT *
+      FROM zmdg_reqtax
+      WHERE request_uuid = @mv_request_uuid
+      INTO TABLE @DATA(tax_numbers).
+
+    DATA(json) = build_payload( request ).
+
+    " Addresses and tax numbers are already read here. They will be added to the
+    " payload once the external API contract is fixed.
+    send_payload( json ).
+  ENDMETHOD.
+
+  METHOD build_payload.
+    DATA(payload) = VALUE ty_api_payload(
+      id     = CONV #( is_request-request_id )
+      system = CONV #( is_request-extsys )
+      type   = CONV #( is_request-request_type )
+      status = CONV #( is_request-status )
+    ).
+
+    rv_json = /ui2/cl_json=>serialize( data = payload ).
+  ENDMETHOD.
+
+  METHOD send_payload.
+    cl_http_client=>create_by_destination(
+      EXPORTING
+        destination              = 'EXT_MDG_SYSTEM'
+      IMPORTING
+        client                   = DATA(http_client)
+      EXCEPTIONS
+        argument_not_found       = 1
+        destination_not_found    = 2
+        destination_no_authority = 3
+        plugin_not_active        = 4
+        internal_error           = 5
+        OTHERS                   = 6
+    ).
+
+    IF sy-subrc <> 0.
+      RAISE EXCEPTION NEW cx_bgmc_operation(
+        retry_settings = VALUE #(
+          delay_time = 60
+          do_retry   = abap_true
+        )
+      ).
+    ENDIF.
+
+    http_client->request->set_method( if_http_request=>co_request_method_post ).
+    http_client->request->set_header_field(
+      name  = 'Content-Type'
+      value = 'application/json'
+    ).
+    http_client->request->set_cdata( iv_json ).
+
+    http_client->send(
+      EXCEPTIONS
+        http_communication_failure = 1
+        http_invalid_state         = 2
+        http_processing_failed     = 3
+        http_invalid_timeout       = 4
+        OTHERS                     = 5
+    ).
+
+    IF sy-subrc <> 0.
+      http_client->close( ).
+      RAISE EXCEPTION NEW cx_bgmc_operation(
+        retry_settings = VALUE #(
+          delay_time = 60
+          do_retry   = abap_true
+        )
+      ).
+    ENDIF.
+
+    http_client->receive(
+      EXCEPTIONS
+        http_communication_failure = 1
+        http_invalid_state         = 2
+        http_processing_failed     = 3
+        OTHERS                     = 4
+    ).
+
+    IF sy-subrc <> 0.
+      http_client->close( ).
+      RAISE EXCEPTION NEW cx_bgmc_operation(
+        retry_settings = VALUE #(
+          delay_time = 60
+          do_retry   = abap_true
+        )
+      ).
+    ENDIF.
+
+    http_client->response->get_status(
+      IMPORTING
+        code = DATA(status_code)
+    ).
+
+    http_client->close( ).
+
+    IF status_code <> 200 AND status_code <> 201.
+      RAISE EXCEPTION NEW cx_bgmc_operation(
+          retry_settings = VALUE #(
+            delay_time = 60
+            do_retry   = abap_true
+          )
+      ).
+    ENDIF.
+  ENDMETHOD.
+ENDCLASS.
+```
 
 ## Service Definition
 
@@ -795,6 +987,7 @@ define service ZUI_MDG_REQ {
   expose ZC_MDG_REQADR as AddressVariants;
   expose ZC_MDG_REQTAX as TaxNumbers;
   expose ZC_MDG_C_SYS  as ConnectedSystems;
+  expose ZC_MDG_USER   as Users;
 }
 ```
 
@@ -971,6 +1164,7 @@ annotate entity ZC_MDG_REQ with
 
   @UI.lineItem: [{ position: 50, label: 'Created By' }]
   @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 40, label: 'Created By' }]
+  @UI.textArrangement: #TEXT_ONLY
   CreatedBy;
 
   @UI.lineItem: [{ position: 60, label: 'Partner GID' }]
@@ -1250,6 +1444,8 @@ define root view entity ZI_MDG_REQ
   composition [0..*] of ZI_MDG_REQTAX as _Tax
   association [0..1] to ZI_MDG_C_SYS as _ConnectedSystem
     on _ConnectedSystem.ExternalSystem = $projection.ExternalSystem
+  association [0..1] to ZI_MDG_USER as _CreatedByUser
+    on _CreatedByUser.UserID = $projection.CreatedBy
 {
   key request_uuid         as RequestUuid,
       request_id           as RequestId,
@@ -1292,6 +1488,7 @@ define root view entity ZI_MDG_REQ
       country              as Country,
       name_org             as OrganizationName,
       name_person          as PersonName,
+      @ObjectModel.text.association: '_CreatedByUser'
       created_by           as CreatedBy,
       created_at           as CreatedAt,
       last_changed_by      as LastChangedBy,
@@ -1299,6 +1496,7 @@ define root view entity ZI_MDG_REQ
       locl_last_changed_at as LocalLastChangedAt,
 
       _ConnectedSystem,
+      _CreatedByUser,
       _Address,
       _Tax
 }
@@ -1418,6 +1616,7 @@ define root view entity ZC_MDG_REQ
       LocalLastChangedAt,
 
       _ConnectedSystem,
+      _CreatedByUser,
       _Address : redirected to composition child ZC_MDG_REQADR,
       _Tax     : redirected to composition child ZC_MDG_REQTAX
 }

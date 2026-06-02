@@ -4,4 +4,5 @@ define service ZUI_MDG_REQ {
   expose ZC_MDG_REQADR as AddressVariants;
   expose ZC_MDG_REQTAX as TaxNumbers;
   expose ZC_MDG_C_SYS  as ConnectedSystems;
+  expose ZC_MDG_USER   as Users;
 }
