@@ -283,6 +283,31 @@ define view entity ZI_MDG_C_FIELDCAT
 }
 ```
 
+### ZI_MDG_BU_GROUP_VH.ddls
+
+```abap
+@EndUserText.label: 'MDG Business Partner Group Value Help'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.resultSet.sizeCategory: #XS
+@Search.searchable: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_BU_GROUP_VH
+  as select from zmdg_c_bugroup
+{
+      @EndUserText.label: 'External System'
+  key extsys   as ExternalSystem,
+
+      @EndUserText.label: 'Partner Group'
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+  key bu_group as BusinessPartnerGroup,
+
+      @EndUserText.label: 'External Number Required'
+      nrind    as IsExternalNumberRequired
+}
+```
+
 ## Behavior Definitions
 
 ### ZI_MDG_REQ_CREATE_P.ddls
@@ -325,9 +350,17 @@ with additional save
 
   field ( readonly, numbering : managed ) RequestUuid;
   field ( readonly ) RequestId;
-  field ( readonly ) RequestType, Status, PartnerId, Vendor, Customer, ExternalSystem, PartnerGID;
+  field ( readonly ) RequestType, Status, Vendor, Customer, ExternalSystem, PartnerGID;
   field ( readonly ) CreatedBy, CreatedAt, LastChangedBy, LastChangedAt, LocalLastChangedAt;
-  field ( mandatory ) OrganizationName1, SearchTerm1, Country, City, PostalCode, Street;
+  field ( features : instance )
+    ParentGid1, ParentGid2, FoundDate, Duns, LeiCode, Euid, PartnerId,
+    BusinessPartnerType, BusinessPartnerGroup, LegalForm,
+    TelephoneNumber, MobileNumber, EmailAddress,
+    IsInactive, InactiveReason,
+    OrganizationName1, OrganizationName2, OrganizationName3, OrganizationName4,
+    FirstName, LastName, SearchTerm1,
+    Country, District, City, PostalCode, Street, HouseNumber, HouseNumberSupplement,
+    OrganizationName, PersonName;
 
   draft action Edit;
   draft action Activate optimized;
@@ -340,6 +373,11 @@ with additional save
 
   determination CalculateRequestId on save { create; }
   validation ValidateRequest on save { create; update; }
+
+  side effects
+  {
+    field BusinessPartnerGroup affects permissions ( field PartnerId );
+  }
 
   association _Address { create; with draft; }
   association _Tax     { create; with draft; }
@@ -560,6 +598,10 @@ CLASS zcl_mdg_req_service DEFINITION
       IMPORTING is_request              TYPE ty_request
       RETURNING VALUE(rt_field_control) TYPE tt_field_control.
 
+    CLASS-METHODS is_partner_id_required
+      IMPORTING is_request       TYPE ty_request
+      RETURNING VALUE(rv_result) TYPE abap_boolean.
+
     CLASS-METHODS request_created
       IMPORTING is_request         TYPE ty_request
       RETURNING VALUE(rs_result)  TYPE ty_save_result.
@@ -722,6 +764,10 @@ CLASS lhc_request DEFINITION INHERITING FROM cl_abap_behavior_handler.
                 keys REQUEST requested_authorizations FOR request
       RESULT    result.
 
+    METHODS get_instance_features FOR INSTANCE FEATURES
+      IMPORTING keys REQUEST requested_features FOR request
+      RESULT result.
+
     METHODS calculate_request_id FOR DETERMINE ON SAVE
       IMPORTING keys FOR request~CalculateRequestId.
 
@@ -746,6 +792,12 @@ CLASS lhc_request IMPLEMENTATION.
         %update = if_abap_behv=>auth-allowed
         %delete = if_abap_behv=>auth-allowed )
     ).
+  ENDMETHOD.
+
+  METHOD get_instance_features.
+    " Reads ZMDG_C_FIELDCAT through ZCL_MDG_REQ_SERVICE=>GET_FIELD_CONTROL.
+    " Customizing controls editable/read-only and mandatory field features.
+    " See file abap/classes/ZBP_I_MDG_REQ.locals.abap for full implementation.
   ENDMETHOD.
 
   METHOD calculate_request_id.
@@ -1098,6 +1150,7 @@ define service ZUI_MDG_REQ {
   expose ZI_MDG_DOMAIN_VALUE_TEXT  as DomainValueTexts;
   expose ZI_MDG_COUNTRY_VH         as Countries;
   expose ZI_MDG_LEGAL_FORM_VH      as LegalForms;
+  expose ZI_MDG_BU_GROUP_VH        as BusinessPartnerGroups;
 }
 ```
 
@@ -1299,19 +1352,27 @@ annotate entity ZC_MDG_REQ with
   @UI.fieldGroup: [{ qualifier: 'MainData', position: 40, label: 'Found Date' }]
   FoundDate;
 
-  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 10, label: 'Partner ID' }]
-  PartnerId;
-
   @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 20, label: 'LEI Code' }]
   LeiCode;
 
   @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 40, label: 'EUID' }]
   Euid;
 
+  @Consumption.valueHelpDefinition: [
+    {
+      entity: { name: 'ZI_MDG_BU_GROUP_VH', element: 'BusinessPartnerGroup' },
+      additionalBinding: [
+        { localElement: 'ExternalSystem', element: 'ExternalSystem' }
+      ]
+    }
+  ]
   @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 10, label: 'Partner Group' }]
   BusinessPartnerGroup;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 20, label: 'Partner Category' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 20, label: 'Partner ID' }]
+  PartnerId;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 30, label: 'Partner Category' }]
   BusinessPartnerType;
 
   @Consumption.valueHelpDefinition: [
@@ -1319,28 +1380,28 @@ annotate entity ZC_MDG_REQ with
       entity: { name: 'ZI_MDG_LEGAL_FORM_VH', element: 'LegalForm' }
     }
   ]
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 30, label: 'Legal Form' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 40, label: 'Legal Form' }]
   LegalForm;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 40, label: 'Telephone No' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 50, label: 'Telephone No' }]
   TelephoneNumber;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 50, label: 'Mobile Tel. No' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 60, label: 'Mobile Tel. No' }]
   MobileNumber;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 60, label: 'E-mail Address' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 70, label: 'E-mail Address' }]
   EmailAddress;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 70, label: 'Vendor' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 80, label: 'Vendor' }]
   Vendor;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 80, label: 'Customer' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 90, label: 'Customer' }]
   Customer;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 90, label: 'Inactive' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 100, label: 'Inactive' }]
   IsInactive;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 100, label: 'Inactive Reason' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 110, label: 'Inactive Reason' }]
   InactiveReason;
 
   @UI.fieldGroup: [{ qualifier: 'Address', position: 10, label: 'Company Name' }]

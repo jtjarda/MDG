@@ -18,9 +18,17 @@ with additional save
 
   field ( readonly, numbering : managed ) RequestUuid;
   field ( readonly ) RequestId;
-  field ( readonly ) RequestType, Status, PartnerId, Vendor, Customer, ExternalSystem, PartnerGID;
+  field ( readonly ) RequestType, Status, Vendor, Customer, ExternalSystem, PartnerGID;
   field ( readonly ) CreatedBy, CreatedAt, LastChangedBy, LastChangedAt, LocalLastChangedAt;
-  field ( mandatory ) OrganizationName1, SearchTerm1, Country, City, PostalCode, Street;
+  field ( features : instance )
+    ParentGid1, ParentGid2, FoundDate, Duns, LeiCode, Euid, PartnerId,
+    BusinessPartnerType, BusinessPartnerGroup, LegalForm,
+    TelephoneNumber, MobileNumber, EmailAddress,
+    IsInactive, InactiveReason,
+    OrganizationName1, OrganizationName2, OrganizationName3, OrganizationName4,
+    FirstName, LastName, SearchTerm1,
+    Country, District, City, PostalCode, Street, HouseNumber, HouseNumberSupplement,
+    OrganizationName, PersonName;
 
   draft action Edit;
   draft action Activate optimized;
@@ -33,6 +41,11 @@ with additional save
 
   determination CalculateRequestId on save { create; }
   validation ValidateRequest on save { create; update; }
+
+  side effects
+  {
+    field BusinessPartnerGroup affects permissions ( field PartnerId );
+  }
 
   association _Address { create; with draft; }
   association _Tax     { create; with draft; }

@@ -1,0 +1,20 @@
+@EndUserText.label: 'MDG Business Partner Group Value Help'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.resultSet.sizeCategory: #XS
+@Search.searchable: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_BU_GROUP_VH
+  as select from zmdg_c_bugroup
+{
+      @EndUserText.label: 'External System'
+  key extsys   as ExternalSystem,
+
+      @EndUserText.label: 'Partner Group'
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+  key bu_group as BusinessPartnerGroup,
+
+      @EndUserText.label: 'External Number Required'
+      nrind    as IsExternalNumberRequired
+}

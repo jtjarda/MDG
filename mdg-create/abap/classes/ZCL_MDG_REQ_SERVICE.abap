@@ -55,6 +55,10 @@ CLASS zcl_mdg_req_service DEFINITION
       IMPORTING is_request              TYPE ty_request
       RETURNING VALUE(rt_field_control) TYPE tt_field_control.
 
+    CLASS-METHODS is_partner_id_required
+      IMPORTING is_request       TYPE ty_request
+      RETURNING VALUE(rv_result) TYPE abap_boolean.
+
     CLASS-METHODS request_created
       IMPORTING is_request         TYPE ty_request
       RETURNING VALUE(rs_result)  TYPE ty_save_result.
@@ -123,6 +127,17 @@ CLASS zcl_mdg_req_service IMPLEMENTATION.
       CHANGING
         ct_message       = rt_message
     ).
+
+    IF is_partner_id_required( is_request ) = abap_true
+       AND is_request-partner_id IS INITIAL.
+      add_error(
+        EXPORTING
+          iv_field_name = 'PartnerId'
+          iv_text       = 'Partner ID is required for selected partner group.'
+        CHANGING
+          ct_message    = rt_message
+      ).
+    ENDIF.
 
     IF is_request-smtpadress IS NOT INITIAL.
       IF NOT matches(
@@ -303,6 +318,21 @@ CLASS zcl_mdg_req_service IMPLEMENTATION.
         editable    = field_control-editable
         mandatory   = field_control-mandatory )
     ).
+  ENDMETHOD.
+
+  METHOD is_partner_id_required.
+    IF is_request-extsys IS INITIAL
+       OR is_request-bu_group IS INITIAL.
+      RETURN.
+    ENDIF.
+
+    SELECT SINGLE nrind
+      FROM zmdg_c_bugroup
+      WHERE extsys   = @is_request-extsys
+        AND bu_group = @is_request-bu_group
+      INTO @DATA(number_assignment).
+
+    rv_result = xsdbool( number_assignment = abap_true ).
   ENDMETHOD.
 
   METHOD request_created.

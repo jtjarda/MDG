@@ -10,6 +10,10 @@ CLASS lhc_request DEFINITION INHERITING FROM cl_abap_behavior_handler.
                 keys REQUEST requested_authorizations FOR request
       RESULT    result.
 
+    METHODS get_instance_features FOR INSTANCE FEATURES
+      IMPORTING keys REQUEST requested_features FOR request
+      RESULT result.
+
     METHODS calculate_request_id FOR DETERMINE ON SAVE
       IMPORTING keys FOR request~CalculateRequestId.
 
@@ -34,6 +38,55 @@ CLASS lhc_request IMPLEMENTATION.
         %update = if_abap_behv=>auth-allowed
         %delete = if_abap_behv=>auth-allowed )
     ).
+  ENDMETHOD.
+
+  METHOD get_instance_features.
+    READ ENTITIES OF zi_mdg_req IN LOCAL MODE
+      ENTITY Request
+        FIELDS (
+          RequestUuid RequestType ExternalSystem BusinessPartnerGroup
+        )
+        WITH CORRESPONDING #( keys )
+      RESULT DATA(requests).
+
+    LOOP AT requests ASSIGNING FIELD-SYMBOL(<request>).
+      DATA(request_data) =
+        CORRESPONDING zmdg_req(
+          <request> MAPPING FROM ENTITY
+        ).
+
+      DATA(request_context) =
+        CORRESPONDING zcl_mdg_req_service=>ty_request(
+          request_data
+        ).
+      request_context-mandt = sy-mandt.
+
+      DATA(field_control) = zcl_mdg_req_service=>get_field_control( request_context ).
+
+      APPEND INITIAL LINE TO result ASSIGNING FIELD-SYMBOL(<features>).
+      <features>-%tky = <request>-%tky.
+
+      LOOP AT field_control ASSIGNING FIELD-SYMBOL(<field_control>)
+           WHERE entity_name = 'REQUEST'.
+
+        ASSIGN COMPONENT <field_control>-field_name OF STRUCTURE <features>-%field TO FIELD-SYMBOL(<field_feature>).
+        IF sy-subrc <> 0.
+          CONTINUE.
+        ENDIF.
+
+        <field_feature> = COND #(
+          WHEN <field_control>-mandatory = abap_true THEN if_abap_behv=>fc-f-mandatory
+          WHEN <field_control>-editable  = abap_true THEN if_abap_behv=>fc-f-unrestricted
+          ELSE if_abap_behv=>fc-f-read_only
+        ).
+      ENDLOOP.
+
+      <features>-%field-PartnerId = COND #(
+        WHEN zcl_mdg_req_service=>is_partner_id_required( request_context ) = abap_true
+          THEN if_abap_behv=>fc-f-mandatory
+        ELSE if_abap_behv=>fc-f-read_only
+      ).
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD calculate_request_id.

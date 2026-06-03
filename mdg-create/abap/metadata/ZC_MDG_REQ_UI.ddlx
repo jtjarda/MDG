@@ -131,19 +131,27 @@ annotate entity ZC_MDG_REQ with
   @UI.fieldGroup: [{ qualifier: 'MainData', position: 40, label: 'Found Date' }]
   FoundDate;
 
-  @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 10, label: 'Partner ID' }]
-  PartnerId;
-
   @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 20, label: 'LEI Code' }]
   LeiCode;
 
   @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 40, label: 'EUID' }]
   Euid;
 
+  @Consumption.valueHelpDefinition: [
+    {
+      entity: { name: 'ZI_MDG_BU_GROUP_VH', element: 'BusinessPartnerGroup' },
+      additionalBinding: [
+        { localElement: 'ExternalSystem', element: 'ExternalSystem' }
+      ]
+    }
+  ]
   @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 10, label: 'Partner Group' }]
   BusinessPartnerGroup;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 20, label: 'Partner Category' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 20, label: 'Partner ID' }]
+  PartnerId;
+
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 30, label: 'Partner Category' }]
   BusinessPartnerType;
 
   @Consumption.valueHelpDefinition: [
@@ -151,28 +159,28 @@ annotate entity ZC_MDG_REQ with
       entity: { name: 'ZI_MDG_LEGAL_FORM_VH', element: 'LegalForm' }
     }
   ]
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 30, label: 'Legal Form' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 40, label: 'Legal Form' }]
   LegalForm;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 40, label: 'Telephone No' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 50, label: 'Telephone No' }]
   TelephoneNumber;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 50, label: 'Mobile Tel. No' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 60, label: 'Mobile Tel. No' }]
   MobileNumber;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 60, label: 'E-mail Address' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 70, label: 'E-mail Address' }]
   EmailAddress;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 70, label: 'Vendor' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 80, label: 'Vendor' }]
   Vendor;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 80, label: 'Customer' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 90, label: 'Customer' }]
   Customer;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 90, label: 'Inactive' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 100, label: 'Inactive' }]
   IsInactive;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 100, label: 'Inactive Reason' }]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 110, label: 'Inactive Reason' }]
   InactiveReason;
 
   @UI.fieldGroup: [{ qualifier: 'Address', position: 10, label: 'Company Name' }]
