@@ -4,29 +4,13 @@ sap.ui.define(
         "sap/m/SelectDialog",
         "sap/m/StandardListItem",
         "sap/ui/model/Filter",
-        "sap/ui/model/FilterOperator",
-        "sap/ui/model/json/JSONModel"
+        "sap/ui/model/FilterOperator"
     ],
-    function (MessageBox, SelectDialog, StandardListItem, Filter, FilterOperator, JSONModel) {
+    function (MessageBox, SelectDialog, StandardListItem, Filter, FilterOperator) {
     "use strict";
 
     var oCreateForSystemDialog;
     var sLocalCreateAppUrl = "http://localhost:8080/test/flp.html?sap-ui-xx-viewCache=false#app-preview";
-
-    function getCreateSystemModel() {
-        return new JSONModel({
-            systems: [
-                {
-                    ExternalSystem: "S4HCLNT140",
-                    Description: "S/4HANA Client 140"
-                },
-                {
-                    ExternalSystem: "SAPCLNT100",
-                    Description: "SAP Client 100"
-                }
-            ]
-        });
-    }
 
     function navigateToCreateApp(sExternalSystem) {
         if (!sExternalSystem) {
@@ -81,6 +65,22 @@ sap.ui.define(
         return null;
     }
 
+    function getCreateSystemFilters(sValue) {
+        if (!sValue) {
+            return [];
+        }
+
+        return [
+            new Filter({
+                filters: [
+                    new Filter("ExternalSystem", FilterOperator.Contains, sValue),
+                    new Filter("Description", FilterOperator.Contains, sValue)
+                ],
+                and: false
+            })
+        ];
+    }
+
     function getCreateForSystemDialog(oController) {
         if (oCreateForSystemDialog) {
             return oCreateForSystemDialog;
@@ -93,15 +93,7 @@ sap.ui.define(
                 var sValue = oEvent.getParameter("value");
                 var oBinding = oEvent.getSource().getBinding("items");
 
-                oBinding.filter([
-                    new Filter({
-                        filters: [
-                            new Filter("ExternalSystem", FilterOperator.Contains, sValue),
-                            new Filter("Description", FilterOperator.Contains, sValue)
-                        ],
-                        and: false
-                    })
-                ]);
+                oBinding.filter(getCreateSystemFilters(sValue));
             },
             confirm: function (oEvent) {
                 var oSelectedItem = oEvent.getParameter("selectedItem");
@@ -110,16 +102,18 @@ sap.ui.define(
                     return;
                 }
 
-                navigateToCreateApp(oSelectedItem.getBindingContext().getProperty("ExternalSystem"));
+                navigateToCreateApp(oSelectedItem.getBindingContext("create").getProperty("ExternalSystem"));
             }
         });
 
-        oCreateForSystemDialog.setModel(getCreateSystemModel());
         oCreateForSystemDialog.bindAggregation("items", {
-            path: "/systems",
+            path: "create>/CreateSystems",
+            filters: getCreateSystemFilters(),
+            parameters: {
+                $orderby: "Description"
+            },
             template: new StandardListItem({
-                title: "{ExternalSystem}",
-                description: "{Description}"
+                title: "{create>Description}"
             })
         });
 

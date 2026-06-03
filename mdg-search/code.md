@@ -768,6 +768,13 @@ Hlavní služba v `webapp/manifest.json`:
     "localUri": "localService/mainService/metadata.xml",
     "odataVersion": "4.0"
   }
+},
+"createService": {
+  "uri": "/sap/opu/odata4/sap/zui_mdg_req_o4/srvd/sap/zui_mdg_req/0001/",
+  "type": "OData",
+  "settings": {
+    "odataVersion": "4.0"
+  }
 }
 ```
 
@@ -1053,10 +1060,9 @@ sap.ui.define(
         "sap/m/SelectDialog",
         "sap/m/StandardListItem",
         "sap/ui/model/Filter",
-        "sap/ui/model/FilterOperator",
-        "sap/ui/model/json/JSONModel"
+        "sap/ui/model/FilterOperator"
     ],
-    function (MessageBox, SelectDialog, StandardListItem, Filter, FilterOperator, JSONModel) {
+    function (MessageBox, SelectDialog, StandardListItem, Filter, FilterOperator) {
     "use strict";
 
     var oCreateForSystemDialog;
@@ -1154,3 +1160,17 @@ Technicky jsou dvě rozumné cesty:
 2. Volat backend akci pro vytvoření draftu přímo z `mdg-search` a po návratu klíče navigovat na Object Page v `mdg-create`.
 
 Pro čistou UX integraci preferuji první variantu, protože `mdg-search` zůstane jen spouštěčem a vlastní tvorbu požadavku bude vlastnit aplikace `mdg-create`.
+
+## Aktualni stav Create for System dialogu
+
+Dialog uz nepouziva klientsky `JSONModel` s pevnymi hodnotami. `manifest.json` definuje druhy OData data source `createService` nad sluzbou `ZUI_MDG_REQ` z aplikace `mdg-create` a pojmenovany model `create`.
+
+`ListReportExt.js` nacita systemy z entity setu:
+
+```text
+create>/CreateSystems
+```
+
+Dialog zobrazuje pouze pole `Description`. Pri potvrzeni se z binding contextu precte technicky klic `ExternalSystem`, ktery se preda cilove aplikaci `mdg-create`.
+
+Entity set `CreateSystems` vychazi z CDS `ZI_MDG_C_SYS_CREATEVH`, kde jsou uz jen systemy povolene pro zalozeni.
