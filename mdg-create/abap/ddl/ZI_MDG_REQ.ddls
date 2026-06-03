@@ -12,6 +12,10 @@ define root view entity ZI_MDG_REQ
     on  _RequestTypeText.DomainName   = 'ZMDG_REQ_TYPE'
     and _RequestTypeText.Language     = $session.system_language
     and _RequestTypeText.DomainValue  = $projection.RequestType
+  association [0..1] to ZI_MDG_DOMAIN_VALUE_TEXT as _StatusText
+    on  _StatusText.DomainName   = 'ZMSG_D_REQ_STATUS'
+    and _StatusText.Language     = $session.system_language
+    and _StatusText.DomainValue  = $projection.Status
   association [0..1] to ZI_MDG_C_SYS as _ConnectedSystem
     on _ConnectedSystem.ExternalSystem = $projection.ExternalSystem
   association [0..1] to ZI_MDG_USER as _CreatedByUser
@@ -26,6 +30,8 @@ define root view entity ZI_MDG_REQ
       @ObjectModel.text.association: '_ConnectedSystem'
       extsys               as ExternalSystem,
       partner_gid          as PartnerGid,
+      @ObjectModel.foreignKey.association: '_StatusText'
+      @ObjectModel.text.association: '_StatusText'
       status               as Status,
       parent_gid1          as ParentGid1,
       parent_gid2          as ParentGid2,
@@ -69,6 +75,7 @@ define root view entity ZI_MDG_REQ
       locl_last_changed_at as LocalLastChangedAt,
 
       _RequestTypeText,
+      _StatusText,
       _ConnectedSystem,
       _CreatedByUser,
       _Address,

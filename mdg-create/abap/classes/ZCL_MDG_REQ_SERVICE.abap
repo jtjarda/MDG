@@ -147,6 +147,51 @@ CLASS zcl_mdg_req_service IMPLEMENTATION.
           ct_message    = rt_message
       ).
     ENDIF.
+
+    IF is_request-smtpadress IS NOT INITIAL.
+      IF NOT matches(
+          val   = is_request-smtpadress
+          pcre  = `^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$`
+        ).
+        add_error(
+          EXPORTING
+            iv_field_name = 'EmailAddress'
+            iv_text       = 'E-mail address has invalid format.'
+          CHANGING
+            ct_message    = rt_message
+        ).
+      ENDIF.
+    ENDIF.
+
+    IF is_request-tel_number IS NOT INITIAL.
+      IF NOT matches(
+          val   = is_request-tel_number
+          pcre  = `^\+?[0-9 ()/-]{6,30}$`
+        ).
+        add_error(
+          EXPORTING
+            iv_field_name = 'TelephoneNumber'
+            iv_text       = 'Telephone number has invalid format.'
+          CHANGING
+            ct_message    = rt_message
+        ).
+      ENDIF.
+    ENDIF.
+
+    IF is_request-mob_number IS NOT INITIAL.
+      IF NOT matches(
+          val   = is_request-mob_number
+          pcre  = `^\+?[0-9 ()/-]{6,30}$`
+        ).
+        add_error(
+          EXPORTING
+            iv_field_name = 'MobileNumber'
+            iv_text       = 'Mobile number has invalid format.'
+          CHANGING
+            ct_message    = rt_message
+        ).
+      ENDIF.
+    ENDIF.
   ENDMETHOD.
 
   METHOD save_request.

@@ -7,4 +7,6 @@ define service ZUI_MDG_REQ {
   expose ZI_MDG_C_SYS_CREATEVH     as CreateSystems;
   expose ZI_MDG_USER               as Users;
   expose ZI_MDG_DOMAIN_VALUE_TEXT  as DomainValueTexts;
+  expose ZI_MDG_COUNTRY_VH         as Countries;
+  expose ZI_MDG_LEGAL_FORM_VH      as LegalForms;
 }

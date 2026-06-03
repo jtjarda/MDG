@@ -18,7 +18,7 @@ with additional save
 
   field ( readonly, numbering : managed ) RequestUuid;
   field ( readonly ) RequestId;
-  field ( readonly ) RequestType, PartnerId, Vendor, Customer, ExternalSystem, PartnerGID;
+  field ( readonly ) RequestType, Status, PartnerId, Vendor, Customer, ExternalSystem, PartnerGID;
   field ( readonly ) CreatedBy, CreatedAt, LastChangedBy, LastChangedAt, LocalLastChangedAt;
   field ( mandatory ) OrganizationName1, SearchTerm1, Country, City, PostalCode, Street;
 

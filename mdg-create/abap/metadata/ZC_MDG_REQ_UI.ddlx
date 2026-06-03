@@ -103,6 +103,7 @@ annotate entity ZC_MDG_REQ with
   @UI.lineItem: [{ position: 40, label: 'Status' }]
   @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 30, label: 'Status' }]
   @UI.selectionField: [{ position: 40 }]
+  @UI.textArrangement: #TEXT_ONLY
   Status;
 
   @UI.lineItem: [{ position: 50, label: 'Created By' }]
@@ -145,6 +146,11 @@ annotate entity ZC_MDG_REQ with
   @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 20, label: 'Partner Category' }]
   BusinessPartnerType;
 
+  @Consumption.valueHelpDefinition: [
+    {
+      entity: { name: 'ZI_MDG_LEGAL_FORM_VH', element: 'LegalForm' }
+    }
+  ]
   @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 30, label: 'Legal Form' }]
   LegalForm;
 
@@ -175,6 +181,11 @@ annotate entity ZC_MDG_REQ with
   @UI.fieldGroup: [{ qualifier: 'Address', position: 20, label: 'Search Term' }]
   SearchTerm1;
 
+  @Consumption.valueHelpDefinition: [
+    {
+      entity: { name: 'ZI_MDG_COUNTRY_VH', element: 'Country' }
+    }
+  ]
   @UI.fieldGroup: [{ qualifier: 'Address', position: 30, label: 'Country' }]
   Country;
 

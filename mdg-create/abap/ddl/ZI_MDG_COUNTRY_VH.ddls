@@ -1,0 +1,21 @@
+@EndUserText.label: 'MDG Country Value Help'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.resultSet.sizeCategory: #XS
+@Search.searchable: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_COUNTRY_VH
+  as select from t005  as Country
+    inner join   t005t as Text on  Text.land1 = Country.land1
+                               and Text.spras = $session.system_language
+{
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      @ObjectModel.text.element: [ 'CountryName' ]
+  key cast( Country.land1 as land1 ) as Country,
+
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      @Semantics.text: true
+      Text.landx    as CountryName
+}

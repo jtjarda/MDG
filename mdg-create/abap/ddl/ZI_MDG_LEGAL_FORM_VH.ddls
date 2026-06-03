@@ -1,0 +1,28 @@
+@EndUserText.label: 'MDG Legal Form Value Help'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.resultSet.sizeCategory: #XS
+@Search.searchable: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_LEGAL_FORM_VH
+  as select from dd07l as Value
+    inner join   dd07t as Text on  Text.domname  = Value.domname
+                               and Text.as4local = Value.as4local
+                               and Text.as4vers  = Value.as4vers
+                               and Text.valpos   = Value.valpos
+{
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      @ObjectModel.text.element: [ 'LegalFormText' ]
+  key cast( substring( Value.domvalue_l, 1, 2 ) as zmdg_bu_legenty ) as LegalForm,
+
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      @Semantics.text: true
+      Text.ddtext as LegalFormText
+}
+where
+      Value.domname    = 'ZMDG_D_BU_TYPE'
+  and Value.as4local   = 'A'
+  and Value.domvalue_l <> ''
+  and Text.ddlanguage  = $session.system_language

@@ -191,6 +191,65 @@ where
   and Value.domvalue_l <> ''
 ```
 
+### ZI_MDG_COUNTRY_VH.ddls
+
+```abap
+@EndUserText.label: 'MDG Country Value Help'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.resultSet.sizeCategory: #XS
+@Search.searchable: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_COUNTRY_VH
+  as select from t005  as Country
+    inner join   t005t as Text on  Text.land1 = Country.land1
+                               and Text.spras = $session.system_language
+{
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      @ObjectModel.text.element: [ 'CountryName' ]
+  key cast( Country.land1 as land1 ) as Country,
+
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      @Semantics.text: true
+      Text.landx    as CountryName
+}
+```
+
+### ZI_MDG_LEGAL_FORM_VH.ddls
+
+```abap
+@EndUserText.label: 'MDG Legal Form Value Help'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.resultSet.sizeCategory: #XS
+@Search.searchable: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_LEGAL_FORM_VH
+  as select from dd07l as Value
+    inner join   dd07t as Text on  Text.domname  = Value.domname
+                               and Text.as4local = Value.as4local
+                               and Text.as4vers  = Value.as4vers
+                               and Text.valpos   = Value.valpos
+{
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      @ObjectModel.text.element: [ 'LegalFormText' ]
+  key cast( substring( Value.domvalue_l, 1, 2 ) as zmdg_bu_legenty ) as LegalForm,
+
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      @Semantics.text: true
+      Text.ddtext as LegalFormText
+}
+where
+      Value.domname    = 'ZMDG_D_BU_TYPE'
+  and Value.as4local   = 'A'
+  and Value.domvalue_l <> ''
+  and Text.ddlanguage  = $session.system_language
+```
+
 ## Behavior Definitions
 
 ### ZI_MDG_REQ_CREATE_P.ddls
@@ -233,7 +292,7 @@ with additional save
 
   field ( readonly, numbering : managed ) RequestUuid;
   field ( readonly ) RequestId;
-  field ( readonly ) RequestType, PartnerId, Vendor, Customer, ExternalSystem, PartnerGID;
+  field ( readonly ) RequestType, Status, PartnerId, Vendor, Customer, ExternalSystem, PartnerGID;
   field ( readonly ) CreatedBy, CreatedAt, LastChangedBy, LastChangedAt, LocalLastChangedAt;
   field ( mandatory ) OrganizationName1, SearchTerm1, Country, City, PostalCode, Street;
 
@@ -976,6 +1035,8 @@ define service ZUI_MDG_REQ {
   expose ZI_MDG_C_SYS_CREATEVH     as CreateSystems;
   expose ZI_MDG_USER               as Users;
   expose ZI_MDG_DOMAIN_VALUE_TEXT  as DomainValueTexts;
+  expose ZI_MDG_COUNTRY_VH         as Countries;
+  expose ZI_MDG_LEGAL_FORM_VH      as LegalForms;
 }
 ```
 
@@ -1149,6 +1210,7 @@ annotate entity ZC_MDG_REQ with
   @UI.lineItem: [{ position: 40, label: 'Status' }]
   @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 30, label: 'Status' }]
   @UI.selectionField: [{ position: 40 }]
+  @UI.textArrangement: #TEXT_ONLY
   Status;
 
   @UI.lineItem: [{ position: 50, label: 'Created By' }]
@@ -1191,6 +1253,11 @@ annotate entity ZC_MDG_REQ with
   @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 20, label: 'Partner Category' }]
   BusinessPartnerType;
 
+  @Consumption.valueHelpDefinition: [
+    {
+      entity: { name: 'ZI_MDG_LEGAL_FORM_VH', element: 'LegalForm' }
+    }
+  ]
   @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 30, label: 'Legal Form' }]
   LegalForm;
 
@@ -1221,6 +1288,11 @@ annotate entity ZC_MDG_REQ with
   @UI.fieldGroup: [{ qualifier: 'Address', position: 20, label: 'Search Term' }]
   SearchTerm1;
 
+  @Consumption.valueHelpDefinition: [
+    {
+      entity: { name: 'ZI_MDG_COUNTRY_VH', element: 'Country' }
+    }
+  ]
   @UI.fieldGroup: [{ qualifier: 'Address', position: 30, label: 'Country' }]
   Country;
 
@@ -1278,6 +1350,11 @@ annotate entity ZC_MDG_REQADR with
   @UI.identification: [{ position: 20, label: 'Company Name' }]
   OrganizationName1;
 
+  @Consumption.valueHelpDefinition: [
+    {
+      entity: { name: 'ZI_MDG_COUNTRY_VH', element: 'Country' }
+    }
+  ]
   @UI.lineItem: [{ position: 30, label: 'Country' }]
   @UI.identification: [{ position: 30, label: 'Country' }]
   Country;
@@ -1462,6 +1539,10 @@ define root view entity ZI_MDG_REQ
     on  _RequestTypeText.DomainName   = 'ZMDG_REQ_TYPE'
     and _RequestTypeText.Language     = $session.system_language
     and _RequestTypeText.DomainValue  = $projection.RequestType
+  association [0..1] to ZI_MDG_DOMAIN_VALUE_TEXT as _StatusText
+    on  _StatusText.DomainName   = 'ZMSG_D_REQ_STATUS'
+    and _StatusText.Language     = $session.system_language
+    and _StatusText.DomainValue  = $projection.Status
   association [0..1] to ZI_MDG_C_SYS as _ConnectedSystem
     on _ConnectedSystem.ExternalSystem = $projection.ExternalSystem
   association [0..1] to ZI_MDG_USER as _CreatedByUser
@@ -1476,6 +1557,8 @@ define root view entity ZI_MDG_REQ
       @ObjectModel.text.association: '_ConnectedSystem'
       extsys               as ExternalSystem,
       partner_gid          as PartnerGid,
+      @ObjectModel.foreignKey.association: '_StatusText'
+      @ObjectModel.text.association: '_StatusText'
       status               as Status,
       parent_gid1          as ParentGid1,
       parent_gid2          as ParentGid2,
@@ -1519,6 +1602,7 @@ define root view entity ZI_MDG_REQ
       locl_last_changed_at as LocalLastChangedAt,
 
       _RequestTypeText,
+      _StatusText,
       _ConnectedSystem,
       _CreatedByUser,
       _Address,
@@ -1640,6 +1724,7 @@ define root view entity ZC_MDG_REQ
       LocalLastChangedAt,
 
       _RequestTypeText,
+      _StatusText,
       _ConnectedSystem,
       _CreatedByUser,
       _Address : redirected to composition child ZC_MDG_REQADR,
