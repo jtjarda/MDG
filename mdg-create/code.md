@@ -116,6 +116,68 @@ define table zmdg_reqtax {
 }
 ```
 
+### ZMDG_C_SYS
+
+```abap
+@EndUserText.label : 'Nastavení připojených systémů'
+@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
+@AbapCatalog.tableCategory : #TRANSPARENT
+@AbapCatalog.deliveryClass : #C
+@AbapCatalog.dataMaintenance : #ALLOWED
+define table zmdg_c_sys {
+
+  key mandt   : mandt not null;
+  key extsys  : zmdg_extsys not null;
+  type        : zmdg_sys_type;
+  description : zmdg_description;
+  comm_class  : zmdg_comm_class;
+  def_alpha   : zmdg_alpha;
+  xcrea       : zmdg_xcrea;
+  xenh        : zmdg_xenh;
+
+}
+```
+
+### ZMDG_C_FIELDCAT
+
+```abap
+@EndUserText.label : 'MDG request fieldcat'
+@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
+@AbapCatalog.tableCategory : #TRANSPARENT
+@AbapCatalog.deliveryClass : #C
+@AbapCatalog.dataMaintenance : #ALLOWED
+define table zmdg_c_fieldcat {
+
+  key mandt        : mandt not null;
+  key request_type : zmdg_creq_type not null;
+  key extsys       : zmdg_extsys not null;
+  key entityname   : zmdg_entity not null;
+  key fieldname    : zmdg_fieldname not null;
+  visible          : abap_boolean;
+  editable         : abap_boolean;
+  mandatory        : abap_boolean;
+
+}
+```
+
+### ZMDG_C_BUGROUP
+
+```abap
+@EndUserText.label : 'Seskupování OP'
+@AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
+@AbapCatalog.tableCategory : #TRANSPARENT
+@AbapCatalog.deliveryClass : #C
+@AbapCatalog.dataMaintenance : #ALLOWED
+define table zmdg_c_bugroup {
+
+  key mandt    : mandt not null;
+  key extsys   : zmdg_extsys not null;
+  key bu_group : zmdg_bu_group not null;
+  nrind        : nrind;
+
+}
+```
+
 ## CDS Sources
 
 
@@ -310,6 +372,21 @@ define view entity ZI_MDG_BU_GROUP_VH
 
 ## Behavior Definitions
 
+## Dynamic Partner ID Rule
+
+`PartnerId` is controlled by the selected `BusinessPartnerGroup`.
+
+- Value help for `BusinessPartnerGroup` reads `ZMDG_C_BUGROUP` through `ZI_MDG_BU_GROUP_VH`.
+- The value help is filtered by the selected `ExternalSystem`.
+- If `ZMDG_C_BUGROUP-NRIND = X`, `PartnerId` becomes editable and mandatory.
+- If `NRIND` is initial, `PartnerId` becomes read-only and is cleared automatically when `BusinessPartnerGroup` changes.
+- This is implemented in RAP, not in a Fiori frontend hook:
+  - `get_instance_features` controls field state.
+  - `ClearPartnerId` clears the stale value on modify.
+  - `ValidateRequest` keeps the backend validation authoritative.
+  - `side effects` refresh both `PartnerId` value and permissions.
+  - Projection BDEF must include `use side effects;`.
+
 ### ZI_MDG_REQ_CREATE_P.ddls
 
 ```abap
@@ -372,11 +449,12 @@ with additional save
   }
 
   determination CalculateRequestId on save { create; }
+  determination ClearPartnerId on modify { field BusinessPartnerGroup; }
   validation ValidateRequest on save { create; update; }
 
   side effects
   {
-    field BusinessPartnerGroup affects permissions ( field PartnerId );
+    field BusinessPartnerGroup affects field PartnerId, permissions ( field PartnerId );
   }
 
   association _Address { create; with draft; }
@@ -500,6 +578,7 @@ etag dependent by _Request
 projection;
 strict ( 2 );
 use draft;
+use side effects;
 
 define behavior for ZC_MDG_REQ alias Request
 {
@@ -771,6 +850,9 @@ CLASS lhc_request DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS calculate_request_id FOR DETERMINE ON SAVE
       IMPORTING keys FOR request~CalculateRequestId.
 
+    METHODS clear_partner_id FOR DETERMINE ON MODIFY
+      IMPORTING keys FOR request~ClearPartnerId.
+
     METHODS validate_request FOR VALIDATE ON SAVE
       IMPORTING keys FOR request~ValidateRequest.
 
@@ -847,6 +929,47 @@ CLASS lhc_request IMPLEMENTATION.
       MODIFY ENTITIES OF zi_mdg_req IN LOCAL MODE
         ENTITY Request
           UPDATE FIELDS ( RequestId )
+          WITH update_requests.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD clear_partner_id.
+    READ ENTITIES OF zi_mdg_req IN LOCAL MODE
+      ENTITY Request
+        FIELDS ( RequestUuid ExternalSystem BusinessPartnerGroup PartnerId )
+        WITH CORRESPONDING #( keys )
+      RESULT DATA(requests).
+
+    DATA update_requests TYPE TABLE FOR UPDATE zi_mdg_req.
+
+    LOOP AT requests ASSIGNING FIELD-SYMBOL(<request>)
+         WHERE PartnerId IS NOT INITIAL.
+
+      DATA(request_data) =
+        CORRESPONDING zmdg_req(
+          <request> MAPPING FROM ENTITY
+        ).
+
+      DATA(request_context) =
+        CORRESPONDING zcl_mdg_req_service=>ty_request(
+          request_data
+        ).
+      request_context-mandt = sy-mandt.
+
+      IF zcl_mdg_req_service=>is_partner_id_required( request_context ) = abap_true.
+        CONTINUE.
+      ENDIF.
+
+      APPEND VALUE #(
+        %tky      = <request>-%tky
+        PartnerId = ''
+      ) TO update_requests.
+    ENDLOOP.
+
+    IF update_requests IS NOT INITIAL.
+      MODIFY ENTITIES OF zi_mdg_req IN LOCAL MODE
+        ENTITY Request
+          UPDATE FIELDS ( PartnerId )
           WITH update_requests.
     ENDIF.
   ENDMETHOD.

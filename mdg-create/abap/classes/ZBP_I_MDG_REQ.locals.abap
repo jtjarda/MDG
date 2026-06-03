@@ -17,6 +17,9 @@ CLASS lhc_request DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS calculate_request_id FOR DETERMINE ON SAVE
       IMPORTING keys FOR request~CalculateRequestId.
 
+    METHODS clear_partner_id FOR DETERMINE ON MODIFY
+      IMPORTING keys FOR request~ClearPartnerId.
+
     METHODS validate_request FOR VALIDATE ON SAVE
       IMPORTING keys FOR request~ValidateRequest.
 
@@ -136,6 +139,47 @@ CLASS lhc_request IMPLEMENTATION.
       MODIFY ENTITIES OF zi_mdg_req IN LOCAL MODE
         ENTITY Request
           UPDATE FIELDS ( RequestId )
+          WITH update_requests.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD clear_partner_id.
+    READ ENTITIES OF zi_mdg_req IN LOCAL MODE
+      ENTITY Request
+        FIELDS ( RequestUuid ExternalSystem BusinessPartnerGroup PartnerId )
+        WITH CORRESPONDING #( keys )
+      RESULT DATA(requests).
+
+    DATA update_requests TYPE TABLE FOR UPDATE zi_mdg_req.
+
+    LOOP AT requests ASSIGNING FIELD-SYMBOL(<request>)
+         WHERE PartnerId IS NOT INITIAL.
+
+      DATA(request_data) =
+        CORRESPONDING zmdg_req(
+          <request> MAPPING FROM ENTITY
+        ).
+
+      DATA(request_context) =
+        CORRESPONDING zcl_mdg_req_service=>ty_request(
+          request_data
+        ).
+      request_context-mandt = sy-mandt.
+
+      IF zcl_mdg_req_service=>is_partner_id_required( request_context ) = abap_true.
+        CONTINUE.
+      ENDIF.
+
+      APPEND VALUE #(
+        %tky      = <request>-%tky
+        PartnerId = ''
+      ) TO update_requests.
+    ENDLOOP.
+
+    IF update_requests IS NOT INITIAL.
+      MODIFY ENTITIES OF zi_mdg_req IN LOCAL MODE
+        ENTITY Request
+          UPDATE FIELDS ( PartnerId )
           WITH update_requests.
     ENDIF.
   ENDMETHOD.

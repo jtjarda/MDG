@@ -40,11 +40,12 @@ with additional save
   }
 
   determination CalculateRequestId on save { create; }
+  determination ClearPartnerId on modify { field BusinessPartnerGroup; }
   validation ValidateRequest on save { create; update; }
 
   side effects
   {
-    field BusinessPartnerGroup affects permissions ( field PartnerId );
+    field BusinessPartnerGroup affects field PartnerId, permissions ( field PartnerId );
   }
 
   association _Address { create; with draft; }
