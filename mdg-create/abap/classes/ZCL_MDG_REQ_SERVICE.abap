@@ -63,6 +63,17 @@ CLASS zcl_mdg_req_service DEFINITION
       IMPORTING iv_request_uuid TYPE sysuuid_x16.
 
   PRIVATE SECTION.
+    CLASS-METHODS check_mandatory_fields
+      IMPORTING
+        is_request       TYPE ty_request
+        it_field_control TYPE tt_field_control
+      CHANGING
+        ct_message       TYPE tt_message.
+
+    CLASS-METHODS get_request_component_name
+      IMPORTING iv_field_name            TYPE zmdg_fieldname
+      RETURNING VALUE(rv_component_name) TYPE string.
+
     CLASS-METHODS add_error
       IMPORTING
         iv_field_name     TYPE string
@@ -103,65 +114,15 @@ CLASS zcl_mdg_req_service IMPLEMENTATION.
       ).
     ENDIF.
 
-    IF is_request-name_org1 IS INITIAL.
-      add_error(
-        EXPORTING
-          iv_field_name = 'OrganizationName1'
-          iv_text       = 'Company name is required.'
-        CHANGING
-          ct_message    = rt_message
-      ).
-    ENDIF.
+    DATA(field_control) = get_field_control( is_request ).
 
-    IF is_request-bu_sort1 IS INITIAL.
-      add_error(
-        EXPORTING
-          iv_field_name = 'SearchTerm1'
-          iv_text       = 'Search term is required.'
-        CHANGING
-          ct_message    = rt_message
-      ).
-    ENDIF.
-
-    IF is_request-country IS INITIAL.
-      add_error(
-        EXPORTING
-          iv_field_name = 'Country'
-          iv_text       = 'Country is required.'
-        CHANGING
-          ct_message    = rt_message
-      ).
-    ENDIF.
-
-    IF is_request-city1 IS INITIAL.
-      add_error(
-        EXPORTING
-          iv_field_name = 'City'
-          iv_text       = 'City is required.'
-        CHANGING
-          ct_message    = rt_message
-      ).
-    ENDIF.
-
-    IF is_request-post_code1 IS INITIAL.
-      add_error(
-        EXPORTING
-          iv_field_name = 'PostalCode'
-          iv_text       = 'Postal code is required.'
-        CHANGING
-          ct_message    = rt_message
-      ).
-    ENDIF.
-
-    IF is_request-street IS INITIAL.
-      add_error(
-        EXPORTING
-          iv_field_name = 'Street'
-          iv_text       = 'Street is required.'
-        CHANGING
-          ct_message    = rt_message
-      ).
-    ENDIF.
+    check_mandatory_fields(
+      EXPORTING
+        is_request       = is_request
+        it_field_control = field_control
+      CHANGING
+        ct_message       = rt_message
+    ).
 
     IF is_request-smtpadress IS NOT INITIAL.
       IF NOT matches(
@@ -394,7 +355,89 @@ CLASS zcl_mdg_req_service IMPLEMENTATION.
     ENDTRY.
   ENDMETHOD.
 
+  METHOD check_mandatory_fields.
+    LOOP AT it_field_control ASSIGNING FIELD-SYMBOL(<field_control>)
+         WHERE entity_name = 'REQUEST'
+           AND mandatory   = abap_true.
+
+      DATA(component_name) = get_request_component_name( <field_control>-field_name ).
+      IF component_name IS INITIAL.
+        CONTINUE.
+      ENDIF.
+
+      ASSIGN COMPONENT component_name OF STRUCTURE is_request TO FIELD-SYMBOL(<field_value>).
+      IF sy-subrc <> 0 OR <field_value> IS NOT INITIAL.
+        CONTINUE.
+      ENDIF.
+
+      add_error(
+        EXPORTING
+          iv_field_name = CONV #( <field_control>-field_name )
+          iv_text       = |Field { <field_control>-field_name } is required.|
+        CHANGING
+          ct_message    = ct_message
+      ).
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD get_request_component_name.
+    rv_component_name = SWITCH #(
+      iv_field_name
+      WHEN 'RequestUuid'           THEN 'REQUEST_UUID'
+      WHEN 'RequestId'             THEN 'REQUEST_ID'
+      WHEN 'RequestType'           THEN 'REQUEST_TYPE'
+      WHEN 'ExternalSystem'        THEN 'EXTSYS'
+      WHEN 'PartnerGid'            THEN 'PARTNER_GID'
+      WHEN 'Status'                THEN 'STATUS'
+      WHEN 'ParentGid1'            THEN 'PARENT_GID1'
+      WHEN 'ParentGid2'            THEN 'PARENT_GID2'
+      WHEN 'FoundDate'             THEN 'FOUND_DATE'
+      WHEN 'Duns'                  THEN 'DUNS'
+      WHEN 'LeiCode'               THEN 'LEI_CODE'
+      WHEN 'Euid'                  THEN 'EUID'
+      WHEN 'PartnerId'             THEN 'PARTNER_ID'
+      WHEN 'BusinessPartnerType'   THEN 'TYPE'
+      WHEN 'BusinessPartnerGroup'  THEN 'BU_GROUP'
+      WHEN 'LegalForm'             THEN 'LEGAL_FORM'
+      WHEN 'TelephoneNumber'       THEN 'TEL_NUMBER'
+      WHEN 'MobileNumber'          THEN 'MOB_NUMBER'
+      WHEN 'EmailAddress'          THEN 'SMTPADRESS'
+      WHEN 'IsInactive'            THEN 'INACTIVE'
+      WHEN 'InactiveReason'        THEN 'INACTIVE_REASON'
+      WHEN 'Vendor'                THEN 'VENDOR'
+      WHEN 'Customer'              THEN 'CUSTOMER'
+      WHEN 'OrganizationName1'     THEN 'NAME_ORG1'
+      WHEN 'OrganizationName2'     THEN 'NAME_ORG2'
+      WHEN 'OrganizationName3'     THEN 'NAME_ORG3'
+      WHEN 'OrganizationName4'     THEN 'NAME_ORG4'
+      WHEN 'FirstName'             THEN 'NAME_FIRST'
+      WHEN 'LastName'              THEN 'NAME_LAST'
+      WHEN 'SearchTerm1'           THEN 'BU_SORT1'
+      WHEN 'Street'                THEN 'STREET'
+      WHEN 'HouseNumber'           THEN 'HOUSE_NUM1'
+      WHEN 'HouseNumberSupplement' THEN 'HOUSE_NUM2'
+      WHEN 'City'                  THEN 'CITY1'
+      WHEN 'District'              THEN 'CITY2'
+      WHEN 'PostalCode'            THEN 'POST_CODE1'
+      WHEN 'Country'               THEN 'COUNTRY'
+      WHEN 'OrganizationName'      THEN 'NAME_ORG'
+      WHEN 'PersonName'            THEN 'NAME_PERSON'
+      WHEN 'CreatedBy'             THEN 'CREATED_BY'
+      WHEN 'CreatedAt'             THEN 'CREATED_AT'
+      WHEN 'LastChangedBy'         THEN 'LAST_CHANGED_BY'
+      WHEN 'LastChangedAt'         THEN 'LAST_CHANGED_AT'
+      WHEN 'LocalLastChangedAt'    THEN 'LOCL_LAST_CHANGED_AT'
+      ELSE ''
+    ).
+  ENDMETHOD.
+
   METHOD add_error.
+    READ TABLE ct_message TRANSPORTING NO FIELDS
+      WITH KEY field_name = iv_field_name.
+    IF sy-subrc = 0.
+      RETURN.
+    ENDIF.
+
     APPEND VALUE #(
       field_name = iv_field_name
       severity   = if_abap_behv_message=>severity-error

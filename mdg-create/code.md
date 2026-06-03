@@ -568,6 +568,17 @@ CLASS zcl_mdg_req_service DEFINITION
       IMPORTING iv_request_uuid TYPE sysuuid_x16.
 
   PRIVATE SECTION.
+    CLASS-METHODS check_mandatory_fields
+      IMPORTING
+        is_request       TYPE ty_request
+        it_field_control TYPE tt_field_control
+      CHANGING
+        ct_message       TYPE tt_message.
+
+    CLASS-METHODS get_request_component_name
+      IMPORTING iv_field_name            TYPE zmdg_fieldname
+      RETURNING VALUE(rv_component_name) TYPE string.
+
     CLASS-METHODS add_error
       IMPORTING
         iv_field_name TYPE string
@@ -579,6 +590,8 @@ ENDCLASS.
 CLASS zcl_mdg_req_service IMPLEMENTATION.
   METHOD check_request.
     " See file abap/classes/ZCL_MDG_REQ_SERVICE.abap for full implementation.
+    " Technical fields are checked directly.
+    " Business mandatory fields are evaluated from ZMDG_C_FIELDCAT.
   ENDMETHOD.
 
   METHOD save_request.
