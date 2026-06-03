@@ -250,6 +250,39 @@ where
   and Text.ddlanguage  = $session.system_language
 ```
 
+### ZI_MDG_C_FIELDCAT.ddls
+
+```abap
+@EndUserText.label: 'MDG Request Field Control'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_C_FIELDCAT
+  as select from zmdg_c_fieldcat
+{
+      @EndUserText.label: 'Request Type'
+  key request_type as RequestType,
+
+      @EndUserText.label: 'External System'
+  key extsys       as ExternalSystem,
+
+      @EndUserText.label: 'Entity Name'
+  key entityname   as EntityName,
+
+      @EndUserText.label: 'Field Name'
+  key fieldname    as FieldName,
+
+      @EndUserText.label: 'Visible'
+      visible      as IsVisible,
+
+      @EndUserText.label: 'Editable'
+      editable     as IsEditable,
+
+      @EndUserText.label: 'Mandatory'
+      mandatory    as IsMandatory
+}
+```
+
 ## Behavior Definitions
 
 ### ZI_MDG_REQ_CREATE_P.ddls
@@ -494,6 +527,17 @@ CLASS zcl_mdg_req_service DEFINITION
       tt_message TYPE STANDARD TABLE OF ty_message WITH EMPTY KEY.
 
     TYPES:
+      BEGIN OF ty_field_control,
+        entity_name TYPE zmdg_entity,
+        field_name  TYPE zmdg_fieldname,
+        visible     TYPE abap_boolean,
+        editable    TYPE abap_boolean,
+        mandatory   TYPE abap_boolean,
+      END OF ty_field_control,
+      tt_field_control TYPE SORTED TABLE OF ty_field_control
+        WITH UNIQUE KEY entity_name field_name.
+
+    TYPES:
       BEGIN OF ty_save_result,
         request  TYPE ty_request,
         messages TYPE tt_message,
@@ -511,6 +555,10 @@ CLASS zcl_mdg_req_service DEFINITION
     CLASS-METHODS get_next_request_id
       RETURNING VALUE(rv_request_id) TYPE zmdg_request_id
       RAISING   cx_number_ranges.
+
+    CLASS-METHODS get_field_control
+      IMPORTING is_request              TYPE ty_request
+      RETURNING VALUE(rt_field_control) TYPE tt_field_control.
 
     CLASS-METHODS request_created
       IMPORTING is_request         TYPE ty_request

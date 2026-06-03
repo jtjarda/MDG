@@ -22,6 +22,17 @@ CLASS zcl_mdg_req_service DEFINITION
       tt_message TYPE STANDARD TABLE OF ty_message WITH EMPTY KEY.
 
     TYPES:
+      BEGIN OF ty_field_control,
+        entity_name TYPE zmdg_entity,
+        field_name  TYPE zmdg_fieldname,
+        visible     TYPE abap_boolean,
+        editable    TYPE abap_boolean,
+        mandatory   TYPE abap_boolean,
+      END OF ty_field_control,
+      tt_field_control TYPE SORTED TABLE OF ty_field_control
+        WITH UNIQUE KEY entity_name field_name.
+
+    TYPES:
       BEGIN OF ty_save_result,
         request  TYPE ty_request,
         messages TYPE tt_message,
@@ -39,6 +50,10 @@ CLASS zcl_mdg_req_service DEFINITION
     CLASS-METHODS get_next_request_id
       RETURNING VALUE(rv_request_id) TYPE zmdg_request_id
       RAISING   cx_number_ranges.
+
+    CLASS-METHODS get_field_control
+      IMPORTING is_request              TYPE ty_request
+      RETURNING VALUE(rt_field_control) TYPE tt_field_control.
 
     CLASS-METHODS request_created
       IMPORTING is_request         TYPE ty_request
@@ -244,6 +259,89 @@ CLASS zcl_mdg_req_service IMPLEMENTATION.
     ).
 
     rv_request_id = |{ number ALPHA = OUT }|.
+  ENDMETHOD.
+
+  METHOD get_field_control.
+    TYPES:
+      BEGIN OF ty_ranked_field_control,
+        entity_name TYPE zmdg_entity,
+        field_name  TYPE zmdg_fieldname,
+        visible     TYPE abap_boolean,
+        editable    TYPE abap_boolean,
+        mandatory   TYPE abap_boolean,
+        priority    TYPE i,
+      END OF ty_ranked_field_control.
+
+    DATA(request_type) = COND zmdg_creq_type(
+      WHEN is_request-request_type IS INITIAL THEN '*'
+      ELSE CONV #( is_request-request_type )
+    ).
+
+    DATA(external_system) = COND zmdg_extsys(
+      WHEN is_request-extsys IS INITIAL THEN '*'
+      ELSE is_request-extsys
+    ).
+
+    SELECT FROM zi_mdg_c_fieldcat
+      FIELDS
+        RequestType,
+        ExternalSystem,
+        EntityName,
+        FieldName,
+        IsVisible,
+        IsEditable,
+        IsMandatory
+      WHERE ( RequestType    = @request_type     OR RequestType    = '*' )
+        AND ( ExternalSystem = @external_system  OR ExternalSystem = '*' )
+      INTO TABLE @DATA(fieldcat).
+
+    DATA ranked_field_control TYPE STANDARD TABLE OF ty_ranked_field_control WITH EMPTY KEY.
+
+    LOOP AT fieldcat ASSIGNING FIELD-SYMBOL(<fieldcat>).
+      DATA(priority) = COND i(
+        WHEN <fieldcat>-RequestType = request_type
+         AND <fieldcat>-ExternalSystem = external_system THEN 1
+        WHEN <fieldcat>-RequestType = request_type
+         AND <fieldcat>-ExternalSystem = '*'             THEN 2
+        WHEN <fieldcat>-RequestType = '*'
+         AND <fieldcat>-ExternalSystem = external_system THEN 3
+        ELSE 4
+      ).
+
+      READ TABLE ranked_field_control ASSIGNING FIELD-SYMBOL(<ranked_field_control>)
+        WITH KEY
+          entity_name = <fieldcat>-EntityName
+          field_name  = <fieldcat>-FieldName.
+
+      IF sy-subrc = 0 AND <ranked_field_control>-priority <= priority.
+        CONTINUE.
+      ENDIF.
+
+      IF sy-subrc = 0.
+        <ranked_field_control>-visible   = <fieldcat>-IsVisible.
+        <ranked_field_control>-editable  = <fieldcat>-IsEditable.
+        <ranked_field_control>-mandatory = <fieldcat>-IsMandatory.
+        <ranked_field_control>-priority  = priority.
+      ELSE.
+        APPEND VALUE #(
+          entity_name = <fieldcat>-EntityName
+          field_name  = <fieldcat>-FieldName
+          visible     = <fieldcat>-IsVisible
+          editable    = <fieldcat>-IsEditable
+          mandatory   = <fieldcat>-IsMandatory
+          priority    = priority
+        ) TO ranked_field_control.
+      ENDIF.
+    ENDLOOP.
+
+    rt_field_control = VALUE #(
+      FOR field_control IN ranked_field_control
+      ( entity_name = field_control-entity_name
+        field_name  = field_control-field_name
+        visible     = field_control-visible
+        editable    = field_control-editable
+        mandatory   = field_control-mandatory )
+    ).
   ENDMETHOD.
 
   METHOD request_created.

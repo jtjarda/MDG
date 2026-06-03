@@ -1,0 +1,28 @@
+@EndUserText.label: 'MDG Request Field Control'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_C_FIELDCAT
+  as select from zmdg_c_fieldcat
+{
+      @EndUserText.label: 'Request Type'
+  key request_type as RequestType,
+
+      @EndUserText.label: 'External System'
+  key extsys       as ExternalSystem,
+
+      @EndUserText.label: 'Entity Name'
+  key entityname   as EntityName,
+
+      @EndUserText.label: 'Field Name'
+  key fieldname    as FieldName,
+
+      @EndUserText.label: 'Visible'
+      visible      as IsVisible,
+
+      @EndUserText.label: 'Editable'
+      editable     as IsEditable,
+
+      @EndUserText.label: 'Mandatory'
+      mandatory    as IsMandatory
+}
