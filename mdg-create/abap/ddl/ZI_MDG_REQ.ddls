@@ -8,6 +8,10 @@ define root view entity ZI_MDG_REQ
   as select from zmdg_req
   composition [0..*] of ZI_MDG_REQADR as _Address
   composition [0..*] of ZI_MDG_REQTAX as _Tax
+  association [0..1] to ZI_MDG_DOMAIN_VALUE_TEXT as _RequestTypeText
+    on  _RequestTypeText.DomainName   = 'ZMDG_REQ_TYPE'
+    and _RequestTypeText.Language     = $session.system_language
+    and _RequestTypeText.DomainValue  = $projection.RequestType
   association [0..1] to ZI_MDG_C_SYS as _ConnectedSystem
     on _ConnectedSystem.ExternalSystem = $projection.ExternalSystem
   association [0..1] to ZI_MDG_USER as _CreatedByUser
@@ -15,6 +19,8 @@ define root view entity ZI_MDG_REQ
 {
   key request_uuid         as RequestUuid,
       request_id           as RequestId,
+      @ObjectModel.foreignKey.association: '_RequestTypeText'
+      @ObjectModel.text.association: '_RequestTypeText'
       request_type         as RequestType,
       @ObjectModel.foreignKey.association: '_ConnectedSystem'
       @ObjectModel.text.association: '_ConnectedSystem'
@@ -54,6 +60,7 @@ define root view entity ZI_MDG_REQ
       country              as Country,
       name_org             as OrganizationName,
       name_person          as PersonName,
+      @ObjectModel.foreignKey.association: '_CreatedByUser'
       @ObjectModel.text.association: '_CreatedByUser'
       created_by           as CreatedBy,
       created_at           as CreatedAt,
@@ -61,6 +68,7 @@ define root view entity ZI_MDG_REQ
       last_changed_at      as LastChangedAt,
       locl_last_changed_at as LocalLastChangedAt,
 
+      _RequestTypeText,
       _ConnectedSystem,
       _CreatedByUser,
       _Address,

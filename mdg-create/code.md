@@ -148,28 +148,6 @@ define view entity ZI_MDG_C_SYS
 ```
 
 
-### ZC_MDG_C_SYS.ddls
-
-```abap
-@EndUserText.label: 'MDG Connected System'
-@AccessControl.authorizationCheck: #NOT_REQUIRED
-@Metadata.allowExtensions: true
-@VDM.viewType: #CONSUMPTION
-define view entity ZC_MDG_C_SYS
-  as select from ZI_MDG_C_SYS
-{
-      @ObjectModel.text.element: [ 'Description' ]
-  key ExternalSystem,
-      SystemType,
-      @Semantics.text: true
-      Description,
-      CommunicationClass,
-      DefaultAlphabet,
-      IsCreateAllowed,
-      IsEnhanceAllowed
-}
-```
-
 ### ZI_MDG_USER.ddls
 
 ```abap
@@ -187,23 +165,31 @@ define view entity ZI_MDG_USER
 }
 ```
 
-### ZC_MDG_USER.ddls
+### ZI_MDG_DOMAIN_VALUE_TEXT.ddls
 
 ```abap
-@EndUserText.label: 'MDG User'
+@EndUserText.label: 'MDG Domain Value Text'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
-@Metadata.allowExtensions: true
-@VDM.viewType: #CONSUMPTION
-define view entity ZC_MDG_USER
-  as select from ZI_MDG_USER
+@Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_DOMAIN_VALUE_TEXT
+  as select from dd07l as Value
+    inner join   dd07t as Text on  Text.domname  = Value.domname
+                               and Text.as4local = Value.as4local
+                               and Text.as4vers  = Value.as4vers
+                               and Text.valpos   = Value.valpos
 {
-      @ObjectModel.text.element: [ 'UserDescription' ]
-  key UserID,
+  key Value.domname    as DomainName,
+  key Text.ddlanguage  as Language,
+      @ObjectModel.text.element: [ 'DomainValueText' ]
+  key Value.domvalue_l as DomainValue,
       @Semantics.text: true
-      UserDescription
+      Text.ddtext      as DomainValueText
 }
+where
+      Value.as4local   = 'A'
+  and Value.domvalue_l <> ''
 ```
-
 
 ## Behavior Definitions
 
@@ -247,7 +233,7 @@ with additional save
 
   field ( readonly, numbering : managed ) RequestUuid;
   field ( readonly ) RequestId;
-  field ( readonly ) PartnerId, Vendor, Customer;
+  field ( readonly ) RequestType, PartnerId, Vendor, Customer, ExternalSystem, PartnerGID;
   field ( readonly ) CreatedBy, CreatedAt, LastChangedBy, LastChangedAt, LocalLastChangedAt;
   field ( mandatory ) OrganizationName1, SearchTerm1, Country, City, PostalCode, Street;
 
@@ -983,11 +969,12 @@ ENDCLASS.
 ```abap
 @EndUserText.label: 'MDG: Create BP Request'
 define service ZUI_MDG_REQ {
-  expose ZC_MDG_REQ    as Requests;
-  expose ZC_MDG_REQADR as AddressVariants;
-  expose ZC_MDG_REQTAX as TaxNumbers;
-  expose ZC_MDG_C_SYS  as ConnectedSystems;
-  expose ZC_MDG_USER   as Users;
+  expose ZC_MDG_REQ                as Requests;
+  expose ZC_MDG_REQADR             as AddressVariants;
+  expose ZC_MDG_REQTAX             as TaxNumbers;
+  expose ZI_MDG_C_SYS              as ConnectedSystems;
+  expose ZI_MDG_USER               as Users;
+  expose ZI_MDG_DOMAIN_VALUE_TEXT  as DomainValueTexts;
 }
 ```
 
@@ -1149,6 +1136,7 @@ annotate entity ZC_MDG_REQ with
   @UI.lineItem: [{ position: 20, label: 'Request Type' }]
   @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 10, label: 'Request Type' }]
   @UI.selectionField: [{ position: 20 }]
+  @UI.textArrangement: #TEXT_ONLY
   RequestType;
 
   @UI.lineItem: [{ position: 30, label: 'External System' }]
@@ -1367,6 +1355,33 @@ where IsCreateAllowed = 'X'
 
 ```
 
+### ZI_MDG_DOMAIN_VALUE_TEXT.ddls
+
+```abap
+@EndUserText.label: 'MDG Domain Value Text'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_DOMAIN_VALUE_TEXT
+  as select from dd07l as Value
+    inner join   dd07t as Text on  Text.domname  = Value.domname
+                               and Text.as4local = Value.as4local
+                               and Text.as4vers  = Value.as4vers
+                               and Text.valpos   = Value.valpos
+{
+  key Value.domname    as DomainName,
+  key Text.ddlanguage  as Language,
+      @ObjectModel.text.element: [ 'DomainValueText' ]
+  key Value.domvalue_l as DomainValue,
+      @Semantics.text: true
+      Text.ddtext      as DomainValueText
+}
+where
+      Value.as4local   = 'A'
+  and Value.domvalue_l <> ''
+
+```
+
 
 ### ZI_MDG_REQADR.ddls
 
@@ -1442,6 +1457,10 @@ define root view entity ZI_MDG_REQ
   as select from zmdg_req
   composition [0..*] of ZI_MDG_REQADR as _Address
   composition [0..*] of ZI_MDG_REQTAX as _Tax
+  association [0..1] to ZI_MDG_DOMAIN_VALUE_TEXT as _RequestTypeText
+    on  _RequestTypeText.DomainName   = 'ZMDG_REQ_TYPE'
+    and _RequestTypeText.Language     = $session.system_language
+    and _RequestTypeText.DomainValue  = $projection.RequestType
   association [0..1] to ZI_MDG_C_SYS as _ConnectedSystem
     on _ConnectedSystem.ExternalSystem = $projection.ExternalSystem
   association [0..1] to ZI_MDG_USER as _CreatedByUser
@@ -1449,6 +1468,8 @@ define root view entity ZI_MDG_REQ
 {
   key request_uuid         as RequestUuid,
       request_id           as RequestId,
+      @ObjectModel.foreignKey.association: '_RequestTypeText'
+      @ObjectModel.text.association: '_RequestTypeText'
       request_type         as RequestType,
       @ObjectModel.foreignKey.association: '_ConnectedSystem'
       @ObjectModel.text.association: '_ConnectedSystem'
@@ -1488,6 +1509,7 @@ define root view entity ZI_MDG_REQ
       country              as Country,
       name_org             as OrganizationName,
       name_person          as PersonName,
+      @ObjectModel.foreignKey.association: '_CreatedByUser'
       @ObjectModel.text.association: '_CreatedByUser'
       created_by           as CreatedBy,
       created_at           as CreatedAt,
@@ -1495,6 +1517,7 @@ define root view entity ZI_MDG_REQ
       last_changed_at      as LastChangedAt,
       locl_last_changed_at as LocalLastChangedAt,
 
+      _RequestTypeText,
       _ConnectedSystem,
       _CreatedByUser,
       _Address,
@@ -1615,6 +1638,7 @@ define root view entity ZC_MDG_REQ
       LastChangedAt,
       LocalLastChangedAt,
 
+      _RequestTypeText,
       _ConnectedSystem,
       _CreatedByUser,
       _Address : redirected to composition child ZC_MDG_REQADR,

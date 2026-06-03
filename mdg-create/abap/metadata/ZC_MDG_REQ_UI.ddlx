@@ -91,6 +91,7 @@ annotate entity ZC_MDG_REQ with
   @UI.lineItem: [{ position: 20, label: 'Request Type' }]
   @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 10, label: 'Request Type' }]
   @UI.selectionField: [{ position: 20 }]
+  @UI.textArrangement: #TEXT_ONLY
   RequestType;
 
   @UI.lineItem: [{ position: 30, label: 'External System' }]

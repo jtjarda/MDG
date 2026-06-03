@@ -1,0 +1,21 @@
+@EndUserText.label: 'MDG Domain Value Text'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_DOMAIN_VALUE_TEXT
+  as select from dd07l as Value
+    inner join   dd07t as Text on  Text.domname  = Value.domname
+                               and Text.as4local = Value.as4local
+                               and Text.as4vers  = Value.as4vers
+                               and Text.valpos   = Value.valpos
+{
+  key Value.domname    as DomainName,
+  key Text.ddlanguage  as Language,
+      @ObjectModel.text.element: [ 'DomainValueText' ]
+  key Value.domvalue_l as DomainValue,
+      @Semantics.text: true
+      Text.ddtext      as DomainValueText
+}
+where
+      Value.as4local   = 'A'
+  and Value.domvalue_l <> ''

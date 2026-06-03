@@ -51,6 +51,7 @@ define root view entity ZC_MDG_REQ
       LastChangedAt,
       LocalLastChangedAt,
 
+      _RequestTypeText,
       _ConnectedSystem,
       _CreatedByUser,
       _Address : redirected to composition child ZC_MDG_REQADR,
