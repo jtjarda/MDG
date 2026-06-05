@@ -15,10 +15,9 @@
     "strict": false,
     "noEmit": true,
     "skipLibCheck": true,
-    "baseUrl": "./webapp",
     "paths": {
       "c4p/mdg/mdgcreaterequest/*": [
-        "./*"
+        "./webapp/*"
       ]
     }
   },
