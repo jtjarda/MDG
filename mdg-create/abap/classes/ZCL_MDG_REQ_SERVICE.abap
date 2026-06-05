@@ -88,11 +88,13 @@ ENDCLASS.
 
 CLASS zcl_mdg_req_service IMPLEMENTATION.
   METHOD check_request.
-    IF is_request-request_type IS INITIAL OR is_request-request_type <> 'C'.
+    IF is_request-request_type IS INITIAL
+       OR ( is_request-request_type <> 'C'
+        AND is_request-request_type <> 'U' ).
       add_error(
         EXPORTING
           iv_field_name = 'RequestType'
-          iv_text       = 'Request type must be C.'
+          iv_text       = 'Request type must be C or U.'
         CHANGING
           ct_message    = rt_message
       ).

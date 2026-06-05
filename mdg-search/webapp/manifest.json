@@ -239,6 +239,15 @@
               "content": {
                 "header": {
                   "actions": {
+                    "Edit": {
+                      "visible": false
+                    },
+                    "Change": {
+                      "press": "c4s.mdg.mdgsearch.ext.controller.ListReportExt.onChange",
+                      "visible": true,
+                      "enabled": true,
+                      "text": "{i18n>change}"
+                    },
                     "showShare": {
                       "visible": false
                     },

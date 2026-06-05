@@ -45,6 +45,12 @@
             "parameters": {
               "ExternalSystem": {
                 "required": false
+              },
+              "PartnerGID": {
+                "required": false
+              },
+              "PartnerGid": {
+                "required": false
               }
             },
             "additionalParameters": "allowed"

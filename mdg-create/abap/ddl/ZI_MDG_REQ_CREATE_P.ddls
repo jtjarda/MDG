@@ -8,4 +8,7 @@ define abstract entity ZI_MDG_REQ_CREATE_P
     }
   ]
   ExternalSystem : zmdg_extsys;
+
+  @EndUserText.label: 'Partner GID'
+  PartnerGID : zmdg_partner_gid;
 }

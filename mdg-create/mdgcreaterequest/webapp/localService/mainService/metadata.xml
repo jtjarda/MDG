@@ -235,10 +235,11 @@
             <Action Name="Prepare" IsBound="true">
                 <Parameter Name="_it" Type="com.sap.gateway.srvd.zui_mdg_req.v0001.RequestsType" Nullable="false"/>
             </Action>
-            <Action Name="CreateForSystem" EntitySetPath="_it" IsBound="true">
+            <Action Name="CreateRequest" EntitySetPath="_it" IsBound="true">
                 <Parameter Name="_it" Type="Collection(com.sap.gateway.srvd.zui_mdg_req.v0001.RequestsType)" Nullable="false"/>
                 <Parameter Name="ResultIsActiveEntity" Type="Edm.Boolean" Nullable="false"/>
                 <Parameter Name="ExternalSystem" Type="Edm.String" Nullable="false" MaxLength="10"/>
+                <Parameter Name="PartnerGID" Type="Edm.String" Nullable="false" MaxLength="10"/>
                 <ReturnType Type="com.sap.gateway.srvd.zui_mdg_req.v0001.RequestsType" Nullable="false"/>
             </Action>
             <Action Name="Resume" IsBound="true">
@@ -481,7 +482,7 @@
                         <PropertyValue Property="EditAction" String="com.sap.gateway.srvd.zui_mdg_req.v0001.Edit"/>
                         <PropertyValue Property="ActivationAction" String="com.sap.gateway.srvd.zui_mdg_req.v0001.Activate"/>
                         <PropertyValue Property="PreparationAction" String="com.sap.gateway.srvd.zui_mdg_req.v0001.Prepare"/>
-                        <PropertyValue Property="NewAction" String="com.sap.gateway.srvd.zui_mdg_req.v0001.CreateForSystem"/>
+                        <PropertyValue Property="NewAction" String="com.sap.gateway.srvd.zui_mdg_req.v0001.CreateRequest"/>
                     </Record>
                 </Annotation>
                 <Annotation Term="SAP__capabilities.SearchRestrictions">
@@ -571,7 +572,7 @@
             <Annotations Target="SAP__self.Edit(SAP__self.RequestsType)">
                 <Annotation Term="SAP__core.OperationAvailable" Path="_it/__OperationControl/Edit"/>
             </Annotations>
-            <Annotations Target="SAP__self.CreateForSystem(Collection(SAP__self.RequestsType))/ExternalSystem">
+            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/ExternalSystem">
                 <Annotation Term="SAP__common.Label" String="External System"/>
                 <Annotation Term="SAP__common.IsUpperCase"/>
                 <Annotation Term="SAP__common.ValueListReferences">
@@ -828,7 +829,7 @@
                     <Collection>
                         <Record Type="SAP__UI.DataFieldForAction">
                             <PropertyValue Property="Label" String="Create for System"/>
-                            <PropertyValue Property="Action" String="com.sap.gateway.srvd.zui_mdg_req.v0001.CreateForSystem(Collection(com.sap.gateway.srvd.zui_mdg_req.v0001.RequestsType))"/>
+                            <PropertyValue Property="Action" String="com.sap.gateway.srvd.zui_mdg_req.v0001.CreateRequest(Collection(com.sap.gateway.srvd.zui_mdg_req.v0001.RequestsType))"/>
                             <PropertyValue Property="InvocationGrouping" EnumMember="SAP__UI.OperationGroupingType/Isolated"/>
                         </Record>
                         <Record Type="SAP__UI.DataField">
@@ -1694,7 +1695,7 @@
                 <Annotation Term="SAP__common.Heading" String="Dynamic Method Control"/>
                 <Annotation Term="SAP__common.QuickInfo" String="Dynamic Method Property"/>
             </Annotations>
-            <Annotations Target="SAP__self.CreateForSystem(Collection(SAP__self.RequestsType))/ResultIsActiveEntity">
+            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/ResultIsActiveEntity">
                 <Annotation Term="SAP__common.Label" String="Výsledek je aktivní"/>
                 <Annotation Term="SAP__common.QuickInfo" String="Návrh - znak - Je aktivní dokument"/>
             </Annotations>

@@ -8,7 +8,7 @@ define behavior for ZC_MDG_REQ alias Request
   use update;
   use delete;
 
-  use action CreateForSystem;
+  use action CreateRequest;
 
   use action Edit;
   use action Activate;

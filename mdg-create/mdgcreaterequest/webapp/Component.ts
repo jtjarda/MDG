@@ -12,7 +12,7 @@ sap.ui.define(
 
             init: function () {
                 Component.prototype.init.apply(this, arguments);
-                this._handleStartupCreateForSystem();
+                this._handleStartupCreateRequest();
             },
 
             _getStartupParameter: function (sParameterName: string): string | null {
@@ -32,22 +32,24 @@ sap.ui.define(
                     new URLSearchParams(window.location.hash.split("?")[1] || "").get(sParameterName);
             },
 
-            _handleStartupCreateForSystem: function (): void {
+            _handleStartupCreateRequest: function (): void {
                 const sExternalSystem = this._getStartupParameter("ExternalSystem");
+                const sPartnerGid = this._getStartupParameter("PartnerGID") ||
+                    this._getStartupParameter("PartnerGid");
 
-                if (!sExternalSystem || this._bStartupCreateForSystemHandled || window.location.hash.indexOf("&/Requests(") > -1) {
+                if ((!sExternalSystem && !sPartnerGid) || this._bStartupCreateRequestHandled || window.location.hash.indexOf("&/Requests(") > -1) {
                     return;
                 }
 
-                this._bStartupCreateForSystemHandled = true;
+                this._bStartupCreateRequestHandled = true;
 
                 this.getModel().getMetaModel().requestObject("/")
                     .then(function () {
-                        return this._createRequestForSystem(sExternalSystem);
+                        return this._createRequest(sExternalSystem, sPartnerGid);
                     }.bind(this))
                     .catch(function (oError: Error) {
                         MessageBox.error(
-                            "BP request draft could not be created for system " + sExternalSystem + ".",
+                            "BP request draft could not be created.",
                             {
                                 details: oError && (oError.message || String(oError))
                             }
@@ -55,27 +57,28 @@ sap.ui.define(
                     });
             },
 
-            _createRequestForSystem: function (sExternalSystem: string): Promise<void> {
+            _createRequest: function (sExternalSystem?: string, sPartnerGid?: string): Promise<void> {
                 const oModel = this.getModel();
                 const oRequestsBinding = oModel.bindList("/Requests");
                 const oOperation = oModel.bindContext(
-                    "com.sap.gateway.srvd.zui_mdg_req.v0001.CreateForSystem(...)",
+                    "com.sap.gateway.srvd.zui_mdg_req.v0001.CreateRequest(...)",
                     oRequestsBinding.getHeaderContext()
                 );
 
-                oOperation.setParameter("ExternalSystem", sExternalSystem);
+                oOperation.setParameter("ExternalSystem", sExternalSystem || "");
+                oOperation.setParameter("PartnerGID", sPartnerGid || "");
                 oOperation.setParameter("ResultIsActiveEntity", false);
 
                 return oOperation.execute().then(function () {
                     const oContext = oOperation.getBoundContext();
 
                     if (!oContext) {
-                        throw new Error("CreateForSystem did not return a request context.");
+                        throw new Error("CreateRequest did not return a request context.");
                     }
 
                     return oContext.requestObject().then(function (oRequest: { RequestUuid?: string; IsActiveEntity?: boolean }) {
                         if (!oRequest || !oRequest.RequestUuid) {
-                            throw new Error("CreateForSystem did not return RequestUuid.");
+                            throw new Error("CreateRequest did not return RequestUuid.");
                         }
 
                         this._navigateToRequestByKey(oRequest.RequestUuid, oRequest.IsActiveEntity);

@@ -14,7 +14,7 @@ with additional save
   update;
   delete ( features : instance );
 
-  static factory action CreateForSystem parameter ZI_MDG_REQ_CREATE_P [1];
+  static factory action CreateRequest parameter ZI_MDG_REQ_CREATE_P [1];
 
   field ( readonly, numbering : managed ) RequestUuid;
   field ( readonly ) RequestId;

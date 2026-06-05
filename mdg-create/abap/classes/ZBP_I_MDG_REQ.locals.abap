@@ -23,8 +23,8 @@ CLASS lhc_request DEFINITION INHERITING FROM cl_abap_behavior_handler.
     METHODS validate_request FOR VALIDATE ON SAVE
       IMPORTING keys FOR request~ValidateRequest.
 
-    METHODS create_for_system FOR MODIFY
-      IMPORTING keys FOR ACTION request~CreateForSystem.
+    METHODS create_request FOR MODIFY
+      IMPORTING keys FOR ACTION request~CreateRequest.
 ENDCLASS.
 
 CLASS lhc_request IMPLEMENTATION.
@@ -284,19 +284,182 @@ CLASS lhc_request IMPLEMENTATION.
     ENDLOOP.
   ENDMETHOD.
 
-  METHOD create_for_system.
+  METHOD create_request.
+    DATA create_requests  TYPE TABLE FOR CREATE zi_mdg_req.
+    DATA create_addresses TYPE TABLE FOR CREATE zi_mdg_req\_Address.
+    DATA create_taxes     TYPE TABLE FOR CREATE zi_mdg_req\_Tax.
+    DATA business_partner TYPE zmdg_bp.
+    DATA system_data      TYPE zmdg_bpsys.
+    DATA display_address  TYPE zmdg_bpadr.
+    DATA addresses        TYPE STANDARD TABLE OF zmdg_bpadr WITH EMPTY KEY.
+    DATA tax_numbers      TYPE STANDARD TABLE OF zmdg_bptax WITH EMPTY KEY.
+    DATA key_index        TYPE i.
+    DATA partner_gid      TYPE zmdg_partner_gid.
+    DATA external_system  TYPE zmdg_extsys.
+
+    LOOP AT keys ASSIGNING FIELD-SYMBOL(<key>).
+      key_index += 1.
+
+      CLEAR:
+        business_partner,
+        system_data,
+        display_address,
+        addresses,
+        tax_numbers,
+        partner_gid,
+        external_system.
+
+      external_system = <key>-%param-ExternalSystem.
+
+      ASSIGN COMPONENT 'PartnerGid' OF STRUCTURE <key>-%param TO FIELD-SYMBOL(<partner_gid>).
+      IF sy-subrc <> 0.
+        ASSIGN COMPONENT 'PartnerGID' OF STRUCTURE <key>-%param TO <partner_gid>.
+      ENDIF.
+      IF sy-subrc <> 0.
+        ASSIGN COMPONENT 'PARTNERGID' OF STRUCTURE <key>-%param TO <partner_gid>.
+      ENDIF.
+      IF sy-subrc = 0 AND <partner_gid> IS ASSIGNED.
+        partner_gid = CONV #( <partner_gid> ).
+      ENDIF.
+
+      DATA(request_type) = COND #( WHEN partner_gid IS INITIAL THEN 'C' ELSE 'U' ).
+
+      IF partner_gid IS NOT INITIAL.
+        SELECT SINGLE *
+          FROM zmdg_bp
+          WHERE partner_gid = @partner_gid
+          INTO @business_partner.
+
+        SELECT SINGLE *
+          FROM zmdg_bpsys
+          WHERE partner_gid = @partner_gid
+            AND extsys      = @external_system
+          INTO @system_data.
+
+        SELECT SINGLE *
+          FROM zmdg_bpadr
+          WHERE partner_gid = @partner_gid
+            AND nation      = @space
+          INTO @display_address.
+
+        SELECT *
+          FROM zmdg_bpadr
+          WHERE partner_gid = @partner_gid
+          INTO TABLE @addresses.
+
+        SELECT *
+          FROM zmdg_bptax
+          WHERE partner_gid = @partner_gid
+          INTO TABLE @tax_numbers.
+
+        IF display_address IS INITIAL AND addresses IS NOT INITIAL.
+          display_address = addresses[ 1 ].
+        ENDIF.
+      ENDIF.
+
+      APPEND VALUE #(
+        %cid                  = <key>-%cid
+        %is_draft             = if_abap_behv=>mk-on
+        RequestType           = request_type
+        ExternalSystem        = external_system
+        PartnerGid            = partner_gid
+        Status                = 'DRA'
+        CreatedBy             = cl_abap_context_info=>get_user_technical_name( )
+        ParentGid1            = business_partner-parent_gid1
+        ParentGid2            = business_partner-parent_gid2
+        FoundDate             = business_partner-found_date
+        Duns                  = business_partner-duns
+        LeiCode               = business_partner-lei_code
+        Euid                  = business_partner-euid
+        PartnerId             = system_data-partner_id
+        BusinessPartnerType   = system_data-type
+        BusinessPartnerGroup  = system_data-bu_group
+        LegalForm             = system_data-legal_form
+        TelephoneNumber       = system_data-tel_number
+        MobileNumber          = system_data-mob_number
+        EmailAddress          = system_data-smtpadress
+        IsInactive            = system_data-inactive
+        InactiveReason        = system_data-inactive_reason
+        OrganizationName1     = display_address-name_org1
+        OrganizationName2     = display_address-name_org2
+        OrganizationName3     = display_address-name_org3
+        OrganizationName4     = display_address-name_org4
+        FirstName             = display_address-name_first
+        LastName              = display_address-name_last
+        SearchTerm1           = display_address-bu_sort1
+        Country               = display_address-country
+        District              = display_address-city2
+        City                  = display_address-city1
+        PostalCode            = display_address-post_code1
+        Street                = display_address-street
+        HouseNumber           = display_address-house_num1
+        HouseNumberSupplement = display_address-house_num2
+        OrganizationName      = display_address-name_org
+        PersonName            = display_address-name_person
+      ) TO create_requests.
+
+      IF addresses IS NOT INITIAL.
+        APPEND VALUE #(
+          %cid_ref = <key>-%cid
+          %target  = VALUE #(
+            FOR address IN addresses INDEX INTO address_index
+            ( %cid                  = |ADR{ key_index }_{ address_index }|
+              %is_draft             = if_abap_behv=>mk-on
+              Nation                = address-nation
+              OrganizationName1     = address-name_org1
+              OrganizationName2     = address-name_org2
+              OrganizationName3     = address-name_org3
+              OrganizationName4     = address-name_org4
+              FirstName             = address-name_first
+              LastName              = address-name_last
+              SearchTerm1           = address-bu_sort1
+              Street                = address-street
+              HouseNumber           = address-house_num1
+              HouseNumberSupplement = address-house_num2
+              City                  = address-city1
+              District              = address-city2
+              PostalCode            = address-post_code1
+              Country               = address-country
+              OrganizationName      = address-name_org
+              PersonName            = address-name_person )
+          )
+        ) TO create_addresses.
+      ENDIF.
+
+      IF tax_numbers IS NOT INITIAL.
+        APPEND VALUE #(
+          %cid_ref = <key>-%cid
+          %target  = VALUE #(
+            FOR tax_number IN tax_numbers INDEX INTO tax_index
+            ( %cid      = |TAX{ key_index }_{ tax_index }|
+              %is_draft = if_abap_behv=>mk-on
+              TaxType   = tax_number-taxtype
+              TaxNumber = tax_number-taxnum )
+          )
+        ) TO create_taxes.
+      ENDIF.
+    ENDLOOP.
+
     MODIFY ENTITIES OF zi_mdg_req IN LOCAL MODE
       ENTITY Request
-        CREATE FIELDS ( RequestType ExternalSystem Status CreatedBy )
-        WITH VALUE #(
-          FOR key IN keys
-          ( %cid           = key-%cid
-            %is_draft      = if_abap_behv=>mk-on
-            RequestType    = 'C'
-            ExternalSystem = key-%param-ExternalSystem
-            Status         = 'DRA'
-            CreatedBy      = cl_abap_context_info=>get_user_technical_name( ) )
+        CREATE FIELDS (
+          RequestType ExternalSystem PartnerGid Status CreatedBy
+          ParentGid1 ParentGid2 FoundDate Duns LeiCode Euid PartnerId
+          BusinessPartnerType BusinessPartnerGroup LegalForm TelephoneNumber MobileNumber EmailAddress
+          IsInactive InactiveReason
+          OrganizationName1 OrganizationName2 OrganizationName3 OrganizationName4 FirstName LastName
+          SearchTerm1 Country District City PostalCode Street HouseNumber HouseNumberSupplement
+          OrganizationName PersonName
         )
+        WITH create_requests
+        CREATE BY \_Address FIELDS (
+          Nation OrganizationName1 OrganizationName2 OrganizationName3 OrganizationName4
+          FirstName LastName SearchTerm1 Street HouseNumber HouseNumberSupplement
+          City District PostalCode Country OrganizationName PersonName
+        )
+        WITH create_addresses
+        CREATE BY \_Tax FIELDS ( TaxType TaxNumber )
+        WITH create_taxes
       MAPPED mapped
       FAILED failed
       REPORTED reported.

@@ -1,4 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @sap-ux/fiori-tools/sap-no-hardcoded-url, @sap-ux/fiori-tools/sap-no-localhost, @sap-ux/fiori-tools/sap-no-location-usage */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument */
+/* eslint-disable no-use-before-define, @sap-ux/fiori-tools/sap-no-hardcoded-url, @sap-ux/fiori-tools/sap-no-localhost */
+/* eslint-disable @sap-ux/fiori-tools/sap-no-location-usage */
 sap.ui.define(
     [
         "sap/m/MessageBox",
@@ -11,35 +14,44 @@ sap.ui.define(
     "use strict";
 
     let oCreateForSystemDialog: any;
+    let sSelectedPartnerGidForRequest = "";
     const sLocalCreateAppUrl = "http://localhost:8080/test/flp.html?sap-ui-xx-viewCache=false#app-preview";
 
-    function navigateToCreateApp(sExternalSystem: string) {
-        if (!sExternalSystem) {
+    function navigateToCreateApp(sExternalSystem?: string, sPartnerGid?: string) {
+        if (!sExternalSystem && !sPartnerGid) {
             return;
         }
 
         if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-            window.location.href = addExternalSystemParameter(sLocalCreateAppUrl, sExternalSystem);
+            window.location.href = addRequestParameters(sLocalCreateAppUrl, sExternalSystem, sPartnerGid);
             return;
         }
 
         const oShellContainer = (sap as any).ushell?.Container;
 
         if (!oShellContainer) {
-            window.location.hash = "MDGBpRequest-create?ExternalSystem=" + encodeURIComponent(sExternalSystem);
+            window.location.hash = "MDGBpRequest-create" + getRequestParameterQuery(sExternalSystem, sPartnerGid);
             return;
         }
 
         oShellContainer.getServiceAsync("CrossApplicationNavigation")
             .then(function (oCrossAppNavigation: any) {
+                const mParams: Record<string, string[]> = {};
+
+                if (sExternalSystem) {
+                    mParams.ExternalSystem = [sExternalSystem];
+                }
+
+                if (sPartnerGid) {
+                    mParams.PartnerGID = [sPartnerGid];
+                }
+
                 oCrossAppNavigation.toExternal({
                     target: {
                         semanticObject: "MDGBpRequest",
                         action: "create"
                     },
-                    params: {
-                        ExternalSystem: [sExternalSystem]
-                    }
+                    params: mParams
                 });
             })
             .catch(function (): void {
@@ -47,13 +59,31 @@ sap.ui.define(
             });
     }
 
-    function addExternalSystemParameter(sUrl: string, sExternalSystem: string): string {
+    function addRequestParameters(sUrl: string, sExternalSystem?: string, sPartnerGid?: string): string {
         const aParts = sUrl.split("#");
         const sBaseUrl = aParts[0];
         const sHash = aParts[1] ? "#" + aParts[1] : "";
-        const sSeparator = sBaseUrl.indexOf("?") === -1 ? "?" : "&";
+        const sQuery = getRequestParameterQuery(sExternalSystem, sPartnerGid);
 
-        return sBaseUrl + sSeparator + "ExternalSystem=" + encodeURIComponent(sExternalSystem) + sHash;
+        if (!sQuery) {
+            return sUrl;
+        }
+
+        return sBaseUrl + (sBaseUrl.indexOf("?") === -1 ? "?" : "&") + sQuery.substring(1) + sHash;
+    }
+
+    function getRequestParameterQuery(sExternalSystem?: string, sPartnerGid?: string): string {
+        const aParameters: string[] = [];
+
+        if (sExternalSystem) {
+            aParameters.push("ExternalSystem=" + encodeURIComponent(sExternalSystem));
+        }
+
+        if (sPartnerGid) {
+            aParameters.push("PartnerGID=" + encodeURIComponent(sPartnerGid));
+        }
+
+        return aParameters.length ? "?" + aParameters.join("&") : "";
     }
 
     function getView(oController: any): any {
@@ -84,6 +114,15 @@ sap.ui.define(
         ];
     }
 
+    function getCurrentPartnerGid(oController: any, oEvent?: any): string {
+        const oSourceContext = oEvent?.getSource?.().getBindingContext?.();
+        const oViewContext = getView(oController)?.getBindingContext?.();
+        const oContext = oSourceContext || oViewContext;
+        const sPartnerGid = oContext?.getProperty?.("PartnerGID") as string | undefined;
+
+        return sPartnerGid || "";
+    }
+
     function getCreateForSystemDialog(oController: any): any {
         if (oCreateForSystemDialog) {
             return oCreateForSystemDialog;
@@ -105,7 +144,10 @@ sap.ui.define(
                     return;
                 }
 
-                navigateToCreateApp(oSelectedItem.getBindingContext("create").getProperty("ExternalSystem"));
+                navigateToCreateApp(
+                    oSelectedItem.getBindingContext("create").getProperty("ExternalSystem"),
+                    sSelectedPartnerGidForRequest
+                );
             }
         });
 
@@ -131,6 +173,19 @@ sap.ui.define(
 
     return {
         onCreateForSystem: function (): void {
+            sSelectedPartnerGidForRequest = "";
+            getCreateForSystemDialog(this).open();
+        },
+
+        onChange: function (oEvent: any): void {
+            const sPartnerGid = getCurrentPartnerGid(this, oEvent);
+
+            if (!sPartnerGid) {
+                MessageBox.error("Business partner ID could not be determined.");
+                return;
+            }
+
+            sSelectedPartnerGidForRequest = sPartnerGid;
             getCreateForSystemDialog(this).open();
         }
     };
