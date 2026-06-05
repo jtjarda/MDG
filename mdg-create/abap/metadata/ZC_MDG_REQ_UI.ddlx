@@ -25,7 +25,7 @@ annotate entity ZC_MDG_REQ with
       id: 'GlobalData',
       parentId: 'General',
       type: #FIELDGROUP_REFERENCE,
-      label: 'Global Data',
+      label: 'Global Data (KID)',
       position: 10,
       targetQualifier: 'GlobalData'
     },
@@ -94,8 +94,8 @@ annotate entity ZC_MDG_REQ with
   @UI.textArrangement: #TEXT_ONLY
   RequestType;
 
-  @UI.lineItem: [{ position: 30, label: 'External System' }]
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 20, label: 'External System' }]
+  @UI.lineItem: [{ position: 30, label: 'Request Origin' }]
+  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 20, label: 'Request Origin' }]
   @UI.selectionField: [{ position: 30 }]
   @UI.textArrangement: #TEXT_ONLY
   ExternalSystem;
@@ -120,6 +120,7 @@ annotate entity ZC_MDG_REQ with
   Duns;
 
   @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 50, label: 'Created At' }]
+  @UI.hidden: true
   CreatedAt;
 
   @UI.fieldGroup: [{ qualifier: 'MainData', position: 20, label: 'Parent GID 1' }]
