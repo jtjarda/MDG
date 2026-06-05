@@ -35,11 +35,25 @@ CLASS lhc_request IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD get_instance_authorizations.
+    READ ENTITIES OF zi_mdg_req IN LOCAL MODE
+      ENTITY Request
+        FIELDS ( Status )
+        WITH CORRESPONDING #( keys )
+      RESULT DATA(requests).
+
     result = VALUE #(
-      FOR key IN keys
-      ( %tky    = key-%tky
-        %update = if_abap_behv=>auth-allowed
-        %delete = if_abap_behv=>auth-allowed )
+      FOR request IN requests
+      ( %tky    = request-%tky
+        %update = COND #(
+          WHEN request-Status = 'DRA'
+            OR request-Status = 'ERR'
+            THEN if_abap_behv=>auth-allowed
+          ELSE if_abap_behv=>auth-unauthorized )
+        %delete = COND #(
+          WHEN request-Status = 'DRA'
+            OR request-Status = 'ERR'
+            THEN if_abap_behv=>auth-allowed
+          ELSE if_abap_behv=>auth-unauthorized ) )
     ).
   ENDMETHOD.
 
@@ -47,7 +61,7 @@ CLASS lhc_request IMPLEMENTATION.
     READ ENTITIES OF zi_mdg_req IN LOCAL MODE
       ENTITY Request
         FIELDS (
-          RequestUuid RequestType ExternalSystem BusinessPartnerGroup
+          RequestUuid RequestType ExternalSystem BusinessPartnerGroup Status
         )
         WITH CORRESPONDING #( keys )
       RESULT DATA(requests).
@@ -68,6 +82,18 @@ CLASS lhc_request IMPLEMENTATION.
 
       APPEND INITIAL LINE TO result ASSIGNING FIELD-SYMBOL(<features>).
       <features>-%tky = <request>-%tky.
+      <features>-%action-Edit = COND #(
+        WHEN <request>-Status = 'DRA'
+          OR <request>-Status = 'ERR'
+          THEN if_abap_behv=>fc-o-enabled
+        ELSE if_abap_behv=>fc-o-disabled
+      ).
+      <features>-%delete = COND #(
+        WHEN <request>-Status = 'DRA'
+          OR <request>-Status = 'ERR'
+          THEN if_abap_behv=>fc-o-enabled
+        ELSE if_abap_behv=>fc-o-disabled
+      ).
 
       LOOP AT field_control ASSIGNING FIELD-SYMBOL(<field_control>)
            WHERE entity_name = 'REQUEST'.
