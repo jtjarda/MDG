@@ -58,6 +58,10 @@ sap.ui.define(
             },
 
             _createRequest: function (sExternalSystem?: string, sPartnerGid?: string): Promise<void> {
+                return this._executeCreateRequest(sExternalSystem, sPartnerGid);
+            },
+
+            _executeCreateRequest: function (sExternalSystem?: string, sPartnerGid?: string): Promise<void> {
                 const oModel = this.getModel();
                 const oRequestsBinding = oModel.bindList("/Requests");
                 const oOperation = oModel.bindContext(

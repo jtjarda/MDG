@@ -15,6 +15,7 @@ sap.ui.define(
 
     let oCreateForSystemDialog: any;
     let sSelectedPartnerGidForRequest = "";
+    let sSelectedSystemPath = "/CreateSystems";
     const sLocalCreateAppUrl = "http://localhost:8080/test/flp.html?sap-ui-xx-viewCache=false#app-preview";
 
     function navigateToCreateApp(sExternalSystem?: string, sPartnerGid?: string) {
@@ -98,12 +99,26 @@ sap.ui.define(
         return null;
     }
 
-    function getCreateSystemFilters(sValue?: string): any[] {
-        if (!sValue) {
-            return [];
+    function getSystemFilters(sValue?: string): any[] {
+        const aFilters: any[] = [];
+
+        if (sSelectedSystemPath === "/ChangeSystems") {
+            aFilters.push(
+                new Filter({
+                    filters: [
+                        new Filter("PartnerGID", FilterOperator.EQ, ""),
+                        new Filter("PartnerGID", FilterOperator.EQ, sSelectedPartnerGidForRequest)
+                    ],
+                    and: false
+                })
+            );
         }
 
-        return [
+        if (!sValue) {
+            return aFilters;
+        }
+
+        aFilters.push(
             new Filter({
                 filters: [
                     new Filter("ExternalSystem", FilterOperator.Contains, sValue),
@@ -111,7 +126,9 @@ sap.ui.define(
                 ],
                 and: false
             })
-        ];
+        );
+
+        return aFilters;
     }
 
     function getCurrentPartnerGid(oController: any, oEvent?: any): string {
@@ -135,7 +152,7 @@ sap.ui.define(
                 const sValue = oEvent.getParameter("value") as string;
                 const oBinding = oEvent.getSource().getBinding("items");
 
-                oBinding.filter(getCreateSystemFilters(sValue));
+                oBinding.filter(getSystemFilters(sValue));
             },
             confirm: function (oEvent: any): void {
                 const oSelectedItem = oEvent.getParameter("selectedItem");
@@ -151,16 +168,7 @@ sap.ui.define(
             }
         });
 
-        oCreateForSystemDialog.bindAggregation("items", {
-            path: "create>/CreateSystems",
-            filters: getCreateSystemFilters(),
-            parameters: {
-                $orderby: "Description"
-            },
-            template: new StandardListItem({
-                title: "{create>Description}"
-            })
-        });
+        bindSystemDialogItems(oCreateForSystemDialog);
 
         const oView = getView(oController);
 
@@ -171,10 +179,27 @@ sap.ui.define(
         return oCreateForSystemDialog;
     }
 
+    function bindSystemDialogItems(oDialog: any): void {
+        oDialog.bindAggregation("items", {
+            path: "create>" + sSelectedSystemPath,
+            filters: getSystemFilters(),
+            parameters: {
+                $orderby: "Description"
+            },
+            template: new StandardListItem({
+                title: "{create>Description}"
+            })
+        });
+    }
+
     return {
         onCreateForSystem: function (): void {
             sSelectedPartnerGidForRequest = "";
-            getCreateForSystemDialog(this).open();
+            sSelectedSystemPath = "/CreateSystems";
+
+            const oDialog = getCreateForSystemDialog(this);
+            bindSystemDialogItems(oDialog);
+            oDialog.open();
         },
 
         onChange: function (oEvent: any): void {
@@ -186,7 +211,11 @@ sap.ui.define(
             }
 
             sSelectedPartnerGidForRequest = sPartnerGid;
-            getCreateForSystemDialog(this).open();
+            sSelectedSystemPath = "/ChangeSystems";
+
+            const oDialog = getCreateForSystemDialog(this);
+            bindSystemDialogItems(oDialog);
+            oDialog.open();
         }
     };
 });

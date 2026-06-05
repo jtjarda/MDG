@@ -1,0 +1,48 @@
+@EndUserText.label: 'MDG Change System Value Help'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.resultSet.sizeCategory: #XS
+@Search.searchable: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_C_SYS_CHANGEVH
+  as select from ZI_MDG_C_SYS
+{
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      @ObjectModel.text.element: ['Description']
+      @UI.textArrangement: #TEXT_ONLY
+  key ExternalSystem,
+
+      @UI.hidden: true
+  key cast( '' as zmdg_partner_gid ) as PartnerGID,
+
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      @Semantics.text: true
+      Description,
+
+      @UI.hidden: true
+      SystemType,
+
+      @UI.hidden: true
+      DefaultAlphabet
+}
+where IsEnhanceAllowed = 'X'
+
+union
+
+select from ZI_MDG_C_SYS as System
+  inner join zmdg_bpsys as BusinessPartnerSystem
+    on BusinessPartnerSystem.extsys = System.ExternalSystem
+{
+  key System.ExternalSystem,
+
+  key BusinessPartnerSystem.partner_gid as PartnerGID,
+
+  System.Description,
+
+  System.SystemType,
+
+  System.DefaultAlphabet
+}
+where System.IsEnhanceAllowed <> 'X'

@@ -293,13 +293,10 @@ CLASS lhc_request IMPLEMENTATION.
     DATA display_address  TYPE zmdg_bpadr.
     DATA addresses        TYPE STANDARD TABLE OF zmdg_bpadr WITH EMPTY KEY.
     DATA tax_numbers      TYPE STANDARD TABLE OF zmdg_bptax WITH EMPTY KEY.
-    DATA key_index        TYPE i.
     DATA partner_gid      TYPE zmdg_partner_gid.
     DATA external_system  TYPE zmdg_extsys.
 
     LOOP AT keys ASSIGNING FIELD-SYMBOL(<key>).
-      key_index += 1.
-
       CLEAR:
         business_partner,
         system_data,
@@ -345,12 +342,8 @@ CLASS lhc_request IMPLEMENTATION.
         SELECT *
           FROM zmdg_bpadr
           WHERE partner_gid = @partner_gid
+            AND nation      <> @space
           INTO TABLE @addresses.
-
-        SELECT *
-          FROM zmdg_bptax
-          WHERE partner_gid = @partner_gid
-          INTO TABLE @tax_numbers.
 
         IF display_address IS INITIAL AND addresses IS NOT INITIAL.
           display_address = addresses[ 1 ].
@@ -397,47 +390,6 @@ CLASS lhc_request IMPLEMENTATION.
         OrganizationName      = display_address-name_org
         PersonName            = display_address-name_person
       ) TO create_requests.
-
-      IF addresses IS NOT INITIAL.
-        APPEND VALUE #(
-          %cid_ref = <key>-%cid
-          %target  = VALUE #(
-            FOR address IN addresses INDEX INTO address_index
-            ( %cid                  = |ADR{ key_index }_{ address_index }|
-              %is_draft             = if_abap_behv=>mk-on
-              Nation                = address-nation
-              OrganizationName1     = address-name_org1
-              OrganizationName2     = address-name_org2
-              OrganizationName3     = address-name_org3
-              OrganizationName4     = address-name_org4
-              FirstName             = address-name_first
-              LastName              = address-name_last
-              SearchTerm1           = address-bu_sort1
-              Street                = address-street
-              HouseNumber           = address-house_num1
-              HouseNumberSupplement = address-house_num2
-              City                  = address-city1
-              District              = address-city2
-              PostalCode            = address-post_code1
-              Country               = address-country
-              OrganizationName      = address-name_org
-              PersonName            = address-name_person )
-          )
-        ) TO create_addresses.
-      ENDIF.
-
-      IF tax_numbers IS NOT INITIAL.
-        APPEND VALUE #(
-          %cid_ref = <key>-%cid
-          %target  = VALUE #(
-            FOR tax_number IN tax_numbers INDEX INTO tax_index
-            ( %cid      = |TAX{ key_index }_{ tax_index }|
-              %is_draft = if_abap_behv=>mk-on
-              TaxType   = tax_number-taxtype
-              TaxNumber = tax_number-taxnum )
-          )
-        ) TO create_taxes.
-      ENDIF.
     ENDLOOP.
 
     MODIFY ENTITIES OF zi_mdg_req IN LOCAL MODE
@@ -452,17 +404,99 @@ CLASS lhc_request IMPLEMENTATION.
           OrganizationName PersonName
         )
         WITH create_requests
+      MAPPED mapped
+      FAILED failed
+      REPORTED reported.
+
+    IF mapped-request IS NOT INITIAL.
+      READ ENTITIES OF zi_mdg_req IN LOCAL MODE
+        ENTITY Request
+          FIELDS ( RequestUuid PartnerGid )
+          WITH CORRESPONDING #( mapped-request )
+        RESULT DATA(created_requests).
+
+      LOOP AT created_requests ASSIGNING FIELD-SYMBOL(<created_request>).
+        IF <created_request>-PartnerGid IS INITIAL.
+          CONTINUE.
+        ENDIF.
+
+        SELECT *
+          FROM zmdg_bpadr
+          WHERE partner_gid = @<created_request>-PartnerGid
+            AND nation      <> @space
+          INTO TABLE @addresses.
+
+        IF addresses IS NOT INITIAL.
+          APPEND VALUE #(
+            %tky    = <created_request>-%tky
+            %target = VALUE #(
+              FOR address IN addresses INDEX INTO address_index
+              ( %cid                  = |ADR{ address_index }|
+                %is_draft             = if_abap_behv=>mk-on
+                Nation                = address-nation
+                OrganizationName1     = address-name_org1
+                OrganizationName2     = address-name_org2
+                OrganizationName3     = address-name_org3
+                OrganizationName4     = address-name_org4
+                FirstName             = address-name_first
+                LastName              = address-name_last
+                SearchTerm1           = address-bu_sort1
+                Street                = address-street
+                HouseNumber           = address-house_num1
+                HouseNumberSupplement = address-house_num2
+                City                  = address-city1
+                District              = address-city2
+                PostalCode            = address-post_code1
+                Country               = address-country
+                OrganizationName      = address-name_org
+                PersonName            = address-name_person )
+            )
+          ) TO create_addresses.
+        ENDIF.
+
+        SELECT *
+          FROM zmdg_bptax
+          WHERE partner_gid = @<created_request>-PartnerGid
+          INTO TABLE @tax_numbers.
+
+        IF tax_numbers IS NOT INITIAL.
+          APPEND VALUE #(
+            %tky    = <created_request>-%tky
+            %target = VALUE #(
+              FOR tax_number IN tax_numbers INDEX INTO tax_index
+              ( %cid      = |TAX{ tax_index }|
+                %is_draft = if_abap_behv=>mk-on
+                TaxType   = tax_number-taxtype
+                TaxNumber = tax_number-taxnum )
+            )
+          ) TO create_taxes.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+
+    IF create_addresses IS NOT INITIAL.
+      MODIFY ENTITIES OF zi_mdg_req IN LOCAL MODE
+        ENTITY Request
         CREATE BY \_Address FIELDS (
           Nation OrganizationName1 OrganizationName2 OrganizationName3 OrganizationName4
           FirstName LastName SearchTerm1 Street HouseNumber HouseNumberSupplement
           City District PostalCode Country OrganizationName PersonName
         )
         WITH create_addresses
+        MAPPED DATA(mapped_addresses)
+        FAILED DATA(failed_addresses)
+        REPORTED DATA(reported_addresses).
+    ENDIF.
+
+    IF create_taxes IS NOT INITIAL.
+      MODIFY ENTITIES OF zi_mdg_req IN LOCAL MODE
+        ENTITY Request
         CREATE BY \_Tax FIELDS ( TaxType TaxNumber )
         WITH create_taxes
-      MAPPED mapped
-      FAILED failed
-      REPORTED reported.
+        MAPPED DATA(mapped_taxes)
+        FAILED DATA(failed_taxes)
+        REPORTED DATA(reported_taxes).
+    ENDIF.
   ENDMETHOD.
 ENDCLASS.
 

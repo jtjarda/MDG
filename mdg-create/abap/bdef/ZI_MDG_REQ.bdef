@@ -149,8 +149,6 @@ etag dependent by _Request
   delete;
 
   field ( readonly ) RequestUuid;
-  field ( readonly : update ) TaxType;
-
   association _Request { with draft; }
 
   mapping for zmdg_reqtax
