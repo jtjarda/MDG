@@ -80,7 +80,7 @@ annotate entity ZC_MDG_REQ with
       position: 5,
       type: #FOR_ACTION,
       dataAction: 'CreateForSystem',
-      label: 'Create for System'
+      label: 'Create'
     },
     { position: 10, label: 'Request ID' }
   ]
