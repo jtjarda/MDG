@@ -584,6 +584,10 @@
                 <Annotation Term="SAP__common.Heading" String="Připojený systém"/>
                 <Annotation Term="SAP__common.QuickInfo" String="Připojený systém"/>
             </Annotations>
+            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/PartnerGID">
+                <Annotation Term="SAP__UI.Hidden"/>
+                <Annotation Term="SAP__common.Label" String="Partner GID"/>
+            </Annotations>
             <Annotations Target="SAP__self.RequestsType">
                 <Annotation Term="SAP__common.Label" String="MDG BP Request"/>
                 <Annotation Term="SAP__UI.Facets">

@@ -81,9 +81,16 @@
       "minUI5Version": "1.136.10",
       "libs": {
         "sap.m": {},
+        "sap.f": {},
         "sap.ui.core": {},
         "sap.fe.templates": {}
       }
+    },
+    "rootView": {
+      "viewName": "sap.fe.templates.RootContainer.view.Fcl",
+      "type": "XML",
+      "async": true,
+      "id": "appRootView"
     },
     "contentDensities": {
       "compact": true,
@@ -114,17 +121,37 @@
       "css": []
     },
     "routing": {
-      "config": {},
+      "config": {
+        "routerClass": "sap.f.routing.Router",
+        "flexibleColumnLayout": {
+          "defaultTwoColumnLayoutType": "TwoColumnsMidExpanded",
+          "defaultThreeColumnLayoutType": "ThreeColumnsMidExpanded"
+        }
+      },
       "routes": [
         {
           "pattern": ":?query:",
           "name": "RequestsList",
-          "target": "RequestsList"
+          "target": [
+            "RequestsList"
+          ]
         },
         {
           "pattern": "Requests({key}):?query:",
           "name": "RequestsObjectPage",
-          "target": "RequestsObjectPage"
+          "target": [
+            "RequestsList",
+            "RequestsObjectPage"
+          ]
+        },
+        {
+          "pattern": "Requests({key})/_Address({key2}):?query:",
+          "name": "AddressVariantsObjectPage",
+          "target": [
+            "RequestsList",
+            "RequestsObjectPage",
+            "AddressVariantsObjectPage"
+          ]
         }
       ],
       "targets": {
@@ -132,6 +159,8 @@
           "type": "Component",
           "id": "RequestsList",
           "name": "sap.fe.templates.ListReport",
+          "controlAggregation": "beginColumnPages",
+          "contextPattern": "",
           "options": {
             "settings": {
               "contextPath": "/Requests",
@@ -157,10 +186,33 @@
           "type": "Component",
           "id": "RequestsObjectPage",
           "name": "sap.fe.templates.ObjectPage",
+          "controlAggregation": "midColumnPages",
+          "contextPattern": "/Requests({key})",
           "options": {
             "settings": {
               "editableHeaderContent": false,
-              "contextPath": "/Requests"
+              "contextPath": "/Requests",
+              "navigation": {
+                "_Address": {
+                  "detail": {
+                    "route": "AddressVariantsObjectPage"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "AddressVariantsObjectPage": {
+          "type": "Component",
+          "id": "AddressVariantsObjectPage",
+          "name": "sap.fe.templates.ObjectPage",
+          "controlAggregation": "endColumnPages",
+          "contextPattern": "/Requests({key})/_Address({key2})",
+          "options": {
+            "settings": {
+              "editableHeaderContent": false,
+              "contextPath": "/Requests/_Address",
+              "showRelatedApps": false
             }
           }
         }

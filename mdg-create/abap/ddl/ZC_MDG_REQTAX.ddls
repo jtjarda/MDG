@@ -11,4 +11,3 @@ define view entity ZC_MDG_REQTAX
 
       _Request : redirected to parent ZC_MDG_REQ
 }
-

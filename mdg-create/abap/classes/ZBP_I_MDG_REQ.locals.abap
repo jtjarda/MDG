@@ -25,6 +25,7 @@ CLASS lhc_request DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS create_request FOR MODIFY
       IMPORTING keys FOR ACTION request~CreateRequest.
+
 ENDCLASS.
 
 CLASS lhc_request IMPLEMENTATION.

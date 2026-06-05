@@ -105,7 +105,7 @@ sap.ui.define(
 
                 if (oRouter) {
                     oRouter.navTo("RequestsObjectPage", {
-                        key: encodeURIComponent(sKeyPredicate)
+                        key: sKeyPredicate
                     }, true);
                 }
             }
