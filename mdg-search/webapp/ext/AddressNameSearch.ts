@@ -2,8 +2,8 @@ sap.ui.define(["sap/ui/model/Filter", "sap/ui/model/FilterOperator"], function (
     "use strict";
 
     return {
-        onAddressNameContains: function (vValue) {
-            var sValue = Array.isArray(vValue) ? vValue[0] : vValue;
+        onAddressNameContains: function (vValue: string | string[] | null | undefined) {
+            let sValue = Array.isArray(vValue) ? vValue[0] : vValue;
 
             if (!sValue || !String(sValue).trim()) {
                 return null;

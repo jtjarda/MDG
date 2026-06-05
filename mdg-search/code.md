@@ -3,6 +3,45 @@
 Tento soubor popisuje aktuální zdroje aplikace `mdg-search`.
 Je to orientační pracovní dokument pro Fiori Elements aplikaci pro vyhledání Business Partnera.
 
+## TypeScript support
+
+Aplikace byla dodatecne prepnuta na TypeScript bez regenerovani projektu.
+
+Runtime zdroje jsou nyni v TypeScriptu:
+
+```text
+webapp/Component.ts
+webapp/ext/AddressNameSearch.ts
+webapp/ext/controller/ListReportExt.ts
+```
+
+Odkazy v `manifest.json` a XML fragmentu zustavaji ve tvaru UI5 modulu, napr.:
+
+```text
+c4s.mdg.mdgsearch.ext.AddressNameSearch
+c4s.mdg.mdgsearch.ext.controller.ListReportExt.onCreateForSystem
+```
+
+Build a lokalni server prekladaji TypeScript pres `ui5-tooling-transpile`.
+Konfigurace je v:
+
+```text
+package.json
+tsconfig.json
+ui5.yaml
+ui5-local.yaml
+ui5-mock.yaml
+```
+
+Kontrolni prikazy:
+
+```bash
+npm run typecheck
+npm run build
+```
+
+OPA/QUnit testy v `webapp/test` zustavaji v JavaScriptu. TypeScript podpora se tyka aplikacnich runtime modulu.
+
 ## Projekt
 
 Adresář:

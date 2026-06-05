@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 sap.ui.define(
     ["sap/fe/core/AppComponent", "sap/m/MessageBox"],
-    function (Component, MessageBox) {
+    function (Component: any, MessageBox: any) {
         "use strict";
 
         return Component.extend("c4p.mdg.mdgcreaterequest.Component", {
@@ -13,10 +14,10 @@ sap.ui.define(
                 this._handleStartupCreateForSystem();
             },
 
-            _getStartupParameter: function (sParameterName) {
-                var oComponentData = this.getComponentData && this.getComponentData();
-                var oStartupParameters = oComponentData && oComponentData.startupParameters;
-                var vParameter = oStartupParameters && oStartupParameters[sParameterName];
+            _getStartupParameter: function (sParameterName: string): string | null {
+                const oComponentData = this.getComponentData && this.getComponentData();
+                const oStartupParameters = oComponentData && oComponentData.startupParameters;
+                const vParameter = oStartupParameters && oStartupParameters[sParameterName];
 
                 if (Array.isArray(vParameter)) {
                     return vParameter[0];
@@ -30,8 +31,8 @@ sap.ui.define(
                     new URLSearchParams(window.location.hash.split("?")[1] || "").get(sParameterName);
             },
 
-            _handleStartupCreateForSystem: function () {
-                var sExternalSystem = this._getStartupParameter("ExternalSystem");
+            _handleStartupCreateForSystem: function (): void {
+                const sExternalSystem = this._getStartupParameter("ExternalSystem");
 
                 if (!sExternalSystem || this._bStartupCreateForSystemHandled || window.location.hash.indexOf("&/Requests(") > -1) {
                     return;
@@ -43,7 +44,7 @@ sap.ui.define(
                     .then(function () {
                         return this._createRequestForSystem(sExternalSystem);
                     }.bind(this))
-                    .catch(function (oError) {
+                    .catch(function (oError: Error) {
                         MessageBox.error(
                             "BP request draft could not be created for system " + sExternalSystem + ".",
                             {
@@ -53,10 +54,10 @@ sap.ui.define(
                     });
             },
 
-            _createRequestForSystem: function (sExternalSystem) {
-                var oModel = this.getModel();
-                var oRequestsBinding = oModel.bindList("/Requests");
-                var oOperation = oModel.bindContext(
+            _createRequestForSystem: function (sExternalSystem: string): Promise<void> {
+                const oModel = this.getModel();
+                const oRequestsBinding = oModel.bindList("/Requests");
+                const oOperation = oModel.bindContext(
                     "com.sap.gateway.srvd.zui_mdg_req.v0001.CreateForSystem(...)",
                     oRequestsBinding.getHeaderContext()
                 );
@@ -65,13 +66,13 @@ sap.ui.define(
                 oOperation.setParameter("ResultIsActiveEntity", false);
 
                 return oOperation.execute().then(function () {
-                    var oContext = oOperation.getBoundContext();
+                    const oContext = oOperation.getBoundContext();
 
                     if (!oContext) {
                         throw new Error("CreateForSystem did not return a request context.");
                     }
 
-                    return oContext.requestObject().then(function (oRequest) {
+                    return oContext.requestObject().then(function (oRequest: { RequestUuid?: string; IsActiveEntity?: boolean }) {
                         if (!oRequest || !oRequest.RequestUuid) {
                             throw new Error("CreateForSystem did not return RequestUuid.");
                         }
@@ -81,18 +82,18 @@ sap.ui.define(
                 }.bind(this));
             },
 
-            _navigateToRequestByKey: function (sRequestUuid, bIsActiveEntity) {
+            _navigateToRequestByKey: function (sRequestUuid: string, bIsActiveEntity?: boolean): void {
                 this._navigateToRequest(
                     "/Requests(RequestUuid=" + sRequestUuid +
                     ",IsActiveEntity=" + (bIsActiveEntity === true ? "true" : "false") + ")"
                 );
             },
 
-            _navigateToRequest: function (sCanonicalPath) {
-                var sKeyPredicate = sCanonicalPath
+            _navigateToRequest: function (sCanonicalPath: string): void {
+                const sKeyPredicate = sCanonicalPath
                     .replace(/^\/Requests\(/, "")
                     .replace(/\)$/, "");
-                var oRouter = this.getRouter && this.getRouter();
+                const oRouter = this.getRouter && this.getRouter();
 
                 if (oRouter) {
                     oRouter.navTo("RequestsObjectPage", {

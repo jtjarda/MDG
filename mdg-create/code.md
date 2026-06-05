@@ -4,6 +4,38 @@ Vychozi datovy model pro novou RAP aplikaci pozadavku na zalozeni BP.
 
 Model pouziva technicky klic `request_uuid` pro draft/kompozice. Pole `request_id` zustava semanticke cislo pozadavku a bude se plnit az pri ulozeni.
 
+## TypeScript support
+
+Fiori aplikace `mdgcreaterequest` byla dodatecne prepnuta na TypeScript bez regenerovani projektu.
+
+Runtime zdroj aplikace je nyni:
+
+```text
+mdgcreaterequest/webapp/Component.ts
+```
+
+Soubor obsahuje startup logiku pro parametr `ExternalSystem`, volani RAP factory action `CreateForSystem(...)` a navigaci na vytvoreny draft request.
+
+Build a lokalni server prekladaji TypeScript pres `ui5-tooling-transpile`.
+Konfigurace je v:
+
+```text
+mdgcreaterequest/package.json
+mdgcreaterequest/tsconfig.json
+mdgcreaterequest/ui5.yaml
+mdgcreaterequest/ui5-local.yaml
+mdgcreaterequest/ui5-mock.yaml
+```
+
+Kontrolni prikazy z adresare `mdgcreaterequest`:
+
+```bash
+npm run typecheck
+npm run build
+```
+
+OPA/QUnit testy v `mdgcreaterequest/webapp/test` zustavaji v JavaScriptu. TypeScript podpora se tyka aplikacnich runtime modulu.
+
 ## Tables
 
 ### ZMDG_REQ
