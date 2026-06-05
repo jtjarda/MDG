@@ -39,7 +39,7 @@ with additional save
     validation ValidateRequest;
   }
 
-  determination CalculateRequestId on save { create; }
+  determination PrepareRequestOnSave on save { create; }
   determination ClearPartnerId on modify { field BusinessPartnerGroup; }
   validation ValidateRequest on save { create; update; }
 

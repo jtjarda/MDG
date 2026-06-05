@@ -14,8 +14,8 @@ CLASS lhc_request DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys REQUEST requested_features FOR request
       RESULT result.
 
-    METHODS calculate_request_id FOR DETERMINE ON SAVE
-      IMPORTING keys FOR request~CalculateRequestId.
+    METHODS prepare_request_on_save FOR DETERMINE ON SAVE
+      IMPORTING keys FOR request~PrepareRequestOnSave.
 
     METHODS clear_partner_id FOR DETERMINE ON MODIFY
       IMPORTING keys FOR request~ClearPartnerId.
@@ -92,7 +92,7 @@ CLASS lhc_request IMPLEMENTATION.
     ENDLOOP.
   ENDMETHOD.
 
-  METHOD calculate_request_id.
+  METHOD prepare_request_on_save.
     READ ENTITIES OF zi_mdg_req IN LOCAL MODE
       ENTITY Request
         FIELDS ( RequestId )
@@ -132,13 +132,14 @@ CLASS lhc_request IMPLEMENTATION.
       APPEND VALUE #(
         %tky      = <request>-%tky
         RequestId = request_id
+        Status    = 'INP'
       ) TO update_requests.
     ENDLOOP.
 
     IF update_requests IS NOT INITIAL.
       MODIFY ENTITIES OF zi_mdg_req IN LOCAL MODE
         ENTITY Request
-          UPDATE FIELDS ( RequestId )
+          UPDATE FIELDS ( RequestId Status )
           WITH update_requests.
     ENDIF.
   ENDMETHOD.
