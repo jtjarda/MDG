@@ -49,12 +49,18 @@ sap.ui.define(
                     }.bind(this))
                     .catch(function (oError: Error) {
                         MessageBox.error(
-                            "BP request draft could not be created.",
+                            this._getText("createRequestDraftFailed"),
                             {
                                 details: oError && (oError.message || String(oError))
                             }
                         );
-                    });
+                    }.bind(this));
+            },
+
+            _getText: function (sKey: string): string {
+                const oResourceBundle = this.getModel("i18n")?.getResourceBundle?.();
+
+                return oResourceBundle?.getText?.(sKey) || sKey;
             },
 
             _createRequest: function (sExternalSystem?: string, sPartnerGid?: string): Promise<void> {

@@ -18,7 +18,13 @@ sap.ui.define(
     let sSelectedSystemPath = "/CreateSystems";
     const sLocalCreateAppUrl = "http://localhost:8080/test/flp.html?sap-ui-xx-viewCache=false#app-preview";
 
-    function navigateToCreateApp(sExternalSystem?: string, sPartnerGid?: string) {
+    function getText(oController: any, sKey: string): string {
+        const oResourceBundle = getView(oController)?.getModel?.("i18n")?.getResourceBundle?.();
+
+        return oResourceBundle?.getText?.(sKey) || sKey;
+    }
+
+    function navigateToCreateApp(oController: any, sExternalSystem?: string, sPartnerGid?: string) {
         if (!sExternalSystem && !sPartnerGid) {
             return;
         }
@@ -56,7 +62,7 @@ sap.ui.define(
                 });
             })
             .catch(function (): void {
-                MessageBox.error("Navigation to BP request creation could not be started.");
+                MessageBox.error(getText(oController, "navigationToCreateFailed"));
             });
     }
 
@@ -146,8 +152,8 @@ sap.ui.define(
         }
 
         oCreateForSystemDialog = new SelectDialog({
-            title: "Select: External System",
-            noDataText: "No systems available",
+            title: getText(oController, "selectExternalSystem"),
+            noDataText: getText(oController, "noSystemsAvailable"),
             search: function (oEvent: any): void {
                 const sValue = oEvent.getParameter("value") as string;
                 const oBinding = oEvent.getSource().getBinding("items");
@@ -162,6 +168,7 @@ sap.ui.define(
                 }
 
                 navigateToCreateApp(
+                    oController,
                     oSelectedItem.getBindingContext("create").getProperty("ExternalSystem"),
                     sSelectedPartnerGidForRequest
                 );
@@ -198,6 +205,8 @@ sap.ui.define(
             sSelectedSystemPath = "/CreateSystems";
 
             const oDialog = getCreateForSystemDialog(this);
+            oDialog.setTitle(getText(this, "selectExternalSystem"));
+            oDialog.setNoDataText(getText(this, "noSystemsAvailable"));
             bindSystemDialogItems(oDialog);
             oDialog.open();
         },
@@ -206,7 +215,7 @@ sap.ui.define(
             const sPartnerGid = getCurrentPartnerGid(this, oEvent);
 
             if (!sPartnerGid) {
-                MessageBox.error("Business partner ID could not be determined.");
+                MessageBox.error(getText(this, "partnerGidMissing"));
                 return;
             }
 
@@ -214,6 +223,8 @@ sap.ui.define(
             sSelectedSystemPath = "/ChangeSystems";
 
             const oDialog = getCreateForSystemDialog(this);
+            oDialog.setTitle(getText(this, "selectExternalSystem"));
+            oDialog.setNoDataText(getText(this, "noSystemsAvailable"));
             bindSystemDialogItems(oDialog);
             oDialog.open();
         }

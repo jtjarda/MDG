@@ -63,6 +63,65 @@
                         </Record>
                     </Collection>
                 </Annotation>
+                <Annotation Term="UI.Facets">
+                    <Collection>
+                        <Record Type="UI.CollectionFacet">
+                            <PropertyValue Property="ID" String="GlobalData"/>
+                            <PropertyValue Property="Label" String="{@i18n>globalData}"/>
+                            <PropertyValue Property="Facets">
+                                <Collection>
+                                    <Record Type="UI.ReferenceFacet">
+                                        <PropertyValue Property="ID" String="MainData"/>
+                                        <PropertyValue Property="Label" String="{@i18n>mainData}"/>
+                                        <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#MainData"/>
+                                    </Record>
+                                    <Record Type="UI.ReferenceFacet">
+                                        <PropertyValue Property="ID" String="IdentificationData"/>
+                                        <PropertyValue Property="Label" String="{@i18n>identificationData}"/>
+                                        <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#IdentificationData"/>
+                                    </Record>
+                                </Collection>
+                            </PropertyValue>
+                        </Record>
+                        <Record Type="UI.ReferenceFacet">
+                            <PropertyValue Property="ID" String="TaxData"/>
+                            <PropertyValue Property="Label" String="{@i18n>taxData}"/>
+                            <PropertyValue Property="Target" AnnotationPath="_TaxNumbers/@UI.LineItem"/>
+                        </Record>
+                        <Record Type="UI.ReferenceFacet">
+                            <PropertyValue Property="ID" String="Address"/>
+                            <PropertyValue Property="Label" String="{@i18n>address}"/>
+                            <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#AddressDisplay"/>
+                        </Record>
+                        <Record Type="UI.ReferenceFacet">
+                            <PropertyValue Property="ID" String="AddressVariants"/>
+                            <PropertyValue Property="Label" String="{@i18n>addressVariants}"/>
+                            <PropertyValue Property="Target" AnnotationPath="_AddressVariants/@UI.LineItem"/>
+                        </Record>
+                        <Record Type="UI.ReferenceFacet">
+                            <PropertyValue Property="ID" String="CountrySpecificData"/>
+                            <PropertyValue Property="Label" String="{@i18n>countrySpecificDataOverview}"/>
+                            <PropertyValue Property="Target" AnnotationPath="_Systems/@UI.LineItem"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="SAP__self.BusinessPartnerSearchType/Country">
+                <Annotation Term="Common.Text" Path="CountryName"/>
+                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextLast"/>
+            </Annotations>
+            <Annotations Target="SAP__self.BusinessPartnerSearchType/TaxNumber">
+                <Annotation Term="Common.Label" String="{@i18n>taxNumber}"/>
+            </Annotations>
+            <Annotations Target="SAP__self.BusinessPartnerSystemType/Language">
+                <Annotation Term="Common.Text" Path="LanguageDescription"/>
+                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextLast"/>
+            </Annotations>
+            <Annotations Target="SAP__self.BusinessPartnerSystemType/ExtSystemDescription">
+                <Annotation Term="Common.Label" String="{@i18n>externalSystem}"/>
+            </Annotations>
+            <Annotations Target="SAP__self.BusinessPartnerSystemType/PartnerCategory">
+                <Annotation Term="Common.Label" String="{@i18n>partnerCategory}"/>
             </Annotations>
             <Annotations Target="SAP__self.BusinessPartnerAddressType/Country">
                 <Annotation Term="Common.ValueList">
@@ -82,11 +141,25 @@
                     </Record>
                 </Annotation>
             </Annotations>
+            <Annotations Target="SAP__self.BusinessPartnerAddressType/AddressPreview">
+                <Annotation Term="Common.Label" String="{@i18n>addressPreview}"/>
+            </Annotations>
+            <Annotations Target="SAP__self.BusinessPartnerAddressType">
+                <Annotation Term="UI.Facets">
+                    <Collection>
+                        <Record Type="UI.ReferenceFacet">
+                            <PropertyValue Property="ID" String="AddressVariantDetail"/>
+                            <PropertyValue Property="Label" String="{@i18n>addressVariantDetail}"/>
+                            <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#AddressVariantDetail"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+            </Annotations>
             <Annotations Target="SAP__self.BusinessPartnerAddressType">
                 <Annotation Term="UI.HeaderInfo">
                     <Record>
-                        <PropertyValue Property="TypeName" String="Address Variant"/>
-                        <PropertyValue Property="TypeNamePlural" String="Address Variants"/>
+                        <PropertyValue Property="TypeName" String="{@i18n>addressVariant}"/>
+                        <PropertyValue Property="TypeNamePlural" String="{@i18n>addressVariants}"/>
                         <PropertyValue Property="Title">
                             <Record Type="UI.DataField">
                                 <PropertyValue Property="Value" Path="AddressVariantTitle"/>

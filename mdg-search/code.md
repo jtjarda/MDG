@@ -353,9 +353,13 @@ define view entity ZI_MDG_BP_ADDRESS
 @VDM.viewType: #BASIC
 define view entity ZI_MDG_BP_DISPLAY_ADDRESS
   as select from ZI_MDG_BP_ADDRESS as Address
+  association [0..1] to I_CountryText as _CountryText
+    on  _CountryText.Country  = Address.Country
+    and _CountryText.Language = $session.system_language
 {
   key Address.PartnerGID,
       Address.Country,
+      _CountryText.CountryName,
       Address.CompanyName,
       Address.PersonName,
       Address.SearchTerm1,
@@ -387,12 +391,14 @@ define view entity ZI_MDG_BP_TAX
   key Tax.partner_gid as PartnerGID,
 
   @UI.lineItem: [{ position: 10, label: 'Tax Type' }]
+  @ObjectModel.text.element: [ 'TaxTypeText' ]
+  @UI.textArrangement: #TEXT_LAST
   key Tax.taxtype     as TaxType,
 
-  @UI.lineItem: [{ position: 20, label: 'Tax Type Text' }]
+  @UI.hidden: true
       _TaxTypeText.TEXT as TaxTypeText,
 
-  @UI.lineItem: [{ position: 30, label: 'Tax Number' }]
+  @UI.lineItem: [{ position: 20, label: 'Tax Number' }]
       Tax.taxnum      as TaxNumber
 }
 where Tax.taxnum is not initial
@@ -455,6 +461,8 @@ define view entity ZI_MDG_BP_TAX_AGG
   as select from ZTF_MDG_BP_TAX_AGG( )
 {
   key partner_gid as PartnerGID,
+
+  @EndUserText.label: 'Tax Number'
       tax_number  as TaxNumber
 }
 ```
@@ -489,6 +497,9 @@ define view entity ZI_MDG_BP_SYSTEM
   as select from zmdg_bpsys as Sys
   association [0..1] to zmdg_c_sys as _ExtSystemText
     on _ExtSystemText.extsys = Sys.extsys
+  association [0..1] to t002t as _LanguageText
+    on  _LanguageText.sprsl = Sys.langu
+    and _LanguageText.spras = $session.system_language
   association [0..1] to ZI_MDG_DOMAIN_VALUE_TEXT as _PartnerCategoryText
     on  _PartnerCategoryText.DomainName  = 'ZMDG_D_BU_TYPE'
     and _PartnerCategoryText.Language    = $session.system_language
@@ -515,7 +526,12 @@ define view entity ZI_MDG_BP_SYSTEM
       )               as ExtSystemDescription,
 
   @UI.lineItem: [{ position: 30, label: 'Language' }]
+  @ObjectModel.text.element: [ 'LanguageDescription' ]
+  @UI.textArrangement: #TEXT_LAST
       Sys.langu       as Language,
+
+  @UI.hidden: true
+      _LanguageText.sptxt as LanguageDescription,
 
       Sys.type        as PartnerCategoryCode,
 
@@ -571,6 +587,9 @@ define view entity ZI_MDG_BP_SEARCH
       BP.ParentGID2,
       BP.FoundDate,
       _DisplayAddress.Country,
+      _DisplayAddress.CountryName,
+
+      @EndUserText.label: 'Tax Number'
       _Tax.TaxNumber,
       _DisplayAddress.CompanyName,
       _DisplayAddress.PersonName,
@@ -648,22 +667,13 @@ define root view entity ZC_MDG_BP_SEARCH
     {
       id: 'Address',
       purpose: #STANDARD,
-      type: #COLLECTION,
-      label: 'Address',
-      position: 30
-    },
-    {
-      id: 'AddressDisplay',
-      parentId: 'Address',
-      purpose: #STANDARD,
       type: #FIELDGROUP_REFERENCE,
       label: 'Address',
-      position: 10,
+      position: 30,
       targetQualifier: 'AddressDisplay'
     },
     {
       id: 'AddressVariants',
-      parentId: 'Address',
       purpose: #STANDARD,
       type: #LINEITEM_REFERENCE,
       label: 'Address variants',
@@ -692,10 +702,16 @@ define root view entity ZC_MDG_BP_SEARCH
 
   @UI.lineItem: [{ position: 20, label: 'Country' }]
   @UI.fieldGroup: [{ qualifier: 'AddressDisplay', position: 10, label: 'Country' }]
+  @ObjectModel.text.element: [ 'CountryName' ]
+  @UI.textArrangement: #TEXT_LAST
   Country,
+
+  @UI.hidden: true
+  CountryName,
 
   @UI.lineItem: [{ position: 30, label: 'Tax Number' }]
   @UI.selectionField: [{ position: 70 }]
+  @EndUserText.label: 'Tax Number'
   TaxNumber,
 
   @UI.lineItem: [{ position: 40, label: 'Company Name' }]
@@ -766,6 +782,465 @@ define service ZUI_MDG_BP_SEARCH {
   expose ZI_MDG_BP_SYSTEM       as BusinessPartnerSystem;
 }
 ```
+
+## Dvojjazycnost CS/EN - CDS a DDIC
+
+UI5 `i18n*.properties` resi pouze vlastni frontend texty, napriklad custom tlacitka, dialogy a hlaseni.
+Popisky poli, sekci, tabulek, akci a value helpu ve Fiori Elements prichazeji z OData metadat, tedy z CDS/DDIC.
+
+Do ABAP zdroju se nedavaji dve jazykove varianty textu. V CDS zustane zdrojovy text a preklady se udrzuji jako prekladove objekty v ADT/SE63 pro jazyky `EN` a `CS`.
+
+### Obecna pravidla
+
+- `@EndUserText.label` prelozit v ADT/SE63.
+- `@UI.* label`, `@UI.headerInfo.typeName`, `@UI.headerInfo.typeNamePlural` prelozit v ADT/SE63.
+- Kde pole vychazi z vlastniho DDIC data elementu, preferovat preklad labelu na data elementu.
+- Kde jde o hodnotu s kodem a popisem, nepouzivat UI5 i18n, ale textovou tabulku/asociaci s jazykem `$session.system_language`.
+- Lokální `webapp/annotations/annotation.xml` pouzivat jen pro frontend overlay. Pokud je stejny label mozne dat do CDS metadata extension, preferovat CDS.
+
+### mdg-search - CDS k uprave/prekladu
+
+#### ZMDG_BP
+
+Prelozit `@EndUserText.label`:
+
+```abap
+@EndUserText.label : 'MDG Business Partner'
+```
+
+#### ZMDG_BPADR
+
+Prelozit `@EndUserText.label`:
+
+```abap
+@EndUserText.label : 'MDG Business Partner Address'
+```
+
+#### ZMDG_BPTAX
+
+Prelozit `@EndUserText.label`:
+
+```abap
+@EndUserText.label : 'MDG Business Partner Tax Numbers'
+```
+
+#### ZMDG_BPSYS
+
+Prelozit `@EndUserText.label`:
+
+```abap
+@EndUserText.label : 'MDG Business Partner System Data'
+```
+
+#### ZMDG_C_SYS
+
+Popis systemu `description` je aktualne bez jazykoveho klice. Pokud ma byt popis externiho systemu skutecne dvojjazycny, je potreba:
+
+- bud doplnit textovou tabulku napr. `ZMDG_C_SYS_T` s klici `EXTSYS`, `LANGU`,
+- nebo mit dva samostatne popisne sloupce a vybirat podle jazyka,
+- cistejsi je textova tabulka s asociaci podle `$session.system_language`.
+
+#### ZI_MDG_BP
+
+Prelozit `@EndUserText.label`:
+
+```abap
+@EndUserText.label: 'MDG BP Root Interface'
+```
+
+Pokud se nektera pole zobrazuji bez explicitniho `@UI label`, prelozit take DDIC data elementy pouzite za poli:
+
+```abap
+PartnerGID
+ParentGID1
+ParentGID2
+FoundDate
+LeiCode
+Duns
+Euid
+```
+
+#### ZI_MDG_BP_ADDRESS
+
+Prelozit:
+
+```abap
+@EndUserText.label: 'MDG BP Address Interface'
+@UI.headerInfo.typeName: 'Address Variant'
+@UI.headerInfo.typeNamePlural: 'Address Variants'
+```
+
+Prelozit vsechny UI labely:
+
+```text
+Address variant detail
+Nation
+Company Name
+Search Term
+Street
+House No
+House No Suppl.
+City
+District
+Postal Code
+Country
+```
+
+Hodnota `AddressVariantTitle` pouziva text z `TSADVT` podle `$session.system_language`. Literal `Default` je ale natvrdo v CDS. Pokud ma byt i defaultni varianta dvojjazycna, doporuceni je:
+
+- zalozit vlastni textovou/value help tabulku pro defaultni nation text,
+- nebo zobrazit technickou hodnotu a defaultni popis resit az pres textovy model.
+
+#### ZI_MDG_BP_DISPLAY_ADDRESS
+
+Prelozit:
+
+```abap
+@EndUserText.label: 'MDG BP Display Address'
+```
+
+Country text je spravne reseny pres:
+
+```abap
+association [0..1] to I_CountryText as _CountryText
+  on  _CountryText.Country  = Address.Country
+  and _CountryText.Language = $session.system_language
+```
+
+#### ZI_MDG_BP_TAX
+
+Prelozit:
+
+```abap
+@EndUserText.label: 'MDG BP Tax Number Interface'
+```
+
+Prelozit UI labely:
+
+```text
+Tax Type
+Tax Number
+```
+
+Tax Type text je spravne reseny pres `TFKTAXNUMTYPE_T` podle `$session.system_language` a ma byt napojen jako text element:
+
+```abap
+@UI.lineItem: [{ position: 10, label: 'Tax Type' }]
+@ObjectModel.text.element: [ 'TaxTypeText' ]
+@UI.textArrangement: #TEXT_LAST
+key Tax.taxtype as TaxType,
+
+@UI.hidden: true
+_TaxTypeText.TEXT as TaxTypeText,
+```
+
+#### ZTF_MDG_BP_TAX_AGG
+
+Prelozit:
+
+```abap
+@EndUserText.label: 'MDG BP Tax Numbers Aggregated'
+```
+
+#### ZI_MDG_BP_TAX_AGG
+
+Prelozit:
+
+```abap
+@EndUserText.label: 'MDG BP Tax Numbers Aggregated Interface'
+```
+
+#### ZI_MDG_DOMAIN_VALUE_TEXT
+
+Prelozit:
+
+```abap
+@EndUserText.label: 'MDG Domain Fixed Value Text'
+```
+
+Tento CDS je jazykove spravne pripraveny, pokud jsou prelozene domain fixed values v DDIC.
+
+#### ZI_MDG_BP_SYSTEM
+
+Prelozit:
+
+```abap
+@EndUserText.label: 'MDG BP System Interface'
+```
+
+Prelozit UI labely:
+
+```text
+Partner ID
+External System
+Language
+Partner Category
+Inactive
+```
+
+Language text je spravne reseny pres:
+
+```abap
+association [0..1] to t002t as _LanguageText
+  on  _LanguageText.sprsl = Sys.langu
+  and _LanguageText.spras = $session.system_language
+```
+
+Partner Category je spravne resena pres `ZI_MDG_DOMAIN_VALUE_TEXT`, pokud jsou prelozene fixed values domeny `ZMDG_D_BU_TYPE`.
+
+#### ZI_MDG_BP_SEARCH
+
+Prelozit:
+
+```abap
+@EndUserText.label: 'MDG BP Search Interface'
+```
+
+Tento CDS jen sklada data. Jazykove texty jsou zde prevzate z:
+
+- `CountryName` z `ZI_MDG_BP_DISPLAY_ADDRESS`,
+- tax type text z `ZI_MDG_BP_TAX`,
+- language text a partner category text z `ZI_MDG_BP_SYSTEM`.
+
+#### ZC_MDG_BP_SEARCH
+
+Prelozit:
+
+```abap
+@EndUserText.label: 'MDG BP Search Consumption'
+@UI.headerInfo.typeName: 'Business Partner'
+@UI.headerInfo.typeNamePlural: 'Business Partners'
+```
+
+Prelozit facet labely:
+
+```text
+Global Data (KID)
+Main data
+Identification data
+Tax Data
+Address
+Address variants
+Country specific data overview
+```
+
+Prelozit UI labely:
+
+```text
+Partner GID
+Parent GID 1
+Parent GID 2
+Country
+Tax Number
+Company Name
+Person Name
+Search Term
+Found Date
+City
+District
+Street
+House No
+House No Suppl.
+Postal Code
+LEI Code
+DUNS Number
+EUID
+```
+
+Country je spravne napojena jako text element:
+
+```abap
+@ObjectModel.text.element: [ 'CountryName' ]
+@UI.textArrangement: #TEXT_LAST
+Country,
+```
+
+#### ZUI_MDG_BP_SEARCH
+
+Prelozit:
+
+```abap
+@EndUserText.label: 'MDG BP Search Service Definition'
+```
+
+### mdg-create - CDS a metadata extension k uprave/prekladu
+
+V `mdg-create` jsou fyzicke zdroje v:
+
+```text
+C:\Users\JTikal\Documents\MDG\mdg-create\abap\ddl
+C:\Users\JTikal\Documents\MDG\mdg-create\abap\metadata
+```
+
+#### ZI_MDG_REQ
+
+Prelozit:
+
+```abap
+@EndUserText.label: 'MDG BP Request'
+```
+
+Texty hodnot jsou pripravene pres domenove texty:
+
+```abap
+_RequestTypeText
+_StatusText
+```
+
+Podminka: domeny `ZMDG_REQ_TYPE` a `ZMSG_D_REQ_STATUS` musi mit prelozene fixed values pro `EN` a `CS`.
+
+#### ZI_MDG_REQADR
+
+Prelozit `@EndUserText.label` v CDS a pripadne DDIC data elementy poli adresy.
+
+#### ZI_MDG_REQTAX
+
+Prelozit `@EndUserText.label` v CDS a pripadne DDIC data elementy poli tax dat.
+
+Pokud bude Tax Type zobrazovat text, musi mit value/text CDS nad `TFKTAXNUMTYPE_T` podle `$session.system_language`, stejne jako ve vyhledavaci casti.
+
+#### ZI_MDG_REQ_CREATE_P
+
+Prelozit labely parametru factory action:
+
+```text
+External System
+Partner GID
+Result Is Active Entity
+```
+
+`PartnerGID` zustava `@UI.hidden: true`, aby se nezobrazoval v popupu.
+
+#### ZI_MDG_C_SYS
+
+Prelozit `@EndUserText.label` a labely poli.
+
+Pozor: `Description` neni jazykove zavisle, pokud zustane jen jeden sloupec v `ZMDG_C_SYS`.
+
+#### ZI_MDG_C_SYS_CREATEVH
+
+Prelozit `@EndUserText.label` a labels value helpu pro Create.
+
+#### ZI_MDG_C_SYS_CHANGEVH
+
+Prelozit `@EndUserText.label` a labels value helpu pro Change.
+
+#### ZI_MDG_COUNTRY_VH
+
+Ocekavane chovani je text z `I_CountryText` podle `$session.system_language`.
+Prelozit jen vlastni `@EndUserText.label`/UI labely, ne nazvy statu - ty jdou ze SAP standard textu.
+
+#### ZI_MDG_BU_GROUP_VH
+
+Prelozit `@EndUserText.label`/UI labely.
+Pokud je popis partner group ze custom customizingu bez jazyka, doplnit textovou tabulku.
+
+#### ZI_MDG_LEGAL_FORM_VH
+
+Prelozit `@EndUserText.label`/UI labely.
+Pokud legal form text prichazi ze SAP standard textove tabulky, musi byt join vazany na `$session.system_language`.
+
+#### ZI_MDG_DOMAIN_VALUE_TEXT
+
+Prelozit `@EndUserText.label`.
+Hlavni preklady hodnot ale lezi na DDIC domenach/fixed values.
+
+#### ZI_MDG_USER
+
+Prelozit `@EndUserText.label`/UI labely.
+
+#### ZC_MDG_REQ_UI
+
+Prelozit header:
+
+```text
+BP Request
+BP Requests
+```
+
+Prelozit facet labely:
+
+```text
+General
+Global Data (KID)
+Main Data
+Identification Data
+Country Specific Data Detail
+Address
+Address Variants
+Additional Tax Data
+```
+
+Prelozit action/field labely:
+
+```text
+Create
+Request ID
+Request Type
+Request Origin
+Status
+Created By
+Partner GID
+DUNS Number
+Created At
+Parent GID 1
+Parent GID 2
+Found Date
+LEI Code
+EUID
+Partner Group
+Partner ID
+Partner Category
+Legal Form
+Telephone No
+Mobile Tel. No
+E-mail Address
+Vendor
+Customer
+Inactive
+Inactive Reason
+Company Name
+Search Term
+Country
+District
+City
+Postal Code
+Street
+House No
+House No Suppl.
+```
+
+#### ZC_MDG_REQADR_UI
+
+Prelozit header/facet/field labely:
+
+```text
+Address Variant
+Address Variants
+Address Details
+Nation
+Company Name
+Country
+City
+Postal Code
+Street
+```
+
+#### ZC_MDG_REQTAX_UI
+
+Prelozit header/facet/field labely:
+
+```text
+Tax Number
+Tax Numbers
+Tax Number Details
+Tax Type
+Tax Number
+```
+
+#### ZUI_MDG_REQ
+
+Prelozit service definition label.
 
 ## package.json
 
