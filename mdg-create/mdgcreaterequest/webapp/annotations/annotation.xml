@@ -25,6 +25,27 @@
             <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/ResultIsActiveEntity">
                 <Annotation Term="Common.Label" String="{@i18n>resultIsActiveEntity}"/>
             </Annotations>
+            <Annotations Target="SAP__self.AddressVariantsType/Nation">
+                <Annotation Term="Common.Label" String="{@i18n>nation}"/>
+                <Annotation Term="Common.Text" Path="NationText"/>
+                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextLast"/>
+                <Annotation Term="Common.ValueList">
+                    <Record Type="Common.ValueListType">
+                        <PropertyValue Property="CollectionPath" String="Nations"/>
+                        <PropertyValue Property="Parameters">
+                            <Collection>
+                                <Record Type="Common.ValueListParameterInOut">
+                                    <PropertyValue Property="LocalDataProperty" PropertyPath="Nation"/>
+                                    <PropertyValue Property="ValueListProperty" String="Nation"/>
+                                </Record>
+                                <Record Type="Common.ValueListParameterDisplayOnly">
+                                    <PropertyValue Property="ValueListProperty" String="NationText"/>
+                                </Record>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+            </Annotations>
 
             <Annotations Target="SAP__self.RequestsType">
                 <Annotation Term="Common.Label" String="{@i18n>bpRequest}"/>
