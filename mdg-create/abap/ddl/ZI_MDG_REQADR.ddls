@@ -7,13 +7,9 @@ define view entity ZI_MDG_REQADR
   as select from zmdg_reqadr
   association to parent ZI_MDG_REQ as _Request
     on $projection.RequestUuid = _Request.RequestUuid
-  association [0..1] to tsadvt as _NationText
-    on  _NationText.nation = $projection.Nation
-    and _NationText.langu  = $session.system_language
 {
   key request_uuid as RequestUuid,
   key nation       as Nation,
-      _NationText.nation_tex as NationText,
       name_org1    as OrganizationName1,
       name_org2    as OrganizationName2,
       name_org3    as OrganizationName3,

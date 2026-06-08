@@ -6,10 +6,7 @@ define view entity ZC_MDG_REQADR
   as projection on ZI_MDG_REQADR
 {
   key RequestUuid,
-
-  @ObjectModel.text.element: [ 'NationText' ]
   key Nation,
-      NationText,
       OrganizationName1,
       OrganizationName2,
       OrganizationName3,
