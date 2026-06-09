@@ -1,4 +1,4 @@
-﻿@EndUserText.label: 'MDG BP Request Tax Number'
+@EndUserText.label: 'MDG BP Request Tax Number'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 @VDM.viewType: #CONSUMPTION
@@ -7,6 +7,8 @@ define view entity ZC_MDG_REQTAX
 {
   key RequestUuid,
   key TaxType,
+      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_MDG_REQTAX_VE'
+      virtual TaxTypeText : abap.char(80),
       TaxNumber,
 
       _Request : redirected to parent ZC_MDG_REQ

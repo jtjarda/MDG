@@ -1,4 +1,4 @@
-﻿# MDG Create - Working Code
+# MDG Create - Working Code
 
 Vychozi datovy model pro novou RAP aplikaci pozadavku na zalozeni BP.
 
@@ -41,7 +41,7 @@ OPA/QUnit testy v `mdgcreaterequest/webapp/test` zustavaji v JavaScriptu. TypeSc
 ### ZMDG_REQ
 
 ```abap
-@EndUserText.label : 'MDG PoĹľadavek'
+@EndUserText.label : 'MDG PoÄąÄľadavek'
 @AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
 @AbapCatalog.tableCategory : #TRANSPARENT
 @AbapCatalog.deliveryClass : #A
@@ -100,7 +100,7 @@ define table zmdg_req {
 ### ZMDG_REQADR
 
 ```abap
-@EndUserText.label : 'MDG PoĹľadavek - Adresy'
+@EndUserText.label : 'MDG PoÄąÄľadavek - Adresy'
 @AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
 @AbapCatalog.tableCategory : #TRANSPARENT
 @AbapCatalog.deliveryClass : #A
@@ -133,7 +133,7 @@ define table zmdg_reqadr {
 ### ZMDG_REQTAX
 
 ```abap
-@EndUserText.label : 'MDG poĹľadavek - daĹovĂˇ ÄŤĂ­sla'
+@EndUserText.label : 'MDG poÄąÄľadavek - daÄąÂovÄ‚Ë‡ Ă„Ĺ¤Ä‚Â­sla'
 @AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
 @AbapCatalog.tableCategory : #TRANSPARENT
 @AbapCatalog.deliveryClass : #A
@@ -151,7 +151,7 @@ define table zmdg_reqtax {
 ### ZMDG_C_SYS
 
 ```abap
-@EndUserText.label : 'Nastavení připojených systémů'
+@EndUserText.label : 'NastavenĂ­ pĹ™ipojenĂ˝ch systĂ©mĹŻ'
 @AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
 @AbapCatalog.tableCategory : #TRANSPARENT
 @AbapCatalog.deliveryClass : #C
@@ -195,7 +195,7 @@ define table zmdg_c_fieldcat {
 ### ZMDG_C_BUGROUP
 
 ```abap
-@EndUserText.label : 'Seskupování OP'
+@EndUserText.label : 'SeskupovĂˇnĂ­ OP'
 @AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
 @AbapCatalog.tableCategory : #TRANSPARENT
 @AbapCatalog.deliveryClass : #C
@@ -482,6 +482,33 @@ select from ZI_MDG_C_SYS as System
   System.DefaultAlphabet
 }
 where System.IsEnhanceAllowed <> 'X'
+```
+
+### ZI_MDG_TAX_TYPE_VH.ddls
+
+```abap
+@EndUserText.label: 'MDG Tax Type Value Help'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.resultSet.sizeCategory: #XS
+@Search.searchable: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_TAX_TYPE_VH
+  as select from tfktaxnumtype as TaxType
+  association [0..1] to tfktaxnumtype_t as _Text
+    on  _Text.taxtype = TaxType.taxtype
+    and _Text.spras   = $session.system_language
+{
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      @ObjectModel.text.element: [ 'TaxTypeText' ]
+  key TaxType.taxtype as TaxType,
+
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      @Semantics.text: true
+      _Text.text as TaxTypeText
+}
 ```
 
 ### ZI_MDG_NATION_VH.ddls
@@ -789,12 +816,13 @@ define view entity ZC_MDG_REQTAX
 {
   key RequestUuid,
   key TaxType,
+      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_MDG_REQTAX_VE'
+      virtual TaxTypeText : abap.char(80),
       TaxNumber,
 
       _Request : redirected to parent ZC_MDG_REQ
 }
 ```
-
 ### ZI_MDG_REQ.bdef
 
 ```abap
@@ -1002,7 +1030,6 @@ define behavior for ZC_MDG_REQTAX alias Tax
   use association _Request { with draft; }
 }
 ```
-
 ### ZUI_MDG_REQ.srvd
 
 ```abap
@@ -1018,6 +1045,7 @@ define service ZUI_MDG_REQ {
   expose ZI_MDG_DOMAIN_VALUE_TEXT  as DomainValueTexts;
   expose ZI_MDG_COUNTRY_VH         as Countries;
   expose ZI_MDG_NATION_VH          as Nations;
+  expose ZI_MDG_TAX_TYPE_VH         as TaxTypes;
   expose ZI_MDG_LEGAL_FORM_VH      as LegalForms;
   expose ZI_MDG_BU_GROUP_VH        as BusinessPartnerGroups;
 }
@@ -1314,7 +1342,7 @@ annotate entity ZC_MDG_REQADR with
 @UI.headerInfo: {
   typeName: 'Tax Number',
   typeNamePlural: 'Tax Numbers',
-  title: { type: #STANDARD, value: 'TaxType' },
+  title: { type: #STANDARD, value: 'TaxTypeText' },
   description: { type: #STANDARD, value: 'TaxNumber' }
 }
 annotate entity ZC_MDG_REQTAX with
@@ -1332,6 +1360,11 @@ annotate entity ZC_MDG_REQTAX with
     }
   ]
 
+  @Consumption.valueHelpDefinition: [
+    {
+      entity: { name: 'ZI_MDG_TAX_TYPE_VH', element: 'TaxType' }
+    }
+  ]
   @UI.lineItem: [{ position: 10, label: 'Tax Type' }]
   @UI.identification: [{ position: 10, label: 'Tax Type' }]
   TaxType;
@@ -2453,6 +2486,80 @@ CLASS zcl_mdg_reqadr_ve IMPLEMENTATION.
 ENDCLASS.
 ```
 
+### ZCL_MDG_REQTAX_VE
+
+```abap
+CLASS zcl_mdg_reqtax_ve DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC.
+
+  PUBLIC SECTION.
+    INTERFACES if_sadl_exit.
+    INTERFACES if_sadl_exit_calc_element_read.
+
+  PRIVATE SECTION.
+    TYPES:
+      BEGIN OF ty_virtual_property,
+        TaxTypeText TYPE tfktaxnumtype_t-text,
+      END OF ty_virtual_property.
+
+    CONSTANTS:
+      c_tax_type      TYPE string VALUE 'TAXTYPE',
+      c_tax_type_text TYPE string VALUE 'TAXTYPETEXT'.
+ENDCLASS.
+
+CLASS zcl_mdg_reqtax_ve IMPLEMENTATION.
+  METHOD if_sadl_exit_calc_element_read~get_calculation_info.
+    LOOP AT it_requested_calc_elements ASSIGNING FIELD-SYMBOL(<calc_element>).
+      CASE <calc_element>.
+        WHEN c_tax_type_text.
+          INSERT c_tax_type INTO TABLE et_requested_orig_elements.
+      ENDCASE.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD if_sadl_exit_calc_element_read~calculate.
+    DATA records TYPE STANDARD TABLE OF zc_mdg_reqtax WITH EMPTY KEY.
+    DATA virtual_properties TYPE STANDARD TABLE OF ty_virtual_property WITH EMPTY KEY.
+    DATA virtual_property TYPE ty_virtual_property.
+
+    TYPES:
+      BEGIN OF ty_tax_type_text,
+        taxType     TYPE tfktaxnumtype-taxtype,
+        taxTypeText TYPE tfktaxnumtype_t-text,
+      END OF ty_tax_type_text.
+
+    DATA tax_type_texts TYPE HASHED TABLE OF ty_tax_type_text WITH UNIQUE KEY taxType.
+
+    records = CORRESPONDING #( it_original_data ).
+
+    IF records IS NOT INITIAL.
+      SELECT taxtype AS taxType,
+             text    AS taxTypeText
+        FROM tfktaxnumtype_t
+        FOR ALL ENTRIES IN @records
+        WHERE taxtype = @records-TaxType
+          AND spras   = @sy-langu
+        INTO TABLE @tax_type_texts.
+    ENDIF.
+
+    LOOP AT records ASSIGNING FIELD-SYMBOL(<record>).
+      CLEAR virtual_property.
+
+      READ TABLE tax_type_texts ASSIGNING FIELD-SYMBOL(<tax_type_text>)
+        WITH TABLE KEY taxType = <record>-TaxType.
+      IF sy-subrc = 0.
+        virtual_property-TaxTypeText = <tax_type_text>-taxTypeText.
+      ENDIF.
+
+      APPEND virtual_property TO virtual_properties.
+    ENDLOOP.
+
+    ct_calculated_data = CORRESPONDING #( virtual_properties ).
+  ENDMETHOD.
+ENDCLASS.
+```
 ### ZCL_MDG_SEND_API_OP
 
 ```abap
@@ -2904,6 +3011,15 @@ sap.ui.define(
             "RequestsObjectPage",
             "AddressVariantsObjectPage"
           ]
+        },
+        {
+          "pattern": "Requests({key})/_Tax({key2}):?query:",
+          "name": "TaxNumbersObjectPage",
+          "target": [
+            "RequestsList",
+            "RequestsObjectPage",
+            "TaxNumbersObjectPage"
+          ]
         }
       ],
       "targets": {
@@ -2949,6 +3065,11 @@ sap.ui.define(
                   "detail": {
                     "route": "AddressVariantsObjectPage"
                   }
+                },
+                "_Tax": {
+                  "detail": {
+                    "route": "TaxNumbersObjectPage"
+                  }
                 }
               }
             }
@@ -2964,6 +3085,20 @@ sap.ui.define(
             "settings": {
               "editableHeaderContent": false,
               "contextPath": "/Requests/_Address",
+              "showRelatedApps": false
+            }
+          }
+        },
+        "TaxNumbersObjectPage": {
+          "type": "Component",
+          "id": "TaxNumbersObjectPage",
+          "name": "sap.fe.templates.ObjectPage",
+          "controlAggregation": "endColumnPages",
+          "contextPattern": "/Requests({key})/_Tax({key2})",
+          "options": {
+            "settings": {
+              "editableHeaderContent": false,
+              "contextPath": "/Requests/_Tax",
               "showRelatedApps": false
             }
           }
@@ -3188,13 +3323,17 @@ sap.ui.define(
                     </Record>
                 </Annotation>
             </Annotations>
+            <Annotations Target="SAP__self.TaxNumbersType/TaxType">
+                <Annotation Term="Common.Text" Path="TaxTypeText"/>
+                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextFirst"/>
+            </Annotations>
             <Annotations Target="SAP__self.TaxNumbersType">
                 <Annotation Term="Common.Label" String="{@i18n>taxNumber}"/>
                 <Annotation Term="UI.HeaderInfo">
                     <Record>
                         <PropertyValue Property="TypeName" String="{@i18n>taxNumber}"/>
                         <PropertyValue Property="TypeNamePlural" String="{@i18n>taxNumbers}"/>
-                        <PropertyValue Property="Title"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="TaxType"/></Record></PropertyValue>
+                        <PropertyValue Property="Title"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="TaxTypeText"/></Record></PropertyValue>
                         <PropertyValue Property="Description"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="TaxNumber"/></Record></PropertyValue>
                     </Record>
                 </Annotation>
@@ -3215,8 +3354,8 @@ sap.ui.define(
                 </Annotation>
                 <Annotation Term="UI.LineItem">
                     <Collection>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxType}"/><PropertyValue Property="Value" Path="TaxType"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxNumber}"/><PropertyValue Property="Value" Path="TaxNumber"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxType}"/><PropertyValue Property="Value" Path="TaxType"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxNumber}"/><PropertyValue Property="Value" Path="TaxNumber"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
                     </Collection>
                 </Annotation>
             </Annotations>
@@ -3359,74 +3498,74 @@ resultIsActiveEntity=Result Is Active Entity
 #Texts for manifest.json
 
 #XTIT: Application name
-appTitle=MDG poĹľadavek - zaloĹľenĂ­ BP
+appTitle=MDG poÄąÄľadavek - zaloÄąÄľenÄ‚Â­ BP
 
 #YDES: Application description
-appDescription=MDG poĹľadavek - zaloĹľenĂ­ BP
+appDescription=MDG poÄąÄľadavek - zaloÄąÄľenÄ‚Â­ BP
 
 #XMSG: Startup create request error
-createRequestDraftFailed=Draft BP poĹľadavku se nepodaĹ™ilo vytvoĹ™it.
+createRequestDraftFailed=Draft BP poÄąÄľadavku se nepodaÄąâ„˘ilo vytvoÄąâ„˘it.
 
 #XTIT: Request object names
-bpRequest=BP poĹľadavek
-bpRequests=BP poĹľadavky
+bpRequest=BP poÄąÄľadavek
+bpRequests=BP poÄąÄľadavky
 
 #XTIT: Object page sections
-general=VĹˇeobecnĂ©
-globalData=GlobĂˇlnĂ­ data (KID)
-mainData=HlavnĂ­ data
-identificationData=IdentifikaÄŤnĂ­ data
+general=VÄąË‡eobecnÄ‚Â©
+globalData=GlobÄ‚Ë‡lnÄ‚Â­ data (KID)
+mainData=HlavnÄ‚Â­ data
+identificationData=IdentifikaĂ„Ĺ¤nÄ‚Â­ data
 countrySpecificDataDetail=Detail dat pro danou zemi
 address=Adresa
 addressVariants=Varianty adres
-additionalTaxData=DaĹovĂˇ data
+additionalTaxData=DaÄąÂovÄ‚Ë‡ data
 addressDetails=Detaily adresy
-taxNumberDetails=Detaily daĹovĂ©ho ÄŤĂ­sla
+taxNumberDetails=Detaily daÄąÂovÄ‚Â©ho Ă„Ĺ¤Ä‚Â­sla
 
 #XBUT: Create request action
-create=VytvoĹ™it
+create=VytvoÄąâ„˘it
 
 #XFLD: Field labels
-requestId=ID poĹľadavku
-requestType=Typ poĹľadavku
-requestOrigin=PĹŻvod poĹľadavku
+requestId=ID poÄąÄľadavku
+requestType=Typ poÄąÄľadavku
+requestOrigin=PÄąĹ»vod poÄąÄľadavku
 status=Status
-createdBy=VytvoĹ™il
-createdAt=VytvoĹ™eno
+createdBy=VytvoÄąâ„˘il
+createdAt=VytvoÄąâ„˘eno
 partnerGid=Partner GID
-parentGid1=NadĹ™azenĂ˝ GID 1
-parentGid2=NadĹ™azenĂ˝ GID 2
-foundDate=Datum zaloĹľenĂ­
-leiCode=LEI kĂłd
-dunsNumber=ÄŚĂ­slo D-U-N-S
+parentGid1=NadÄąâ„˘azenÄ‚Ëť GID 1
+parentGid2=NadÄąâ„˘azenÄ‚Ëť GID 2
+foundDate=Datum zaloÄąÄľenÄ‚Â­
+leiCode=LEI kÄ‚Ĺ‚d
+dunsNumber=Ă„ĹšÄ‚Â­slo D-U-N-S
 euid=EUID
 partnerGroup=Skupina partnera
 partnerId=ID partnera
 partnerCategory=Kategorie partnera
-legalForm=PrĂˇvnĂ­ forma
+legalForm=PrÄ‚Ë‡vnÄ‚Â­ forma
 telephoneNo=Telefon
-mobileTelNo=MobilnĂ­ telefon
-emailAddress=E-mailovĂˇ adresa
+mobileTelNo=MobilnÄ‚Â­ telefon
+emailAddress=E-mailovÄ‚Ë‡ adresa
 vendor=Dodavatel
-customer=ZĂˇkaznĂ­k
-inactive=NeaktivnĂ­
-inactiveReason=DĹŻvod neaktivity
-companyName=NĂˇzev organizace
-searchTerm=HledanĂ˝ vĂ˝raz 1
-country=KlĂ­ÄŤ stĂˇtu/regionu
-district=MĂ­stnĂ­ ÄŤĂˇst
-city=MÄ›sto
-postalCode=PSÄŚ
+customer=ZÄ‚Ë‡kaznÄ‚Â­k
+inactive=NeaktivnÄ‚Â­
+inactiveReason=DÄąĹ»vod neaktivity
+companyName=NÄ‚Ë‡zev organizace
+searchTerm=HledanÄ‚Ëť vÄ‚Ëťraz 1
+country=KlÄ‚Â­Ă„Ĺ¤ stÄ‚Ë‡tu/regionu
+district=MÄ‚Â­stnÄ‚Â­ Ă„Ĺ¤Ä‚Ë‡st
+city=MĂ„â€şsto
+postalCode=PSĂ„Ĺš
 street=Ulice
-houseNo=ÄŚĂ­slo domu
+houseNo=Ă„ĹšÄ‚Â­slo domu
 houseNoSuppl=Dodatek
 addressVariant=Varianta adresy
 nation=Text verze
-taxNumber=DaĹovĂ© ÄŤĂ­slo
-taxNumbers=DaĹovĂˇ ÄŤĂ­sla
-taxType=Typ danÄ›
-externalSystem=ZemÄ›/Region
-resultIsActiveEntity=VĂ˝sledek je aktivnĂ­
+taxNumber=DaÄąÂovÄ‚Â© Ă„Ĺ¤Ä‚Â­slo
+taxNumbers=DaÄąÂovÄ‚Ë‡ Ă„Ĺ¤Ä‚Â­sla
+taxType=Typ danĂ„â€ş
+externalSystem=ZemĂ„â€ş/Region
+resultIsActiveEntity=VÄ‚Ëťsledek je aktivnÄ‚Â­
 ```
 
 ### mdgcreaterequest/webapp/i18n/i18n_en.properties

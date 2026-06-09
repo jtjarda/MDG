@@ -1,0 +1,22 @@
+@EndUserText.label: 'MDG Tax Type Value Help'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.resultSet.sizeCategory: #XS
+@Search.searchable: true
+@VDM.viewType: #BASIC
+define view entity ZI_MDG_TAX_TYPE_VH
+  as select from tfktaxnumtype as TaxType
+  association [0..1] to tfktaxnumtype_t as _Text
+    on  _Text.taxtype = TaxType.taxtype
+    and _Text.spras   = $session.system_language
+{
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      @ObjectModel.text.element: [ 'TaxTypeText' ]
+  key TaxType.taxtype as TaxType,
+
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      @Semantics.text: true
+      _Text.text as TaxTypeText
+}

@@ -10,6 +10,7 @@ define service ZUI_MDG_REQ {
   expose ZI_MDG_DOMAIN_VALUE_TEXT  as DomainValueTexts;
   expose ZI_MDG_COUNTRY_VH         as Countries;
   expose ZI_MDG_NATION_VH          as Nations;
+  expose ZI_MDG_TAX_TYPE_VH         as TaxTypes;
   expose ZI_MDG_LEGAL_FORM_VH      as LegalForms;
   expose ZI_MDG_BU_GROUP_VH        as BusinessPartnerGroups;
 }
