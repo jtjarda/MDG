@@ -1,8 +1,8 @@
-@Metadata.layer: #CUSTOMER
+﻿@Metadata.layer: #CUSTOMER
 @UI.headerInfo: {
   typeName: 'Tax Number',
   typeNamePlural: 'Tax Numbers',
-  title: { type: #STANDARD, value: 'TaxTypeText' },
+  title: { type: #STANDARD, value: 'TaxType' },
   description: { type: #STANDARD, value: 'TaxNumber' }
 }
 annotate entity ZC_MDG_REQTAX with
@@ -25,6 +25,7 @@ annotate entity ZC_MDG_REQTAX with
       entity: { name: 'ZI_MDG_TAX_TYPE_VH', element: 'TaxType' }
     }
   ]
+  @UI.textArrangement: #TEXT_FIRST
   @UI.lineItem: [{ position: 10, label: 'Tax Type' }]
   @UI.identification: [{ position: 10, label: 'Tax Type' }]
   TaxType;

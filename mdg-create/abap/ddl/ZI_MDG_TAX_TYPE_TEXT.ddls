@@ -1,0 +1,16 @@
+﻿@EndUserText.label: 'MDG Tax Type Text'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #BASIC
+@ObjectModel.dataCategory: #TEXT
+define view entity ZI_MDG_TAX_TYPE_TEXT
+  as select from tfktaxnumtype_t
+{
+      @Semantics.language: true
+  key spras   as Language,
+  key taxtype as TaxType,
+      @Semantics.text: true
+      text    as TaxTypeText
+}
+
+

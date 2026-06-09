@@ -1,4 +1,4 @@
-﻿managed implementation in class ZBP_I_MDG_REQ unique;
+managed implementation in class ZBP_I_MDG_REQ unique;
 strict ( 2 );
 with draft;
 
@@ -18,12 +18,12 @@ with additional save
 
   field ( readonly, numbering : managed ) RequestUuid;
   field ( readonly ) RequestId;
-  field ( readonly ) RequestType, Status, Vendor, Customer, ExternalSystem, PartnerGID;
+  field ( readonly ) RequestType, Status, ExternalSystem, PartnerGID;
   field ( readonly ) CreatedBy, CreatedAt, LastChangedBy, LastChangedAt, LocalLastChangedAt;
   field ( features : instance )
     ParentGid1, ParentGid2, FoundDate, Duns, LeiCode, Euid, PartnerId,
     BusinessPartnerType, BusinessPartnerGroup, LegalForm,
-    TelephoneNumber, MobileNumber, EmailAddress,
+    TelephoneNumber, MobileNumber, EmailAddress, Vendor, Customer,
     IsInactive, InactiveReason,
     OrganizationName1, OrganizationName2, OrganizationName3, OrganizationName4,
     FirstName, LastName, SearchTerm1,
@@ -46,6 +46,7 @@ with additional save
   side effects
   {
     field BusinessPartnerGroup affects field PartnerId, permissions ( field PartnerId );
+    field IsInactive affects field InactiveReason, permissions ( field InactiveReason );
   }
 
   association _Address { create; with draft; }

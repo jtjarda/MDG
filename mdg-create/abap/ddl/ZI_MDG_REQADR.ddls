@@ -1,4 +1,4 @@
-@EndUserText.label: 'MDG Request Address Variant'
+﻿@EndUserText.label: 'MDG Request Address Variant'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 @Metadata.ignorePropagatedAnnotations: true
@@ -7,8 +7,15 @@ define view entity ZI_MDG_REQADR
   as select from zmdg_reqadr
   association to parent ZI_MDG_REQ as _Request
     on $projection.RequestUuid = _Request.RequestUuid
+  association [0..1] to ZI_MDG_NATION_TEXT as _NationText
+    on  $projection.Nation = _NationText.Nation
+    and _NationText.Language = $session.system_language
+  association [0..1] to ZI_MDG_COUNTRY_TEXT as _CountryText
+    on  $projection.Country = _CountryText.Country
+    and _CountryText.Language = $session.system_language
 {
   key request_uuid as RequestUuid,
+      @ObjectModel.text.association: '_NationText'
   key nation       as Nation,
       name_org1    as OrganizationName1,
       name_org2    as OrganizationName2,
@@ -23,8 +30,15 @@ define view entity ZI_MDG_REQADR
       city1        as City,
       city2        as District,
       post_code1   as PostalCode,
+      @ObjectModel.text.association: '_CountryText'
       country      as Country,
       name_org     as OrganizationName,
       name_person  as PersonName,
+      _NationText,
+      _CountryText,
       _Request
 }
+
+
+
+

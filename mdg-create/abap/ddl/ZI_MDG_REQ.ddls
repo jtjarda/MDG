@@ -1,4 +1,4 @@
-@EndUserText.label: 'MDG Request'
+﻿@EndUserText.label: 'MDG Request'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 @Metadata.ignorePropagatedAnnotations: true
@@ -20,6 +20,9 @@ define root view entity ZI_MDG_REQ
     on _ConnectedSystem.ExternalSystem = $projection.ExternalSystem
   association [0..1] to ZI_MDG_USER as _CreatedByUser
     on _CreatedByUser.UserID = $projection.CreatedBy
+  association [0..1] to ZI_MDG_COUNTRY_TEXT as _CountryText
+    on  $projection.Country = _CountryText.Country
+    and _CountryText.Language = $session.system_language
 {
   key request_uuid         as RequestUuid,
       request_id           as RequestId,
@@ -63,6 +66,7 @@ define root view entity ZI_MDG_REQ
       city1                as City,
       city2                as District,
       post_code1           as PostalCode,
+      @ObjectModel.text.association: '_CountryText'
       country              as Country,
       name_org             as OrganizationName,
       name_person          as PersonName,
@@ -78,7 +82,7 @@ define root view entity ZI_MDG_REQ
       _StatusText,
       _ConnectedSystem,
       _CreatedByUser,
+      _CountryText,
       _Address,
       _Tax
 }
-

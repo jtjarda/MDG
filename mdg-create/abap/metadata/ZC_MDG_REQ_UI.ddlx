@@ -17,14 +17,7 @@ annotate entity ZC_MDG_REQ with
 
   @UI.facet: [
     {
-      id: 'General',
-      type: #COLLECTION,
-      label: 'General',
-      position: 10
-    },
-    {
       id: 'GlobalData',
-      parentId: 'General',
       type: #FIELDGROUP_REFERENCE,
       label: 'Global Data (KID)',
       position: 10,
@@ -32,50 +25,66 @@ annotate entity ZC_MDG_REQ with
     },
     {
       id: 'MainData',
-      parentId: 'General',
-      type: #FIELDGROUP_REFERENCE,
+      type: #COLLECTION,
       label: 'Main Data',
+      position: 20
+    },
+    {
+      id: 'MainDataIds',
+      parentId: 'MainData',
+      type: #FIELDGROUP_REFERENCE,
+      position: 10,
+      targetQualifier: 'MainDataIds'
+    },
+    {
+      id: 'MainDataNames',
+      parentId: 'MainData',
+      type: #FIELDGROUP_REFERENCE,
       position: 20,
-      targetQualifier: 'MainData'
+      targetQualifier: 'MainDataNames'
     },
     {
       id: 'IdentificationData',
-      parentId: 'General',
-      type: #FIELDGROUP_REFERENCE,
+      type: #COLLECTION,
       label: 'Identification Data',
-      position: 30,
+      position: 30
+    },
+    {
+      id: 'IdentificationDataFields',
+      parentId: 'IdentificationData',
+      type: #FIELDGROUP_REFERENCE,
+      position: 10,
       targetQualifier: 'IdentificationData'
+    },
+    {
+      id: 'TaxNumbers',
+      parentId: 'IdentificationData',
+      type: #LINEITEM_REFERENCE,
+      position: 20,
+      targetElement: '_Tax'
     },
     {
       id: 'CountrySpecificData',
       type: #FIELDGROUP_REFERENCE,
       label: 'Country Specific Data Detail',
-      position: 20,
+      position: 60,
       targetQualifier: 'CountrySpecificData'
     },
     {
       id: 'Address',
       type: #FIELDGROUP_REFERENCE,
       label: 'Address',
-      position: 30,
+      position: 40,
       targetQualifier: 'Address'
     },
     {
       id: 'AddressVariants',
       type: #LINEITEM_REFERENCE,
       label: 'Address Variants',
-      position: 40,
-      targetElement: '_Address'
-    },
-    {
-      id: 'TaxNumbers',
-      type: #LINEITEM_REFERENCE,
-      label: 'Additional Tax Data',
       position: 50,
-      targetElement: '_Tax'
+      targetElement: '_Address'
     }
   ]
-
   @UI.lineItem: [
     {
       position: 5,
@@ -113,7 +122,7 @@ annotate entity ZC_MDG_REQ with
   CreatedBy;
 
   @UI.lineItem: [{ position: 60, label: 'Partner GID' }]
-  @UI.fieldGroup: [{ qualifier: 'MainData', position: 10, label: 'Partner GID' }]
+  @UI.fieldGroup: [{ qualifier: 'MainDataIds', position: 10, label: 'Partner GID' }]
   PartnerGid;
 
   @UI.lineItem: [{ position: 70, label: 'DUNS Number' }]
@@ -124,13 +133,13 @@ annotate entity ZC_MDG_REQ with
   @UI.hidden: true
   CreatedAt;
 
-  @UI.fieldGroup: [{ qualifier: 'MainData', position: 20, label: 'Parent GID 1' }]
+  @UI.fieldGroup: [{ qualifier: 'MainDataIds', position: 20, label: 'Parent GID 1' }]
   ParentGid1;
 
-  @UI.fieldGroup: [{ qualifier: 'MainData', position: 30, label: 'Parent GID 2' }]
+  @UI.fieldGroup: [{ qualifier: 'MainDataIds', position: 30, label: 'Parent GID 2' }]
   ParentGid2;
 
-  @UI.fieldGroup: [{ qualifier: 'MainData', position: 40, label: 'Found Date' }]
+  @UI.fieldGroup: [{ qualifier: 'MainDataNames', position: 30, label: 'Found Date' }]
   FoundDate;
 
   @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 20, label: 'LEI Code' }]
@@ -153,14 +162,15 @@ annotate entity ZC_MDG_REQ with
   @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 20, label: 'Partner ID' }]
   PartnerId;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 30, label: 'Partner Category' }]
-  BusinessPartnerType;
-
   @Consumption.valueHelpDefinition: [
     {
-      entity: { name: 'ZI_MDG_LEGAL_FORM_VH', element: 'LegalForm' }
+      entity: { name: 'ZI_MDG_PARTNER_TYPE_VH', element: 'BusinessPartnerType' }
     }
   ]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 30, label: 'Partner Category' }]
+  @UI.textArrangement: #TEXT_ONLY
+  BusinessPartnerType;
+
   @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 40, label: 'Legal Form' }]
   LegalForm;
 
@@ -185,10 +195,10 @@ annotate entity ZC_MDG_REQ with
   @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 110, label: 'Inactive Reason' }]
   InactiveReason;
 
-  @UI.fieldGroup: [{ qualifier: 'MainData', position: 50, label: 'Company Name' }]
+  @UI.fieldGroup: [{ qualifier: 'MainDataNames', position: 10, label: 'Company Name' }]
   OrganizationName1;
 
-  @UI.fieldGroup: [{ qualifier: 'MainData', position: 60, label: 'Search Term' }]
+  @UI.fieldGroup: [{ qualifier: 'MainDataNames', position: 20, label: 'Search Term' }]
   SearchTerm1;
 
   @Consumption.valueHelpDefinition: [
@@ -197,18 +207,19 @@ annotate entity ZC_MDG_REQ with
     }
   ]
   @UI.fieldGroup: [{ qualifier: 'Address', position: 10, label: 'Country' }]
+  @UI.textArrangement: #TEXT_LAST
   Country;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 20, label: 'District' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 30, label: 'District' }]
   District;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 30, label: 'City' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 20, label: 'City' }]
   City;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 40, label: 'Postal Code' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 50, label: 'Postal Code' }]
   PostalCode;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 50, label: 'Street' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 40, label: 'Street' }]
   Street;
 
   @UI.fieldGroup: [{ qualifier: 'Address', position: 60, label: 'House No' }]

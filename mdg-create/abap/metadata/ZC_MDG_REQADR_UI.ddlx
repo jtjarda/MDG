@@ -2,7 +2,7 @@
 @UI.headerInfo: {
   typeName: 'Address Variant',
   typeNamePlural: 'Address Variants',
-  title: { type: #STANDARD, value: 'NationText' },
+  title: { type: #STANDARD, value: 'Nation' },
   description: { type: #STANDARD, value: 'OrganizationName1' }
 }
 annotate entity ZC_MDG_REQADR with
@@ -25,6 +25,7 @@ annotate entity ZC_MDG_REQADR with
       entity: { name: 'ZI_MDG_NATION_VH', element: 'Nation' }
     }
   ]
+  @UI.textArrangement: #TEXT_FIRST
   @UI.lineItem: [{ position: 10, label: 'Nation' }]
   @UI.identification: [{ position: 10, label: 'Nation' }]
   Nation;
@@ -38,6 +39,7 @@ annotate entity ZC_MDG_REQADR with
       entity: { name: 'ZI_MDG_COUNTRY_VH', element: 'Country' }
     }
   ]
+  @UI.textArrangement: #TEXT_LAST
   @UI.lineItem: [{ position: 30, label: 'Country' }]
   @UI.identification: [{ position: 30, label: 'Country' }]
   Country;

@@ -1,10 +1,10 @@
-@EndUserText.label: 'MDG Legal Form Value Help'
+@EndUserText.label: 'MDG Partner Type Value Help'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.ignorePropagatedAnnotations: true
 @ObjectModel.resultSet.sizeCategory: #XS
 @Search.searchable: true
 @VDM.viewType: #BASIC
-define view entity ZI_MDG_LEGAL_FORM_VH
+define view entity ZI_MDG_PARTNER_TYPE_VH
   as select from dd07l as Value
     inner join   dd07t as Text on  Text.domname  = Value.domname
                                and Text.as4local = Value.as4local
@@ -13,13 +13,14 @@ define view entity ZI_MDG_LEGAL_FORM_VH
 {
       @Search.defaultSearchElement: true
       @Search.fuzzinessThreshold: 0.8
-      @ObjectModel.text.element: [ 'LegalFormText' ]
-  key cast( substring( Value.domvalue_l, 1, 2 ) as zmdg_bu_legenty ) as LegalForm,
+      @ObjectModel.text.element: [ 'BusinessPartnerTypeText' ]
+      @UI.textArrangement: #TEXT_ONLY
+  key cast( substring( Value.domvalue_l, 1, 1 ) as zmdg_bu_type ) as BusinessPartnerType,
 
       @Search.defaultSearchElement: true
       @Search.fuzzinessThreshold: 0.8
       @Semantics.text: true
-      Text.ddtext as LegalFormText
+      Text.ddtext as BusinessPartnerTypeText
 }
 where
       Value.domname    = 'ZMDG_D_BU_TYPE'

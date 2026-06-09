@@ -1,4 +1,4 @@
-# MDG Create - Working Code
+﻿# MDG Create - Working Code
 
 Vychozi datovy model pro novou RAP aplikaci pozadavku na zalozeni BP.
 
@@ -41,7 +41,7 @@ OPA/QUnit testy v `mdgcreaterequest/webapp/test` zustavaji v JavaScriptu. TypeSc
 ### ZMDG_REQ
 
 ```abap
-@EndUserText.label : 'MDG PoÄąÄľadavek'
+@EndUserText.label : 'MDG PoĂ„Ä…Ă„Äľadavek'
 @AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
 @AbapCatalog.tableCategory : #TRANSPARENT
 @AbapCatalog.deliveryClass : #A
@@ -100,7 +100,7 @@ define table zmdg_req {
 ### ZMDG_REQADR
 
 ```abap
-@EndUserText.label : 'MDG PoÄąÄľadavek - Adresy'
+@EndUserText.label : 'MDG PoĂ„Ä…Ă„Äľadavek - Adresy'
 @AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
 @AbapCatalog.tableCategory : #TRANSPARENT
 @AbapCatalog.deliveryClass : #A
@@ -133,7 +133,7 @@ define table zmdg_reqadr {
 ### ZMDG_REQTAX
 
 ```abap
-@EndUserText.label : 'MDG poÄąÄľadavek - daÄąÂovÄ‚Ë‡ Ă„Ĺ¤Ä‚Â­sla'
+@EndUserText.label : 'MDG poĂ„Ä…Ă„Äľadavek - daĂ„Ä…Ă‚ÂovĂ„â€šĂ‹â€ˇ Ä‚â€žÄąÂ¤Ă„â€šĂ‚Â­sla'
 @AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
 @AbapCatalog.tableCategory : #TRANSPARENT
 @AbapCatalog.deliveryClass : #A
@@ -151,7 +151,7 @@ define table zmdg_reqtax {
 ### ZMDG_C_SYS
 
 ```abap
-@EndUserText.label : 'NastavenĂ­ pĹ™ipojenĂ˝ch systĂ©mĹŻ'
+@EndUserText.label : 'NastavenÄ‚Â­ pÄąâ„˘ipojenÄ‚Ëťch systÄ‚Â©mÄąĹ»'
 @AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
 @AbapCatalog.tableCategory : #TRANSPARENT
 @AbapCatalog.deliveryClass : #C
@@ -195,7 +195,7 @@ define table zmdg_c_fieldcat {
 ### ZMDG_C_BUGROUP
 
 ```abap
-@EndUserText.label : 'SeskupovĂˇnĂ­ OP'
+@EndUserText.label : 'SeskupovÄ‚Ë‡nÄ‚Â­ OP'
 @AbapCatalog.enhancement.category : #NOT_EXTENSIBLE
 @AbapCatalog.tableCategory : #TRANSPARENT
 @AbapCatalog.deliveryClass : #C
@@ -215,7 +215,6 @@ define table zmdg_c_bugroup {
 ## Current Source Snapshot
 
 ### ZI_MDG_C_SYS.ddls
-
 ```abap
 @EndUserText.label: 'MDG Connected System'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -239,9 +238,11 @@ define view entity ZI_MDG_C_SYS
       xcrea       as IsCreateAllowed,
       xenh        as IsEnhanceAllowed
 }
-```
-### ZI_MDG_REQ.bdef
 
+
+```
+
+### ZI_MDG_REQ.bdef
 ```abap
 managed implementation in class ZBP_I_MDG_REQ unique;
 strict ( 2 );
@@ -263,12 +264,12 @@ with additional save
 
   field ( readonly, numbering : managed ) RequestUuid;
   field ( readonly ) RequestId;
-  field ( readonly ) RequestType, Status, Vendor, Customer, ExternalSystem, PartnerGID;
+  field ( readonly ) RequestType, Status, ExternalSystem, PartnerGID;
   field ( readonly ) CreatedBy, CreatedAt, LastChangedBy, LastChangedAt, LocalLastChangedAt;
   field ( features : instance )
     ParentGid1, ParentGid2, FoundDate, Duns, LeiCode, Euid, PartnerId,
     BusinessPartnerType, BusinessPartnerGroup, LegalForm,
-    TelephoneNumber, MobileNumber, EmailAddress,
+    TelephoneNumber, MobileNumber, EmailAddress, Vendor, Customer,
     IsInactive, InactiveReason,
     OrganizationName1, OrganizationName2, OrganizationName3, OrganizationName4,
     FirstName, LastName, SearchTerm1,
@@ -291,6 +292,7 @@ with additional save
   side effects
   {
     field BusinessPartnerGroup affects field PartnerId, permissions ( field PartnerId );
+    field IsInactive affects field InactiveReason, permissions ( field InactiveReason );
   }
 
   association _Address { create; with draft; }
@@ -404,9 +406,10 @@ etag dependent by _Request
     TaxNumber   = taxnum;
   }
 }
-```
-### ZUI_MDG_REQ.srvd
 
+```
+
+### ZUI_MDG_REQ.srvd
 ```abap
 @EndUserText.label: 'MDG: Create MDG Request'
 define service ZUI_MDG_REQ {
@@ -419,14 +422,18 @@ define service ZUI_MDG_REQ {
   expose ZI_MDG_USER               as Users;
   expose ZI_MDG_DOMAIN_VALUE_TEXT  as DomainValueTexts;
   expose ZI_MDG_COUNTRY_VH         as Countries;
+  expose ZI_MDG_COUNTRY_TEXT       as CountryTexts;
   expose ZI_MDG_NATION_VH          as Nations;
-  expose ZI_MDG_TAX_TYPE_VH         as TaxTypes;
-  expose ZI_MDG_LEGAL_FORM_VH      as LegalForms;
+  expose ZI_MDG_NATION_TEXT        as NationTexts;
+  expose ZI_MDG_TAX_TYPE_VH        as TaxTypes;
+  expose ZI_MDG_TAX_TYPE_TEXT      as TaxTypeTexts;
+  expose ZI_MDG_PARTNER_TYPE_VH    as PartnerTypes;
   expose ZI_MDG_BU_GROUP_VH        as BusinessPartnerGroups;
 }
-```
-### ZCL_MDG_SEND_API_OP
 
+```
+
+### ZCL_MDG_SEND_API_OP
 ```abap
 CLASS zcl_mdg_send_api_op DEFINITION
   PUBLIC
@@ -592,7 +599,9 @@ CLASS zcl_mdg_send_api_op IMPLEMENTATION.
     ENDIF.
   ENDMETHOD.
 ENDCLASS.
+
 ```
+
 ### mdgcreaterequest/README.md
 
 ```markdown
@@ -641,7 +650,6 @@ MDG request - create BP
 ```
 
 ### ZI_MDG_USER.ddls
-
 ```abap
 @EndUserText.label: 'MDG User'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -655,10 +663,10 @@ define view entity ZI_MDG_USER
       @Semantics.text: true
       UserDescription
 }
+
 ```
 
 ### ZI_MDG_DOMAIN_VALUE_TEXT.ddls
-
 ```abap
 @EndUserText.label: 'MDG Domain Value Text'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -681,10 +689,10 @@ define view entity ZI_MDG_DOMAIN_VALUE_TEXT
 where
       Value.as4local   = 'A'
   and Value.domvalue_l <> ''
+
 ```
 
 ### ZI_MDG_COUNTRY_VH.ddls
-
 ```abap
 @EndUserText.label: 'MDG Country Value Help'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -707,18 +715,18 @@ define view entity ZI_MDG_COUNTRY_VH
       @Semantics.text: true
       Text.landx    as CountryName
 }
+
 ```
 
-### ZI_MDG_LEGAL_FORM_VH.ddls
-
+### ZI_MDG_PARTNER_TYPE_VH.ddls
 ```abap
-@EndUserText.label: 'MDG Legal Form Value Help'
+@EndUserText.label: 'MDG Partner Type Value Help'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.ignorePropagatedAnnotations: true
 @ObjectModel.resultSet.sizeCategory: #XS
 @Search.searchable: true
 @VDM.viewType: #BASIC
-define view entity ZI_MDG_LEGAL_FORM_VH
+define view entity ZI_MDG_PARTNER_TYPE_VH
   as select from dd07l as Value
     inner join   dd07t as Text on  Text.domname  = Value.domname
                                and Text.as4local = Value.as4local
@@ -727,13 +735,14 @@ define view entity ZI_MDG_LEGAL_FORM_VH
 {
       @Search.defaultSearchElement: true
       @Search.fuzzinessThreshold: 0.8
-      @ObjectModel.text.element: [ 'LegalFormText' ]
-  key cast( substring( Value.domvalue_l, 1, 2 ) as zmdg_bu_legenty ) as LegalForm,
+      @ObjectModel.text.element: [ 'BusinessPartnerTypeText' ]
+      @UI.textArrangement: #TEXT_ONLY
+  key cast( substring( Value.domvalue_l, 1, 1 ) as zmdg_bu_type ) as BusinessPartnerType,
 
       @Search.defaultSearchElement: true
       @Search.fuzzinessThreshold: 0.8
       @Semantics.text: true
-      Text.ddtext as LegalFormText
+      Text.ddtext as BusinessPartnerTypeText
 }
 where
       Value.domname    = 'ZMDG_D_BU_TYPE'
@@ -743,7 +752,6 @@ where
 ```
 
 ### ZI_MDG_C_FIELDCAT.ddls
-
 ```abap
 @EndUserText.label: 'MDG Request Field Control'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -773,10 +781,10 @@ define view entity ZI_MDG_C_FIELDCAT
       @EndUserText.label: 'Mandatory'
       mandatory    as IsMandatory
 }
+
 ```
 
 ### ZI_MDG_BU_GROUP_VH.ddls
-
 ```abap
 @EndUserText.label: 'MDG Business Partner Group Value Help'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -798,10 +806,10 @@ define view entity ZI_MDG_BU_GROUP_VH
       @EndUserText.label: 'External Number Required'
       nrind    as IsExternalNumberRequired
 }
+
 ```
 
 ### ZI_MDG_C_SYS_CREATEVH.ddls
-
 ```abap
 @EndUserText.label: 'MDG Create System Value Help'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -828,10 +836,11 @@ define view entity ZI_MDG_C_SYS_CREATEVH
       DefaultAlphabet
 }
 where IsCreateAllowed = 'X'
+
+
 ```
 
 ### ZI_MDG_C_SYS_CHANGEVH.ddls
-
 ```abap
 @EndUserText.label: 'MDG Change System Value Help'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -881,10 +890,10 @@ select from ZI_MDG_C_SYS as System
   System.DefaultAlphabet
 }
 where System.IsEnhanceAllowed <> 'X'
+
 ```
 
 ### ZI_MDG_TAX_TYPE_VH.ddls
-
 ```abap
 @EndUserText.label: 'MDG Tax Type Value Help'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -911,7 +920,6 @@ define view entity ZI_MDG_TAX_TYPE_VH
 ```
 
 ### ZI_MDG_NATION_VH.ddls
-
 ```abap
 @EndUserText.label: 'MDG Address Version Value Help'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -936,10 +944,10 @@ define view entity ZI_MDG_NATION_VH
       _Text.nation_text as NationText
 }
 where Nation.inactive <> 'X'
+
 ```
 
 ### ZI_MDG_REQ_CREATE_P.ddls
-
 ```abap
 @EndUserText.label: 'Create MDG Request Parameters'
 define abstract entity ZI_MDG_REQ_CREATE_P
@@ -956,10 +964,10 @@ define abstract entity ZI_MDG_REQ_CREATE_P
   @UI.hidden: true
   PartnerGID : zmdg_partner_gid;
 }
+
 ```
 
 ### ZI_MDG_REQ.ddls
-
 ```abap
 @EndUserText.label: 'MDG Request'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -983,6 +991,9 @@ define root view entity ZI_MDG_REQ
     on _ConnectedSystem.ExternalSystem = $projection.ExternalSystem
   association [0..1] to ZI_MDG_USER as _CreatedByUser
     on _CreatedByUser.UserID = $projection.CreatedBy
+  association [0..1] to ZI_MDG_COUNTRY_TEXT as _CountryText
+    on  $projection.Country = _CountryText.Country
+    and _CountryText.Language = $session.system_language
 {
   key request_uuid         as RequestUuid,
       request_id           as RequestId,
@@ -1026,6 +1037,7 @@ define root view entity ZI_MDG_REQ
       city1                as City,
       city2                as District,
       post_code1           as PostalCode,
+      @ObjectModel.text.association: '_CountryText'
       country              as Country,
       name_org             as OrganizationName,
       name_person          as PersonName,
@@ -1041,13 +1053,14 @@ define root view entity ZI_MDG_REQ
       _StatusText,
       _ConnectedSystem,
       _CreatedByUser,
+      _CountryText,
       _Address,
       _Tax
 }
+
 ```
 
 ### ZI_MDG_REQADR.ddls
-
 ```abap
 @EndUserText.label: 'MDG Request Address Variant'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -1058,8 +1071,15 @@ define view entity ZI_MDG_REQADR
   as select from zmdg_reqadr
   association to parent ZI_MDG_REQ as _Request
     on $projection.RequestUuid = _Request.RequestUuid
+  association [0..1] to ZI_MDG_NATION_TEXT as _NationText
+    on  $projection.Nation = _NationText.Nation
+    and _NationText.Language = $session.system_language
+  association [0..1] to ZI_MDG_COUNTRY_TEXT as _CountryText
+    on  $projection.Country = _CountryText.Country
+    and _CountryText.Language = $session.system_language
 {
   key request_uuid as RequestUuid,
+      @ObjectModel.text.association: '_NationText'
   key nation       as Nation,
       name_org1    as OrganizationName1,
       name_org2    as OrganizationName2,
@@ -1074,15 +1094,22 @@ define view entity ZI_MDG_REQADR
       city1        as City,
       city2        as District,
       post_code1   as PostalCode,
+      @ObjectModel.text.association: '_CountryText'
       country      as Country,
       name_org     as OrganizationName,
       name_person  as PersonName,
+      _NationText,
+      _CountryText,
       _Request
 }
+
+
+
+
+
 ```
 
 ### ZI_MDG_REQTAX.ddls
-
 ```abap
 @EndUserText.label: 'MDG Request Tax Number'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -1093,17 +1120,22 @@ define view entity ZI_MDG_REQTAX
   as select from zmdg_reqtax
   association to parent ZI_MDG_REQ as _Request
     on $projection.RequestUuid = _Request.RequestUuid
+  association [0..1] to ZI_MDG_TAX_TYPE_TEXT as _TaxTypeText
+    on  $projection.TaxType = _TaxTypeText.TaxType
+    and _TaxTypeText.Language = $session.system_language
 {
   key request_uuid as RequestUuid,
+      @ObjectModel.text.association: '_TaxTypeText'
   key taxtype      as TaxType,
       taxnum       as TaxNumber,
 
+      _TaxTypeText,
       _Request
 }
+
 ```
 
 ### ZC_MDG_REQ.ddls
-
 ```abap
 @EndUserText.label: 'MDG Request'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -1165,13 +1197,14 @@ define root view entity ZC_MDG_REQ
       _StatusText,
       _ConnectedSystem,
       _CreatedByUser,
+      _CountryText,
       _Address : redirected to composition child ZC_MDG_REQADR,
       _Tax     : redirected to composition child ZC_MDG_REQTAX
 }
+
 ```
 
 ### ZC_MDG_REQADR.ddls
-
 ```abap
 @EndUserText.label: 'MDG Request Address Variant'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -1182,8 +1215,6 @@ define view entity ZC_MDG_REQADR
 {
   key RequestUuid,
   key Nation,
-      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_MDG_REQADR_VE'
-      virtual NationText : abap.char(60),
       OrganizationName1,
       OrganizationName2,
       OrganizationName3,
@@ -1198,16 +1229,18 @@ define view entity ZC_MDG_REQADR
       District,
       PostalCode,
       Country,
-      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_MDG_REQADR_VE'
-      virtual CountryName : abap.char(50),
       OrganizationName,
       PersonName,
+      _NationText,
+      _CountryText,
       _Request : redirected to parent ZC_MDG_REQ
 }
+
+
+
 ```
 
 ### ZC_MDG_REQTAX.ddls
-
 ```abap
 @EndUserText.label: 'MDG Request Tax Number'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
@@ -1218,16 +1251,16 @@ define view entity ZC_MDG_REQTAX
 {
   key RequestUuid,
   key TaxType,
-      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_MDG_REQTAX_VE'
-      virtual TaxTypeText : abap.char(80),
       TaxNumber,
 
+      _TaxTypeText,
       _Request : redirected to parent ZC_MDG_REQ
 }
+
+
 ```
 
 ### ZC_MDG_REQ.bdef
-
 ```abap
 projection;
 strict ( 2 );
@@ -1266,10 +1299,10 @@ define behavior for ZC_MDG_REQTAX alias Tax
 
   use association _Request { with draft; }
 }
+
 ```
 
 ### ZC_MDG_REQ_UI.ddlx
-
 ```abap
 @Metadata.layer: #CUSTOMER
 @UI.headerInfo: {
@@ -1290,14 +1323,7 @@ annotate entity ZC_MDG_REQ with
 
   @UI.facet: [
     {
-      id: 'General',
-      type: #COLLECTION,
-      label: 'General',
-      position: 10
-    },
-    {
       id: 'GlobalData',
-      parentId: 'General',
       type: #FIELDGROUP_REFERENCE,
       label: 'Global Data (KID)',
       position: 10,
@@ -1305,50 +1331,66 @@ annotate entity ZC_MDG_REQ with
     },
     {
       id: 'MainData',
-      parentId: 'General',
-      type: #FIELDGROUP_REFERENCE,
+      type: #COLLECTION,
       label: 'Main Data',
+      position: 20
+    },
+    {
+      id: 'MainDataIds',
+      parentId: 'MainData',
+      type: #FIELDGROUP_REFERENCE,
+      position: 10,
+      targetQualifier: 'MainDataIds'
+    },
+    {
+      id: 'MainDataNames',
+      parentId: 'MainData',
+      type: #FIELDGROUP_REFERENCE,
       position: 20,
-      targetQualifier: 'MainData'
+      targetQualifier: 'MainDataNames'
     },
     {
       id: 'IdentificationData',
-      parentId: 'General',
-      type: #FIELDGROUP_REFERENCE,
+      type: #COLLECTION,
       label: 'Identification Data',
-      position: 30,
+      position: 30
+    },
+    {
+      id: 'IdentificationDataFields',
+      parentId: 'IdentificationData',
+      type: #FIELDGROUP_REFERENCE,
+      position: 10,
       targetQualifier: 'IdentificationData'
+    },
+    {
+      id: 'TaxNumbers',
+      parentId: 'IdentificationData',
+      type: #LINEITEM_REFERENCE,
+      position: 20,
+      targetElement: '_Tax'
     },
     {
       id: 'CountrySpecificData',
       type: #FIELDGROUP_REFERENCE,
       label: 'Country Specific Data Detail',
-      position: 20,
+      position: 60,
       targetQualifier: 'CountrySpecificData'
     },
     {
       id: 'Address',
       type: #FIELDGROUP_REFERENCE,
       label: 'Address',
-      position: 30,
+      position: 40,
       targetQualifier: 'Address'
     },
     {
       id: 'AddressVariants',
       type: #LINEITEM_REFERENCE,
       label: 'Address Variants',
-      position: 40,
-      targetElement: '_Address'
-    },
-    {
-      id: 'TaxNumbers',
-      type: #LINEITEM_REFERENCE,
-      label: 'Additional Tax Data',
       position: 50,
-      targetElement: '_Tax'
+      targetElement: '_Address'
     }
   ]
-
   @UI.lineItem: [
     {
       position: 5,
@@ -1386,7 +1428,7 @@ annotate entity ZC_MDG_REQ with
   CreatedBy;
 
   @UI.lineItem: [{ position: 60, label: 'Partner GID' }]
-  @UI.fieldGroup: [{ qualifier: 'MainData', position: 10, label: 'Partner GID' }]
+  @UI.fieldGroup: [{ qualifier: 'MainDataIds', position: 10, label: 'Partner GID' }]
   PartnerGid;
 
   @UI.lineItem: [{ position: 70, label: 'DUNS Number' }]
@@ -1397,13 +1439,13 @@ annotate entity ZC_MDG_REQ with
   @UI.hidden: true
   CreatedAt;
 
-  @UI.fieldGroup: [{ qualifier: 'MainData', position: 20, label: 'Parent GID 1' }]
+  @UI.fieldGroup: [{ qualifier: 'MainDataIds', position: 20, label: 'Parent GID 1' }]
   ParentGid1;
 
-  @UI.fieldGroup: [{ qualifier: 'MainData', position: 30, label: 'Parent GID 2' }]
+  @UI.fieldGroup: [{ qualifier: 'MainDataIds', position: 30, label: 'Parent GID 2' }]
   ParentGid2;
 
-  @UI.fieldGroup: [{ qualifier: 'MainData', position: 40, label: 'Found Date' }]
+  @UI.fieldGroup: [{ qualifier: 'MainDataNames', position: 30, label: 'Found Date' }]
   FoundDate;
 
   @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 20, label: 'LEI Code' }]
@@ -1426,14 +1468,15 @@ annotate entity ZC_MDG_REQ with
   @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 20, label: 'Partner ID' }]
   PartnerId;
 
-  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 30, label: 'Partner Category' }]
-  BusinessPartnerType;
-
   @Consumption.valueHelpDefinition: [
     {
-      entity: { name: 'ZI_MDG_LEGAL_FORM_VH', element: 'LegalForm' }
+      entity: { name: 'ZI_MDG_PARTNER_TYPE_VH', element: 'BusinessPartnerType' }
     }
   ]
+  @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 30, label: 'Partner Category' }]
+  @UI.textArrangement: #TEXT_ONLY
+  BusinessPartnerType;
+
   @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 40, label: 'Legal Form' }]
   LegalForm;
 
@@ -1458,10 +1501,10 @@ annotate entity ZC_MDG_REQ with
   @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 110, label: 'Inactive Reason' }]
   InactiveReason;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 10, label: 'Company Name' }]
+  @UI.fieldGroup: [{ qualifier: 'MainDataNames', position: 10, label: 'Company Name' }]
   OrganizationName1;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 20, label: 'Search Term' }]
+  @UI.fieldGroup: [{ qualifier: 'MainDataNames', position: 20, label: 'Search Term' }]
   SearchTerm1;
 
   @Consumption.valueHelpDefinition: [
@@ -1469,37 +1512,38 @@ annotate entity ZC_MDG_REQ with
       entity: { name: 'ZI_MDG_COUNTRY_VH', element: 'Country' }
     }
   ]
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 30, label: 'Country' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 10, label: 'Country' }]
+  @UI.textArrangement: #TEXT_LAST
   Country;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 40, label: 'District' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 30, label: 'District' }]
   District;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 50, label: 'City' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 20, label: 'City' }]
   City;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 60, label: 'Postal Code' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 50, label: 'Postal Code' }]
   PostalCode;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 70, label: 'Street' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 40, label: 'Street' }]
   Street;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 80, label: 'House No' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 60, label: 'House No' }]
   HouseNumber;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 90, label: 'House No Suppl.' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 70, label: 'House No Suppl.' }]
   HouseNumberSupplement;
 }
+
 ```
 
 ### ZC_MDG_REQADR_UI.ddlx
-
 ```abap
 @Metadata.layer: #CUSTOMER
 @UI.headerInfo: {
   typeName: 'Address Variant',
   typeNamePlural: 'Address Variants',
-  title: { type: #STANDARD, value: 'NationText' },
+  title: { type: #STANDARD, value: 'Nation' },
   description: { type: #STANDARD, value: 'OrganizationName1' }
 }
 annotate entity ZC_MDG_REQADR with
@@ -1522,6 +1566,7 @@ annotate entity ZC_MDG_REQADR with
       entity: { name: 'ZI_MDG_NATION_VH', element: 'Nation' }
     }
   ]
+  @UI.textArrangement: #TEXT_FIRST
   @UI.lineItem: [{ position: 10, label: 'Nation' }]
   @UI.identification: [{ position: 10, label: 'Nation' }]
   Nation;
@@ -1535,6 +1580,7 @@ annotate entity ZC_MDG_REQADR with
       entity: { name: 'ZI_MDG_COUNTRY_VH', element: 'Country' }
     }
   ]
+  @UI.textArrangement: #TEXT_LAST
   @UI.lineItem: [{ position: 30, label: 'Country' }]
   @UI.identification: [{ position: 30, label: 'Country' }]
   Country;
@@ -1551,16 +1597,16 @@ annotate entity ZC_MDG_REQADR with
   @UI.identification: [{ position: 60, label: 'Street' }]
   Street;
 }
+
 ```
 
 ### ZC_MDG_REQTAX_UI.ddlx
-
 ```abap
 @Metadata.layer: #CUSTOMER
 @UI.headerInfo: {
   typeName: 'Tax Number',
   typeNamePlural: 'Tax Numbers',
-  title: { type: #STANDARD, value: 'TaxTypeText' },
+  title: { type: #STANDARD, value: 'TaxType' },
   description: { type: #STANDARD, value: 'TaxNumber' }
 }
 annotate entity ZC_MDG_REQTAX with
@@ -1583,6 +1629,7 @@ annotate entity ZC_MDG_REQTAX with
       entity: { name: 'ZI_MDG_TAX_TYPE_VH', element: 'TaxType' }
     }
   ]
+  @UI.textArrangement: #TEXT_FIRST
   @UI.lineItem: [{ position: 10, label: 'Tax Type' }]
   @UI.identification: [{ position: 10, label: 'Tax Type' }]
   TaxType;
@@ -1591,10 +1638,10 @@ annotate entity ZC_MDG_REQTAX with
   @UI.identification: [{ position: 20, label: 'Tax Number' }]
   TaxNumber;
 }
+
 ```
 
 ### ZBP_I_MDG_REQ locals
-
 ```abap
 CLASS lhc_request DEFINITION INHERITING FROM cl_abap_behavior_handler.
   PRIVATE SECTION.
@@ -1660,7 +1707,7 @@ CLASS lhc_request IMPLEMENTATION.
     READ ENTITIES OF zi_mdg_req IN LOCAL MODE
       ENTITY Request
         FIELDS (
-          RequestUuid RequestType ExternalSystem BusinessPartnerGroup Status
+          RequestUuid RequestType ExternalSystem BusinessPartnerGroup Status IsInactive
         )
         WITH CORRESPONDING #( keys )
       RESULT DATA(requests).
@@ -1714,6 +1761,10 @@ CLASS lhc_request IMPLEMENTATION.
           THEN if_abap_behv=>fc-f-mandatory
         ELSE if_abap_behv=>fc-f-read_only
       ).
+
+      IF <request>-IsInactive <> abap_true.
+        <features>-%field-InactiveReason = if_abap_behv=>fc-f-read_only.
+      ENDIF.
     ENDLOOP.
   ENDMETHOD.
 
@@ -2119,10 +2170,10 @@ CLASS lsc_zi_mdg_req IMPLEMENTATION.
     ENDLOOP.
   ENDMETHOD.
 ENDCLASS.
+
 ```
 
 ### ZCL_MDG_REQ_SERVICE
-
 ```abap
 CLASS zcl_mdg_req_service DEFINITION
   PUBLIC
@@ -2603,184 +2654,10 @@ CLASS zcl_mdg_req_service IMPLEMENTATION.
     ) TO ct_message.
   ENDMETHOD.
 ENDCLASS.
-```
 
-### ZCL_MDG_REQADR_VE
-
-```abap
-CLASS zcl_mdg_reqadr_ve DEFINITION
-  PUBLIC
-  FINAL
-  CREATE PUBLIC.
-
-  PUBLIC SECTION.
-    INTERFACES if_sadl_exit.
-    INTERFACES if_sadl_exit_calc_element_read.
-
-  PRIVATE SECTION.
-    TYPES:
-      BEGIN OF ty_virtual_property,
-        NationText  TYPE zmdg_c_nationt-nation_text,
-        CountryName TYPE t005t-landx,
-      END OF ty_virtual_property.
-
-    CONSTANTS:
-      c_nation       TYPE string VALUE 'NATION',
-      c_nation_text  TYPE string VALUE 'NATIONTEXT',
-      c_country      TYPE string VALUE 'COUNTRY',
-      c_country_name TYPE string VALUE 'COUNTRYNAME'.
-ENDCLASS.
-
-CLASS zcl_mdg_reqadr_ve IMPLEMENTATION.
-  METHOD if_sadl_exit_calc_element_read~get_calculation_info.
-    LOOP AT it_requested_calc_elements ASSIGNING FIELD-SYMBOL(<calc_element>).
-      CASE <calc_element>.
-        WHEN c_nation_text.
-          INSERT c_nation INTO TABLE et_requested_orig_elements.
-        WHEN c_country_name.
-          INSERT c_country INTO TABLE et_requested_orig_elements.
-      ENDCASE.
-    ENDLOOP.
-  ENDMETHOD.
-
-  METHOD if_sadl_exit_calc_element_read~calculate.
-    DATA records TYPE STANDARD TABLE OF zc_mdg_reqadr WITH EMPTY KEY.
-    DATA virtual_properties TYPE STANDARD TABLE OF ty_virtual_property WITH EMPTY KEY.
-    DATA virtual_property TYPE ty_virtual_property.
-
-    TYPES:
-      BEGIN OF ty_nation_text,
-        nation      TYPE zmdg_c_nation-nation,
-        nation_text TYPE zmdg_c_nationt-nation_text,
-      END OF ty_nation_text,
-      BEGIN OF ty_country_text,
-        country     TYPE land1,
-        countryName TYPE t005t-landx,
-      END OF ty_country_text.
-
-    DATA nation_texts TYPE HASHED TABLE OF ty_nation_text WITH UNIQUE KEY nation.
-    DATA country_texts TYPE HASHED TABLE OF ty_country_text WITH UNIQUE KEY country.
-
-    records = CORRESPONDING #( it_original_data ).
-
-    IF records IS NOT INITIAL.
-      SELECT nation,
-             nation_text
-        FROM zmdg_c_nationt
-        FOR ALL ENTRIES IN @records
-        WHERE nation = @records-Nation
-          AND langu  = @sy-langu
-        INTO TABLE @nation_texts.
-
-      SELECT land1 AS country,
-             landx AS countryName
-        FROM t005t
-        FOR ALL ENTRIES IN @records
-        WHERE land1 = @records-Country
-          AND spras = @sy-langu
-        INTO TABLE @country_texts.
-    ENDIF.
-
-    LOOP AT records ASSIGNING FIELD-SYMBOL(<record>).
-      CLEAR virtual_property.
-
-      READ TABLE nation_texts ASSIGNING FIELD-SYMBOL(<nation_text>)
-        WITH TABLE KEY nation = <record>-Nation.
-      IF sy-subrc = 0.
-        virtual_property-NationText = <nation_text>-nation_text.
-      ENDIF.
-
-      READ TABLE country_texts ASSIGNING FIELD-SYMBOL(<country_text>)
-        WITH TABLE KEY country = <record>-Country.
-      IF sy-subrc = 0.
-        virtual_property-CountryName = <country_text>-countryName.
-      ENDIF.
-
-      APPEND virtual_property TO virtual_properties.
-    ENDLOOP.
-
-    ct_calculated_data = CORRESPONDING #( virtual_properties ).
-  ENDMETHOD.
-ENDCLASS.
-```
-
-### ZCL_MDG_REQTAX_VE
-
-```abap
-CLASS zcl_mdg_reqtax_ve DEFINITION
-  PUBLIC
-  FINAL
-  CREATE PUBLIC.
-
-  PUBLIC SECTION.
-    INTERFACES if_sadl_exit.
-    INTERFACES if_sadl_exit_calc_element_read.
-
-  PRIVATE SECTION.
-    TYPES:
-      BEGIN OF ty_virtual_property,
-        TaxTypeText TYPE tfktaxnumtype_t-text,
-      END OF ty_virtual_property.
-
-    CONSTANTS:
-      c_tax_type      TYPE string VALUE 'TAXTYPE',
-      c_tax_type_text TYPE string VALUE 'TAXTYPETEXT'.
-ENDCLASS.
-
-CLASS zcl_mdg_reqtax_ve IMPLEMENTATION.
-  METHOD if_sadl_exit_calc_element_read~get_calculation_info.
-    LOOP AT it_requested_calc_elements ASSIGNING FIELD-SYMBOL(<calc_element>).
-      CASE <calc_element>.
-        WHEN c_tax_type_text.
-          INSERT c_tax_type INTO TABLE et_requested_orig_elements.
-      ENDCASE.
-    ENDLOOP.
-  ENDMETHOD.
-
-  METHOD if_sadl_exit_calc_element_read~calculate.
-    DATA records TYPE STANDARD TABLE OF zc_mdg_reqtax WITH EMPTY KEY.
-    DATA virtual_properties TYPE STANDARD TABLE OF ty_virtual_property WITH EMPTY KEY.
-    DATA virtual_property TYPE ty_virtual_property.
-
-    TYPES:
-      BEGIN OF ty_tax_type_text,
-        taxType     TYPE tfktaxnumtype-taxtype,
-        taxTypeText TYPE tfktaxnumtype_t-text,
-      END OF ty_tax_type_text.
-
-    DATA tax_type_texts TYPE HASHED TABLE OF ty_tax_type_text WITH UNIQUE KEY taxType.
-
-    records = CORRESPONDING #( it_original_data ).
-
-    IF records IS NOT INITIAL.
-      SELECT taxtype AS taxType,
-             text    AS taxTypeText
-        FROM tfktaxnumtype_t
-        FOR ALL ENTRIES IN @records
-        WHERE taxtype = @records-TaxType
-          AND spras   = @sy-langu
-        INTO TABLE @tax_type_texts.
-    ENDIF.
-
-    LOOP AT records ASSIGNING FIELD-SYMBOL(<record>).
-      CLEAR virtual_property.
-
-      READ TABLE tax_type_texts ASSIGNING FIELD-SYMBOL(<tax_type_text>)
-        WITH TABLE KEY taxType = <record>-TaxType.
-      IF sy-subrc = 0.
-        virtual_property-TaxTypeText = <tax_type_text>-taxTypeText.
-      ENDIF.
-
-      APPEND virtual_property TO virtual_properties.
-    ENDLOOP.
-
-    ct_calculated_data = CORRESPONDING #( virtual_properties ).
-  ENDMETHOD.
-ENDCLASS.
 ```
 
 ### ZCL_MDG_REQ_TITLE_VE
-
 ```abap
 CLASS zcl_mdg_req_title_ve DEFINITION
   PUBLIC
@@ -2838,10 +2715,10 @@ CLASS zcl_mdg_req_title_ve IMPLEMENTATION.
     ct_calculated_data = CORRESPONDING #( virtual_properties ).
   ENDMETHOD.
 ENDCLASS.
+
 ```
 
 ### mdgcreaterequest/webapp/Component.ts
-
 ```typescript
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
@@ -2963,10 +2840,10 @@ sap.ui.define(
         });
     }
 );
+
 ```
 
 ### mdgcreaterequest/webapp/manifest.json
-
 ```json
 {
   "_version": "1.73.1",
@@ -3244,303 +3121,111 @@ sap.ui.define(
     }
   }
 }
+
 ```
 
 ### mdgcreaterequest/webapp/annotations/annotation.xml
-
 ```xml
+<?xml version="1.0" encoding="utf-8"?>
 <edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
-    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
-        <edmx:Include Namespace="com.sap.vocabularies.Common.v1" Alias="Common"/>
-    </edmx:Reference>
-    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
-        <edmx:Include Namespace="com.sap.vocabularies.UI.v1" Alias="UI"/>
-    </edmx:Reference>
-    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Communication.xml">
-        <edmx:Include Namespace="com.sap.vocabularies.Communication.v1" Alias="Communication"/>
-    </edmx:Reference>
-    <edmx:Reference Uri="/sap/opu/odata4/sap/zui_mdg_req_o4/srvd/sap/zui_mdg_req/0001/$metadata">
-        <edmx:Include Namespace="com.sap.gateway.srvd.zui_mdg_req.v0001" Alias="SAP__self"/>
-    </edmx:Reference>
-    <edmx:DataServices>
-        <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="local">
-            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))">
-                <Annotation Term="Common.Label" String="{@i18n>create}"/>
-            </Annotations>
-            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/ExternalSystem">
-                <Annotation Term="Common.Label" String="{@i18n>externalSystem}"/>
-            </Annotations>
-            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/PartnerGID">
-                <Annotation Term="Common.Label" String="{@i18n>partnerGid}"/>
-            </Annotations>
-            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/ResultIsActiveEntity">
-                <Annotation Term="Common.Label" String="{@i18n>resultIsActiveEntity}"/>
-            </Annotations>
-<Annotations Target="SAP__self.RequestsType">
-                <Annotation Term="Common.Label" String="{@i18n>bpRequest}"/>
-                <Annotation Term="UI.HeaderInfo">
-                    <Record>
-                        <PropertyValue Property="TypeName" String="{@i18n>bpRequest}"/>
-                        <PropertyValue Property="TypeNamePlural" String="{@i18n>bpRequests}"/>
-                        <PropertyValue Property="Title">
-                            <Record Type="UI.DataField">
-                                <PropertyValue Property="Value" Path="ObjectPageTitle"/>
-                            </Record>
-                        </PropertyValue>
-                        <PropertyValue Property="Description">
-                            <Record Type="UI.DataField">
-                                <PropertyValue Property="Value" Path="Status"/>
-                            </Record>
-                        </PropertyValue>
-                    </Record>
-                </Annotation>
-                <Annotation Term="UI.Facets">
-                    <Collection>
-                        <Record Type="UI.CollectionFacet">
-                            <PropertyValue Property="ID" String="General"/>
-                            <PropertyValue Property="Label" String="{@i18n>general}"/>
-                            <PropertyValue Property="Facets">
-                                <Collection>
-                                    <Record Type="UI.ReferenceFacet">
-                                        <PropertyValue Property="ID" String="GlobalData"/>
-                                        <PropertyValue Property="Label" String="{@i18n>globalData}"/>
-                                        <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#GlobalData"/>
-                                    </Record>
-                                    <Record Type="UI.ReferenceFacet">
-                                        <PropertyValue Property="ID" String="MainData"/>
-                                        <PropertyValue Property="Label" String="{@i18n>mainData}"/>
-                                        <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#MainData"/>
-                                    </Record>
-                                    <Record Type="UI.ReferenceFacet">
-                                        <PropertyValue Property="ID" String="IdentificationData"/>
-                                        <PropertyValue Property="Label" String="{@i18n>identificationData}"/>
-                                        <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#IdentificationData"/>
-                                    </Record>
-                                </Collection>
-                            </PropertyValue>
-                        </Record>
-                        <Record Type="UI.ReferenceFacet">
-                            <PropertyValue Property="ID" String="CountrySpecificData"/>
-                            <PropertyValue Property="Label" String="{@i18n>countrySpecificDataDetail}"/>
-                            <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#CountrySpecificData"/>
-                        </Record>
-                        <Record Type="UI.ReferenceFacet">
-                            <PropertyValue Property="ID" String="Address"/>
-                            <PropertyValue Property="Label" String="{@i18n>address}"/>
-                            <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#Address"/>
-                        </Record>
-                        <Record Type="UI.ReferenceFacet">
-                            <PropertyValue Property="ID" String="AddressVariants"/>
-                            <PropertyValue Property="Label" String="{@i18n>addressVariants}"/>
-                            <PropertyValue Property="Target" AnnotationPath="_Address/@UI.LineItem"/>
-                        </Record>
-                        <Record Type="UI.ReferenceFacet">
-                            <PropertyValue Property="ID" String="TaxNumbers"/>
-                            <PropertyValue Property="Label" String="{@i18n>additionalTaxData}"/>
-                            <PropertyValue Property="Target" AnnotationPath="_Tax/@UI.LineItem"/>
-                        </Record>
-                    </Collection>
-                </Annotation>
-                <Annotation Term="UI.LineItem">
-                    <Collection>
-                        <Record Type="UI.DataFieldForAction">
-                            <PropertyValue Property="Label" String="{@i18n>create}"/>
-                            <PropertyValue Property="Action" String="com.sap.gateway.srvd.zui_mdg_req.v0001.CreateRequest"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Label" String="{@i18n>requestId}"/>
-                            <PropertyValue Property="Value" Path="RequestId"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Label" String="{@i18n>requestType}"/>
-                            <PropertyValue Property="Value" Path="RequestType"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Label" String="{@i18n>requestOrigin}"/>
-                            <PropertyValue Property="Value" Path="ExternalSystem"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Label" String="{@i18n>status}"/>
-                            <PropertyValue Property="Value" Path="Status"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Label" String="{@i18n>createdBy}"/>
-                            <PropertyValue Property="Value" Path="CreatedBy"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Label" String="{@i18n>partnerGid}"/>
-                            <PropertyValue Property="Value" Path="PartnerGid"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Label" String="{@i18n>dunsNumber}"/>
-                            <PropertyValue Property="Value" Path="Duns"/>
-                        </Record>
-                    </Collection>
-                </Annotation>
-                <Annotation Term="UI.FieldGroup" Qualifier="GlobalData">
-                    <Record>
-                        <PropertyValue Property="Data">
-                            <Collection>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>requestType}"/><PropertyValue Property="Value" Path="RequestType"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>requestOrigin}"/><PropertyValue Property="Value" Path="ExternalSystem"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>status}"/><PropertyValue Property="Value" Path="Status"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>createdBy}"/><PropertyValue Property="Value" Path="CreatedBy"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>createdAt}"/><PropertyValue Property="Value" Path="CreatedAt"/></Record>
-                            </Collection>
-                        </PropertyValue>
-                    </Record>
-                </Annotation>
-                <Annotation Term="UI.FieldGroup" Qualifier="MainData">
-                    <Record>
-                        <PropertyValue Property="Data">
-                            <Collection>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>partnerGid}"/><PropertyValue Property="Value" Path="PartnerGid"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>parentGid1}"/><PropertyValue Property="Value" Path="ParentGid1"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>parentGid2}"/><PropertyValue Property="Value" Path="ParentGid2"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>foundDate}"/><PropertyValue Property="Value" Path="FoundDate"/></Record>
-                            </Collection>
-                        </PropertyValue>
-                    </Record>
-                </Annotation>
-                <Annotation Term="UI.FieldGroup" Qualifier="IdentificationData">
-                    <Record>
-                        <PropertyValue Property="Data">
-                            <Collection>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>leiCode}"/><PropertyValue Property="Value" Path="LeiCode"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>dunsNumber}"/><PropertyValue Property="Value" Path="Duns"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>euid}"/><PropertyValue Property="Value" Path="Euid"/></Record>
-                            </Collection>
-                        </PropertyValue>
-                    </Record>
-                </Annotation>
-                <Annotation Term="UI.FieldGroup" Qualifier="CountrySpecificData">
-                    <Record>
-                        <PropertyValue Property="Data">
-                            <Collection>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>partnerGroup}"/><PropertyValue Property="Value" Path="BusinessPartnerGroup"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>partnerId}"/><PropertyValue Property="Value" Path="PartnerId"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>partnerCategory}"/><PropertyValue Property="Value" Path="BusinessPartnerType"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>legalForm}"/><PropertyValue Property="Value" Path="LegalForm"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>telephoneNo}"/><PropertyValue Property="Value" Path="TelephoneNumber"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>mobileTelNo}"/><PropertyValue Property="Value" Path="MobileNumber"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>emailAddress}"/><PropertyValue Property="Value" Path="EmailAddress"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>vendor}"/><PropertyValue Property="Value" Path="Vendor"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>customer}"/><PropertyValue Property="Value" Path="Customer"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>inactive}"/><PropertyValue Property="Value" Path="IsInactive"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>inactiveReason}"/><PropertyValue Property="Value" Path="InactiveReason"/></Record>
-                            </Collection>
-                        </PropertyValue>
-                    </Record>
-                </Annotation>
-                <Annotation Term="UI.FieldGroup" Qualifier="Address">
-                    <Record>
-                        <PropertyValue Property="Data">
-                            <Collection>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>companyName}"/><PropertyValue Property="Value" Path="OrganizationName1"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>searchTerm}"/><PropertyValue Property="Value" Path="SearchTerm1"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>country}"/><PropertyValue Property="Value" Path="Country"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>district}"/><PropertyValue Property="Value" Path="District"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>city}"/><PropertyValue Property="Value" Path="City"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>postalCode}"/><PropertyValue Property="Value" Path="PostalCode"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>street}"/><PropertyValue Property="Value" Path="Street"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>houseNo}"/><PropertyValue Property="Value" Path="HouseNumber"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>houseNoSuppl}"/><PropertyValue Property="Value" Path="HouseNumberSupplement"/></Record>
-                            </Collection>
-                        </PropertyValue>
-                    </Record>
-                </Annotation>
-            </Annotations>
-            <Annotations Target="SAP__self.TaxNumbersType/TaxType">
-                <Annotation Term="Common.Text" Path="TaxTypeText"/>
-                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextFirst"/>
-            </Annotations>
-            <Annotations Target="SAP__self.TaxNumbersType">
-                <Annotation Term="Common.Label" String="{@i18n>taxNumber}"/>
-                <Annotation Term="UI.HeaderInfo">
-                    <Record>
-                        <PropertyValue Property="TypeName" String="{@i18n>taxNumber}"/>
-                        <PropertyValue Property="TypeNamePlural" String="{@i18n>taxNumbers}"/>
-                        <PropertyValue Property="Title"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="TaxTypeText"/></Record></PropertyValue>
-                        <PropertyValue Property="Description"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="TaxNumber"/></Record></PropertyValue>
-                    </Record>
-                </Annotation>
-                <Annotation Term="UI.Facets">
-                    <Collection>
-                        <Record Type="UI.ReferenceFacet">
-                            <PropertyValue Property="ID" String="TaxNumberDetail"/>
-                            <PropertyValue Property="Label" String="{@i18n>taxNumberDetails}"/>
-                            <PropertyValue Property="Target" AnnotationPath="@UI.Identification"/>
-                        </Record>
-                    </Collection>
-                </Annotation>
-                <Annotation Term="UI.Identification">
-                    <Collection>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxType}"/><PropertyValue Property="Value" Path="TaxType"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxNumber}"/><PropertyValue Property="Value" Path="TaxNumber"/></Record>
-                    </Collection>
-                </Annotation>
-                <Annotation Term="UI.LineItem">
-                    <Collection>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxType}"/><PropertyValue Property="Value" Path="TaxType"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxNumber}"/><PropertyValue Property="Value" Path="TaxNumber"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                    </Collection>
-                </Annotation>
-            </Annotations>
-            <Annotations Target="SAP__self.AddressVariantsType/Nation">
-                <Annotation Term="Common.Text" Path="NationText"/>
-                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextFirst"/>
-            </Annotations>
-            <Annotations Target="SAP__self.AddressVariantsType/Country">
-                <Annotation Term="Common.Text" Path="CountryName"/>
-                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextLast"/>
-            </Annotations>
-            <Annotations Target="SAP__self.AddressVariantsType">
-                <Annotation Term="Common.Label" String="{@i18n>addressVariant}"/>
-                <Annotation Term="UI.HeaderInfo">
-                    <Record>
-                        <PropertyValue Property="TypeName" String="{@i18n>addressVariant}"/>
-                        <PropertyValue Property="TypeNamePlural" String="{@i18n>addressVariants}"/>
-                        <PropertyValue Property="Title"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="NationText"/></Record></PropertyValue>
-                        <PropertyValue Property="Description"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="OrganizationName1"/></Record></PropertyValue>
-                    </Record>
-                </Annotation>
-                <Annotation Term="UI.Facets">
-                    <Collection>
-                        <Record Type="UI.ReferenceFacet">
-                            <PropertyValue Property="ID" String="AddressVariantDetail"/>
-                            <PropertyValue Property="Label" String="{@i18n>addressDetails}"/>
-                            <PropertyValue Property="Target" AnnotationPath="@UI.Identification"/>
-                        </Record>
-                    </Collection>
-                </Annotation>
-                <Annotation Term="UI.Identification">
-                    <Collection>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>nation}"/><PropertyValue Property="Value" Path="Nation"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>companyName}"/><PropertyValue Property="Value" Path="OrganizationName1"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>country}"/><PropertyValue Property="Value" Path="Country"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>city}"/><PropertyValue Property="Value" Path="City"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>postalCode}"/><PropertyValue Property="Value" Path="PostalCode"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>street}"/><PropertyValue Property="Value" Path="Street"/></Record>
-                    </Collection>
-                </Annotation>
-                <Annotation Term="UI.LineItem">
-                    <Collection>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>nation}"/><PropertyValue Property="Value" Path="Nation"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>companyName}"/><PropertyValue Property="Value" Path="OrganizationName1"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>country}"/><PropertyValue Property="Value" Path="Country"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>city}"/><PropertyValue Property="Value" Path="City"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>postalCode}"/><PropertyValue Property="Value" Path="PostalCode"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>street}"/><PropertyValue Property="Value" Path="Street"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                    </Collection>
-                </Annotation>
-            </Annotations>
-        </Schema>
-    </edmx:DataServices>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
+    <edmx:Include Namespace="com.sap.vocabularies.Common.v1" Alias="Common" />
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
+    <edmx:Include Namespace="com.sap.vocabularies.UI.v1" Alias="UI" />
+  </edmx:Reference>
+  <edmx:Reference Uri="/sap/opu/odata4/sap/zui_mdg_req_o4/srvd/sap/zui_mdg_req/0001/$metadata">
+    <edmx:Include Namespace="com.sap.gateway.srvd.zui_mdg_req.v0001" Alias="SAP__self" />
+  </edmx:Reference>
+  <edmx:DataServices>
+    <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="local">
+      <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))">
+        <Annotation Term="Common.Label" String="{@i18n>create}" />
+      </Annotations>
+      <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/ExternalSystem">
+        <Annotation Term="Common.Label" String="{@i18n>externalSystem}" />
+      </Annotations>
+      <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/PartnerGID">
+        <Annotation Term="Common.Label" String="{@i18n>partnerGid}" />
+      </Annotations>
+      <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/ResultIsActiveEntity">
+        <Annotation Term="Common.Label" String="{@i18n>resultIsActiveEntity}" />
+      </Annotations>
+      <Annotations Target="SAP__self.TaxNumbersType">
+        <Annotation Term="UI.LineItem">
+          <Collection>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Label" String="{@i18n>taxType}" />
+              <PropertyValue Property="Value" Path="TaxType" />
+              <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly" />
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Label" String="{@i18n>taxNumber}" />
+              <PropertyValue Property="Value" Path="TaxNumber" />
+              <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly" />
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="SAP__self.AddressVariantsType">
+        <Annotation Term="UI.HeaderInfo">
+          <Record Type="UI.HeaderInfoType">
+            <PropertyValue Property="TypeName" String="{@i18n>addressVariant}" />
+            <PropertyValue Property="TypeNamePlural" String="{@i18n>addressVariants}" />
+            <PropertyValue Property="Title">
+              <Record Type="UI.DataField">
+                <PropertyValue Property="Value" Path="_NationText/NationText" />
+              </Record>
+            </PropertyValue>
+            <PropertyValue Property="Description">
+              <Record Type="UI.DataField">
+                <PropertyValue Property="Value" Path="OrganizationName1" />
+              </Record>
+            </PropertyValue>
+          </Record>
+        </Annotation>
+        <Annotation Term="UI.LineItem">
+          <Collection>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Label" String="{@i18n>nation}" />
+              <PropertyValue Property="Value" Path="Nation" />
+              <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly" />
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Label" String="{@i18n>companyName}" />
+              <PropertyValue Property="Value" Path="OrganizationName1" />
+              <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly" />
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Label" String="{@i18n>country}" />
+              <PropertyValue Property="Value" Path="Country" />
+              <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly" />
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Label" String="{@i18n>city}" />
+              <PropertyValue Property="Value" Path="City" />
+              <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly" />
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Label" String="{@i18n>postalCode}" />
+              <PropertyValue Property="Value" Path="PostalCode" />
+              <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly" />
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Label" String="{@i18n>street}" />
+              <PropertyValue Property="Value" Path="Street" />
+              <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly" />
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+    </Schema>
+  </edmx:DataServices>
 </edmx:Edmx>
+
 ```
 
 ### mdgcreaterequest/webapp/i18n/i18n.properties
-
 ```properties
 # This is the resource bundle for c4p.mdg.mdgcreaterequest
 
@@ -3615,10 +3300,10 @@ taxNumbers=Tax Numbers
 taxType=Tax Type
 externalSystem=External System
 resultIsActiveEntity=Result Is Active Entity
+
 ```
 
 ### mdgcreaterequest/webapp/i18n/i18n_en.properties
-
 ```properties
 # This is the resource bundle for c4p.mdg.mdgcreaterequest
 
@@ -3655,7 +3340,7 @@ create=Create
 #XFLD: Field labels
 requestId=Request ID
 requestType=Request Type
-requestOrigin=Request Origin
+requestOrigin=Requesting Country
 status=Status
 createdBy=Created By
 createdAt=Created At
@@ -3693,88 +3378,88 @@ taxNumbers=Tax Numbers
 taxType=Tax Type
 externalSystem=Country/Region
 resultIsActiveEntity=Result Is Active Entity
+
 ```
 
 ### mdgcreaterequest/webapp/i18n/i18n_cs.properties
-
 ```properties
 # This is the resource bundle for c4p.mdg.mdgcreaterequest
 
 #Texts for manifest.json
 
 #XTIT: Application name
-appTitle=MDG požadavek
+appTitle=MDG poĹľadavek
 
 #YDES: Application description
-appDescription=MDG požadavek
+appDescription=MDG poĹľadavek
 
 #XMSG: Startup create request error
-createRequestDraftFailed=Draft MDG požadavku se nepodařilo vytvořit.
+createRequestDraftFailed=Draft MDG poĹľadavku se nepodaĹ™ilo vytvoĹ™it.
 
 #XTIT: Request object names
-bpRequest=MDG požadavek
-bpRequests=MDG požadavky
+bpRequest=MDG poĹľadavek
+bpRequests=MDG poĹľadavky
 
 #XTIT: Object page sections
-general=Všeobecné
-globalData=Globální data (KID)
-mainData=Hlavní data
-identificationData=Identifikační data
+general=VĹˇeobecnĂ©
+globalData=GlobĂˇlnĂ­ data (KID)
+mainData=HlavnĂ­ data
+identificationData=IdentifikaÄŤnĂ­ data
 countrySpecificDataDetail=Detail dat pro danou zemi
 address=Adresa
 addressVariants=Varianty adres
-additionalTaxData=Daňová data
+additionalTaxData=DaĹovĂˇ data
 addressDetails=Detaily adresy
-taxNumberDetails=Detaily daňového čísla
+taxNumberDetails=Detaily daĹovĂ©ho ÄŤĂ­sla
 
 #XBUT: Create request action
-create=Vytvořit
+create=VytvoĹ™it
 
 #XFLD: Field labels
-requestId=ID požadavku
-requestType=Typ požadavku
-requestOrigin=Původ požadavku
+requestId=ID poĹľadavku
+requestType=Typ poĹľadavku
+requestOrigin=Ĺ˝ĂˇdajĂ­cĂ­ zemÄ›
 status=Status
-createdBy=Vytvořil
-createdAt=Vytvořeno
+createdBy=VytvoĹ™il
+createdAt=VytvoĹ™eno
 partnerGid=Partner GID
-parentGid1=Nadřazený GID 1
-parentGid2=Nadřazený GID 2
-foundDate=Datum založení
-leiCode=LEI kód
-dunsNumber=Číslo D-U-N-S
+parentGid1=NadĹ™azenĂ˝ GID 1
+parentGid2=NadĹ™azenĂ˝ GID 2
+foundDate=Datum zaloĹľenĂ­
+leiCode=LEI kĂłd
+dunsNumber=ÄŚĂ­slo D-U-N-S
 euid=EUID
 partnerGroup=Skupina partnera
 partnerId=ID partnera
 partnerCategory=Kategorie partnera
-legalForm=Právní forma
+legalForm=PrĂˇvnĂ­ forma
 telephoneNo=Telefon
-mobileTelNo=Mobilní telefon
-emailAddress=E-mailová adresa
+mobileTelNo=MobilnĂ­ telefon
+emailAddress=E-mailovĂˇ adresa
 vendor=Dodavatel
-customer=Zákazník
-inactive=Neaktivní
-inactiveReason=Důvod neaktivity
-companyName=Název organizace
-searchTerm=Hledaný výraz 1
-country=Klíč státu/regionu
-district=Místní část
-city=Město
-postalCode=PSČ
+customer=ZĂˇkaznĂ­k
+inactive=NeaktivnĂ­
+inactiveReason=DĹŻvod neaktivity
+companyName=NĂˇzev organizace
+searchTerm=HledanĂ˝ vĂ˝raz 1
+country=KlĂ­ÄŤ stĂˇtu/regionu
+district=MĂ­stnĂ­ ÄŤĂˇst
+city=MÄ›sto
+postalCode=PSÄŚ
 street=Ulice
-houseNo=Číslo domu
+houseNo=ÄŚĂ­slo domu
 houseNoSuppl=Dodatek
 addressVariant=Varianta adresy
 nation=Text verze
-taxNumber=Daňové číslo
-taxNumbers=Daňová čísla
-taxType=Typ daně
-externalSystem=Země/Region
-resultIsActiveEntity=Výsledek je aktivní
+taxNumber=DaĹovĂ© ÄŤĂ­slo
+taxNumbers=DaĹovĂˇ ÄŤĂ­sla
+taxType=Typ danÄ›
+externalSystem=ZemÄ›/Region
+resultIsActiveEntity=VĂ˝sledek je aktivnĂ­
+
 ```
 
 ### mdgcreaterequest/package.json
-
 ```json
 {
   "name": "mdgcreaterequest",
@@ -3814,10 +3499,10 @@ resultIsActiveEntity=Výsledek je aktivní
   "sapuxLayer": "CUSTOMER_BASE",
   "sapux": true
 }
+
 ```
 
 ### mdgcreaterequest/tsconfig.json
-
 ```json
 {
   "compilerOptions": {
@@ -3851,10 +3536,10 @@ resultIsActiveEntity=Výsledek je aktivní
     "webapp/test"
   ]
 }
+
 ```
 
 ### mdgcreaterequest/ui5.yaml
-
 ```yaml
 # yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
 
@@ -3894,10 +3579,10 @@ server:
       configuration:
         flp:
           theme: sap_horizon
+
 ```
 
 ### mdgcreaterequest/ui5-local.yaml
-
 ```yaml
 # yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
 
@@ -3941,10 +3626,10 @@ server:
           - path: /sap
             url: https://hsr.con4pas.cz
             client: '140'
+
 ```
 
 ### mdgcreaterequest/ui5-mock.yaml
-
 ```yaml
 # yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
 
@@ -3995,10 +3680,10 @@ server:
             generateMockData: true
             resolveExternalServiceReferences: true
         annotations: []
+
 ```
 
 ### mdgcreaterequest/eslint.config.mjs
-
 ```javascript
 import fioriTools from '@sap-ux/eslint-plugin-fiori-tools';
 import tseslint from 'typescript-eslint';
@@ -4020,11 +3705,11 @@ export default [
         }
     }
 ];
+
 ```
 
 ### mdgcreaterequest/webapp/index.html
-
-```html
+```
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -4063,7 +3748,6 @@ export default [
 ```
 
 ### mdgcreaterequest/.appGenInfo.json
-
 ```json
 {
   "generationParameters": {
@@ -4098,4 +3782,69 @@ export default [
     "valueHelpDownloaded": true
   }
 }
+
 ```
+
+
+
+### ZI_MDG_COUNTRY_TEXT.ddls
+```abap
+@EndUserText.label: 'MDG Country Text'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@VDM.viewType: #BASIC
+@ObjectModel.dataCategory: #TEXT
+define view entity ZI_MDG_COUNTRY_TEXT
+  as select from t005t
+{
+      @Semantics.language: true
+  key spras as Language,
+  key land1 as Country,
+
+      @Semantics.text: true
+      landx as CountryName
+}
+
+```
+
+### ZI_MDG_NATION_TEXT.ddls
+```abap
+@EndUserText.label: 'MDG Nation Text'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #BASIC
+@ObjectModel.dataCategory: #TEXT
+define view entity ZI_MDG_NATION_TEXT
+  as select from zmdg_c_nationt
+{
+      @Semantics.language: true
+  key langu       as Language,
+  key nation      as Nation,
+      @Semantics.text: true
+      nation_text as NationText
+}
+
+
+
+```
+
+### ZI_MDG_TAX_TYPE_TEXT.ddls
+```abap
+@EndUserText.label: 'MDG Tax Type Text'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #BASIC
+@ObjectModel.dataCategory: #TEXT
+define view entity ZI_MDG_TAX_TYPE_TEXT
+  as select from tfktaxnumtype_t
+{
+      @Semantics.language: true
+  key spras   as Language,
+  key taxtype as TaxType,
+      @Semantics.text: true
+      text    as TaxTypeText
+}
+
+
+
+```
+

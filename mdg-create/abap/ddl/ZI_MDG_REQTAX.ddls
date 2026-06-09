@@ -1,4 +1,4 @@
-@EndUserText.label: 'MDG Request Tax Number'
+﻿@EndUserText.label: 'MDG Request Tax Number'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 @Metadata.ignorePropagatedAnnotations: true
@@ -7,11 +7,15 @@ define view entity ZI_MDG_REQTAX
   as select from zmdg_reqtax
   association to parent ZI_MDG_REQ as _Request
     on $projection.RequestUuid = _Request.RequestUuid
+  association [0..1] to ZI_MDG_TAX_TYPE_TEXT as _TaxTypeText
+    on  $projection.TaxType = _TaxTypeText.TaxType
+    and _TaxTypeText.Language = $session.system_language
 {
   key request_uuid as RequestUuid,
+      @ObjectModel.text.association: '_TaxTypeText'
   key taxtype      as TaxType,
       taxnum       as TaxNumber,
 
+      _TaxTypeText,
       _Request
 }
-

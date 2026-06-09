@@ -1,0 +1,14 @@
+﻿@EndUserText.label: 'MDG Country Text'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@VDM.viewType: #BASIC
+@ObjectModel.dataCategory: #TEXT
+define view entity ZI_MDG_COUNTRY_TEXT
+  as select from t005t
+{
+      @Semantics.language: true
+  key spras as Language,
+  key land1 as Country,
+
+      @Semantics.text: true
+      landx as CountryName
+}

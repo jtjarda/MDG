@@ -1,0 +1,16 @@
+﻿@EndUserText.label: 'MDG Nation Text'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@Metadata.ignorePropagatedAnnotations: true
+@VDM.viewType: #BASIC
+@ObjectModel.dataCategory: #TEXT
+define view entity ZI_MDG_NATION_TEXT
+  as select from zmdg_c_nationt
+{
+      @Semantics.language: true
+  key langu       as Language,
+  key nation      as Nation,
+      @Semantics.text: true
+      nation_text as NationText
+}
+
+

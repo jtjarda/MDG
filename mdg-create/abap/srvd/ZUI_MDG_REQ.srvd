@@ -1,4 +1,4 @@
-@EndUserText.label: 'MDG: Create MDG Request'
+﻿@EndUserText.label: 'MDG: Create MDG Request'
 define service ZUI_MDG_REQ {
   expose ZC_MDG_REQ                as Requests;
   expose ZC_MDG_REQADR             as AddressVariants;
@@ -9,8 +9,11 @@ define service ZUI_MDG_REQ {
   expose ZI_MDG_USER               as Users;
   expose ZI_MDG_DOMAIN_VALUE_TEXT  as DomainValueTexts;
   expose ZI_MDG_COUNTRY_VH         as Countries;
+  expose ZI_MDG_COUNTRY_TEXT       as CountryTexts;
   expose ZI_MDG_NATION_VH          as Nations;
-  expose ZI_MDG_TAX_TYPE_VH         as TaxTypes;
-  expose ZI_MDG_LEGAL_FORM_VH      as LegalForms;
+  expose ZI_MDG_NATION_TEXT        as NationTexts;
+  expose ZI_MDG_TAX_TYPE_VH        as TaxTypes;
+  expose ZI_MDG_TAX_TYPE_TEXT      as TaxTypeTexts;
+  expose ZI_MDG_PARTNER_TYPE_VH    as PartnerTypes;
   expose ZI_MDG_BU_GROUP_VH        as BusinessPartnerGroups;
 }

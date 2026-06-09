@@ -1,0 +1,93 @@
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
+        <edmx:Include Namespace="com.sap.vocabularies.Common.v1" Alias="Common"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
+        <edmx:Include Namespace="com.sap.vocabularies.UI.v1" Alias="UI"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="/sap/opu/odata4/sap/zui_mdg_req_o4/srvd/sap/zui_mdg_req/0001/$metadata">
+        <edmx:Include Namespace="com.sap.gateway.srvd.zui_mdg_req.v0001" Alias="SAP__self"/>
+    </edmx:Reference>
+    <edmx:DataServices>
+        <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="local">
+            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))">
+                <Annotation Term="Common.Label" String="{@i18n>create}"/>
+            </Annotations>
+            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/ExternalSystem">
+                <Annotation Term="Common.Label" String="{@i18n>externalSystem}"/>
+            </Annotations>
+            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/PartnerGID">
+                <Annotation Term="Common.Label" String="{@i18n>partnerGid}"/>
+            </Annotations>
+            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/ResultIsActiveEntity">
+                <Annotation Term="Common.Label" String="{@i18n>resultIsActiveEntity}"/>
+            </Annotations>
+
+            <Annotations Target="SAP__self.TaxNumbersType/TaxType">
+                <Annotation Term="Common.Text" Path="TaxTypeText"/>
+                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextFirst"/>
+            </Annotations>
+            <Annotations Target="SAP__self.TaxNumbersType">
+                <Annotation Term="UI.LineItem">
+                    <Collection>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="{@i18n>taxType}"/>
+                            <PropertyValue Property="Value" Path="TaxType"/>
+                            <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="{@i18n>taxNumber}"/>
+                            <PropertyValue Property="Value" Path="TaxNumber"/>
+                            <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+            </Annotations>
+
+            <Annotations Target="SAP__self.AddressVariantsType/Nation">
+                <Annotation Term="Common.Text" Path="NationText"/>
+                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextFirst"/>
+            </Annotations>
+            <Annotations Target="SAP__self.AddressVariantsType/Country">
+                <Annotation Term="Common.Text" Path="CountryName"/>
+                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextLast"/>
+            </Annotations>
+            <Annotations Target="SAP__self.AddressVariantsType">
+                <Annotation Term="UI.LineItem">
+                    <Collection>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="{@i18n>nation}"/>
+                            <PropertyValue Property="Value" Path="Nation"/>
+                            <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="{@i18n>companyName}"/>
+                            <PropertyValue Property="Value" Path="OrganizationName1"/>
+                            <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="{@i18n>country}"/>
+                            <PropertyValue Property="Value" Path="Country"/>
+                            <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="{@i18n>city}"/>
+                            <PropertyValue Property="Value" Path="City"/>
+                            <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="{@i18n>postalCode}"/>
+                            <PropertyValue Property="Value" Path="PostalCode"/>
+                            <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="{@i18n>street}"/>
+                            <PropertyValue Property="Value" Path="Street"/>
+                            <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+            </Annotations>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>

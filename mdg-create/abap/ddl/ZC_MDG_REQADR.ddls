@@ -1,4 +1,4 @@
-@EndUserText.label: 'MDG Request Address Variant'
+﻿@EndUserText.label: 'MDG Request Address Variant'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 @VDM.viewType: #CONSUMPTION
@@ -7,8 +7,6 @@ define view entity ZC_MDG_REQADR
 {
   key RequestUuid,
   key Nation,
-      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_MDG_REQADR_VE'
-      virtual NationText : abap.char(60),
       OrganizationName1,
       OrganizationName2,
       OrganizationName3,
@@ -23,9 +21,11 @@ define view entity ZC_MDG_REQADR
       District,
       PostalCode,
       Country,
-      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_MDG_REQADR_VE'
-      virtual CountryName : abap.char(50),
       OrganizationName,
       PersonName,
+      _NationText,
+      _CountryText,
       _Request : redirected to parent ZC_MDG_REQ
 }
+
+

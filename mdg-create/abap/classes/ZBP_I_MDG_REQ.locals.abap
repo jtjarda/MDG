@@ -62,7 +62,7 @@ CLASS lhc_request IMPLEMENTATION.
     READ ENTITIES OF zi_mdg_req IN LOCAL MODE
       ENTITY Request
         FIELDS (
-          RequestUuid RequestType ExternalSystem BusinessPartnerGroup Status
+          RequestUuid RequestType ExternalSystem BusinessPartnerGroup Status IsInactive
         )
         WITH CORRESPONDING #( keys )
       RESULT DATA(requests).
@@ -116,6 +116,10 @@ CLASS lhc_request IMPLEMENTATION.
           THEN if_abap_behv=>fc-f-mandatory
         ELSE if_abap_behv=>fc-f-read_only
       ).
+
+      IF <request>-IsInactive <> abap_true.
+        <features>-%field-InactiveReason = if_abap_behv=>fc-f-read_only.
+      ENDIF.
     ENDLOOP.
   ENDMETHOD.
 

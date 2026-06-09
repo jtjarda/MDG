@@ -1,4 +1,4 @@
-CLASS zcl_mdg_req_title_ve DEFINITION
+﻿CLASS zcl_mdg_req_title_ve DEFINITION
   PUBLIC
   FINAL
   CREATE PUBLIC.
