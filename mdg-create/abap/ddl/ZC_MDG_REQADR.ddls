@@ -23,6 +23,8 @@ define view entity ZC_MDG_REQADR
       District,
       PostalCode,
       Country,
+      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_MDG_REQADR_VE'
+      virtual CountryName : abap.char(50),
       OrganizationName,
       PersonName,
       _Request : redirected to parent ZC_MDG_REQ

@@ -1,8 +1,8 @@
-@Metadata.layer: #CUSTOMER
+﻿@Metadata.layer: #CUSTOMER
 @UI.headerInfo: {
   typeName: 'Address Variant',
   typeNamePlural: 'Address Variants',
-  title: { type: #STANDARD, value: 'Nation' },
+  title: { type: #STANDARD, value: 'NationText' },
   description: { type: #STANDARD, value: 'OrganizationName1' }
 }
 annotate entity ZC_MDG_REQADR with

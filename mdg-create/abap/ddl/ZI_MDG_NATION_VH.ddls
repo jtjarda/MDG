@@ -1,22 +1,23 @@
-@EndUserText.label: 'MDG Address Version Value Help'
+﻿@EndUserText.label: 'MDG Address Version Value Help'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.ignorePropagatedAnnotations: true
 @ObjectModel.resultSet.sizeCategory: #XS
 @Search.searchable: true
 @VDM.viewType: #BASIC
 define view entity ZI_MDG_NATION_VH
-  as select from tsadv as NationVersion
-  association [0..1] to tsadvt as _Text
-    on  _Text.nation = NationVersion.nation
+  as select from zmdg_c_nation as Nation
+  association [0..1] to zmdg_c_nationt as _Text
+    on  _Text.nation = Nation.nation
     and _Text.langu  = $session.system_language
 {
       @Search.defaultSearchElement: true
       @Search.fuzzinessThreshold: 0.8
       @ObjectModel.text.element: [ 'NationText' ]
-  key NationVersion.nation as Nation,
+  key Nation.nation as Nation,
 
       @Search.defaultSearchElement: true
       @Search.fuzzinessThreshold: 0.8
       @Semantics.text: true
-      _Text.nation_tex as NationText
+      _Text.nation_text as NationText
 }
+where Nation.inactive <> 'X'

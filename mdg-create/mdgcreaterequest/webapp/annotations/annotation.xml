@@ -236,13 +236,17 @@
                 <Annotation Term="Common.Text" Path="NationText"/>
                 <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextFirst"/>
             </Annotations>
+            <Annotations Target="SAP__self.AddressVariantsType/Country">
+                <Annotation Term="Common.Text" Path="CountryName"/>
+                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextLast"/>
+            </Annotations>
             <Annotations Target="SAP__self.AddressVariantsType">
                 <Annotation Term="Common.Label" String="{@i18n>addressVariant}"/>
                 <Annotation Term="UI.HeaderInfo">
                     <Record>
                         <PropertyValue Property="TypeName" String="{@i18n>addressVariant}"/>
                         <PropertyValue Property="TypeNamePlural" String="{@i18n>addressVariants}"/>
-                        <PropertyValue Property="Title"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="Nation"/></Record></PropertyValue>
+                        <PropertyValue Property="Title"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="NationText"/></Record></PropertyValue>
                         <PropertyValue Property="Description"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="OrganizationName1"/></Record></PropertyValue>
                     </Record>
                 </Annotation>

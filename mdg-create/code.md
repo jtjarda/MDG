@@ -494,21 +494,22 @@ where System.IsEnhanceAllowed <> 'X'
 @Search.searchable: true
 @VDM.viewType: #BASIC
 define view entity ZI_MDG_NATION_VH
-  as select from tsadv as NationVersion
-  association [0..1] to tsadvt as _Text
-    on  _Text.nation = NationVersion.nation
+  as select from zmdg_c_nation as Nation
+  association [0..1] to zmdg_c_nationt as _Text
+    on  _Text.nation = Nation.nation
     and _Text.langu  = $session.system_language
 {
       @Search.defaultSearchElement: true
       @Search.fuzzinessThreshold: 0.8
       @ObjectModel.text.element: [ 'NationText' ]
-  key NationVersion.nation as Nation,
+  key Nation.nation as Nation,
 
       @Search.defaultSearchElement: true
       @Search.fuzzinessThreshold: 0.8
       @Semantics.text: true
-      _Text.nation_tex as NationText
+      _Text.nation_text as NationText
 }
+where Nation.inactive <> 'X'
 ```
 
 ### ZI_MDG_REQ_CREATE_P.ddls
@@ -768,6 +769,8 @@ define view entity ZC_MDG_REQADR
       District,
       PostalCode,
       Country,
+      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_MDG_REQADR_VE'
+      virtual CountryName : abap.char(50),
       OrganizationName,
       PersonName,
       _Request : redirected to parent ZC_MDG_REQ
@@ -1250,7 +1253,7 @@ annotate entity ZC_MDG_REQ with
 @UI.headerInfo: {
   typeName: 'Address Variant',
   typeNamePlural: 'Address Variants',
-  title: { type: #STANDARD, value: 'Nation' },
+  title: { type: #STANDARD, value: 'NationText' },
   description: { type: #STANDARD, value: 'OrganizationName1' }
 }
 annotate entity ZC_MDG_REQADR with
@@ -2366,12 +2369,15 @@ CLASS zcl_mdg_reqadr_ve DEFINITION
   PRIVATE SECTION.
     TYPES:
       BEGIN OF ty_virtual_property,
-        NationText TYPE c LENGTH 60,
+        NationText  TYPE zmdg_c_nationt-nation_text,
+        CountryName TYPE t005t-landx,
       END OF ty_virtual_property.
 
     CONSTANTS:
-      c_nation      TYPE string VALUE 'NATION',
-      c_nation_text TYPE string VALUE 'NATIONTEXT'.
+      c_nation       TYPE string VALUE 'NATION',
+      c_nation_text  TYPE string VALUE 'NATIONTEXT',
+      c_country      TYPE string VALUE 'COUNTRY',
+      c_country_name TYPE string VALUE 'COUNTRYNAME'.
 ENDCLASS.
 
 CLASS zcl_mdg_reqadr_ve IMPLEMENTATION.
@@ -2380,6 +2386,8 @@ CLASS zcl_mdg_reqadr_ve IMPLEMENTATION.
       CASE <calc_element>.
         WHEN c_nation_text.
           INSERT c_nation INTO TABLE et_requested_orig_elements.
+        WHEN c_country_name.
+          INSERT c_country INTO TABLE et_requested_orig_elements.
       ENDCASE.
     ENDLOOP.
   ENDMETHOD.
@@ -2391,22 +2399,35 @@ CLASS zcl_mdg_reqadr_ve IMPLEMENTATION.
 
     TYPES:
       BEGIN OF ty_nation_text,
-        nation     TYPE tsadv-nation,
-        nationText TYPE c LENGTH 60,
-      END OF ty_nation_text.
+        nation      TYPE zmdg_c_nation-nation,
+        nation_text TYPE zmdg_c_nationt-nation_text,
+      END OF ty_nation_text,
+      BEGIN OF ty_country_text,
+        country     TYPE land1,
+        countryName TYPE t005t-landx,
+      END OF ty_country_text.
 
     DATA nation_texts TYPE HASHED TABLE OF ty_nation_text WITH UNIQUE KEY nation.
+    DATA country_texts TYPE HASHED TABLE OF ty_country_text WITH UNIQUE KEY country.
 
     records = CORRESPONDING #( it_original_data ).
 
     IF records IS NOT INITIAL.
       SELECT nation,
-             nation_tex AS nationText
-        FROM tsadvt
+             nation_text
+        FROM zmdg_c_nationt
         FOR ALL ENTRIES IN @records
         WHERE nation = @records-Nation
           AND langu  = @sy-langu
         INTO TABLE @nation_texts.
+
+      SELECT land1 AS country,
+             landx AS countryName
+        FROM t005t
+        FOR ALL ENTRIES IN @records
+        WHERE land1 = @records-Country
+          AND spras = @sy-langu
+        INTO TABLE @country_texts.
     ENDIF.
 
     LOOP AT records ASSIGNING FIELD-SYMBOL(<record>).
@@ -2415,7 +2436,13 @@ CLASS zcl_mdg_reqadr_ve IMPLEMENTATION.
       READ TABLE nation_texts ASSIGNING FIELD-SYMBOL(<nation_text>)
         WITH TABLE KEY nation = <record>-Nation.
       IF sy-subrc = 0.
-        virtual_property-NationText = CONV #( <nation_text>-nationText ).
+        virtual_property-NationText = <nation_text>-nation_text.
+      ENDIF.
+
+      READ TABLE country_texts ASSIGNING FIELD-SYMBOL(<country_text>)
+        WITH TABLE KEY country = <record>-Country.
+      IF sy-subrc = 0.
+        virtual_property-CountryName = <country_text>-countryName.
       ENDIF.
 
       APPEND virtual_property TO virtual_properties.
@@ -3197,13 +3224,17 @@ sap.ui.define(
                 <Annotation Term="Common.Text" Path="NationText"/>
                 <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextFirst"/>
             </Annotations>
+            <Annotations Target="SAP__self.AddressVariantsType/Country">
+                <Annotation Term="Common.Text" Path="CountryName"/>
+                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextLast"/>
+            </Annotations>
             <Annotations Target="SAP__self.AddressVariantsType">
                 <Annotation Term="Common.Label" String="{@i18n>addressVariant}"/>
                 <Annotation Term="UI.HeaderInfo">
                     <Record>
                         <PropertyValue Property="TypeName" String="{@i18n>addressVariant}"/>
                         <PropertyValue Property="TypeNamePlural" String="{@i18n>addressVariants}"/>
-                        <PropertyValue Property="Title"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="Nation"/></Record></PropertyValue>
+                        <PropertyValue Property="Title"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="NationText"/></Record></PropertyValue>
                         <PropertyValue Property="Description"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="OrganizationName1"/></Record></PropertyValue>
                     </Record>
                 </Annotation>
