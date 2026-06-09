@@ -185,10 +185,10 @@ annotate entity ZC_MDG_REQ with
   @UI.fieldGroup: [{ qualifier: 'CountrySpecificData', position: 110, label: 'Inactive Reason' }]
   InactiveReason;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 10, label: 'Company Name' }]
+  @UI.fieldGroup: [{ qualifier: 'MainData', position: 50, label: 'Company Name' }]
   OrganizationName1;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 20, label: 'Search Term' }]
+  @UI.fieldGroup: [{ qualifier: 'MainData', position: 60, label: 'Search Term' }]
   SearchTerm1;
 
   @Consumption.valueHelpDefinition: [
@@ -196,24 +196,24 @@ annotate entity ZC_MDG_REQ with
       entity: { name: 'ZI_MDG_COUNTRY_VH', element: 'Country' }
     }
   ]
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 30, label: 'Country' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 10, label: 'Country' }]
   Country;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 40, label: 'District' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 20, label: 'District' }]
   District;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 50, label: 'City' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 30, label: 'City' }]
   City;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 60, label: 'Postal Code' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 40, label: 'Postal Code' }]
   PostalCode;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 70, label: 'Street' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 50, label: 'Street' }]
   Street;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 80, label: 'House No' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 60, label: 'House No' }]
   HouseNumber;
 
-  @UI.fieldGroup: [{ qualifier: 'Address', position: 90, label: 'House No Suppl.' }]
+  @UI.fieldGroup: [{ qualifier: 'Address', position: 70, label: 'House No Suppl.' }]
   HouseNumberSupplement;
 }

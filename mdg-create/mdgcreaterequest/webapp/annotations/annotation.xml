@@ -147,6 +147,8 @@
                                 <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>parentGid1}"/><PropertyValue Property="Value" Path="ParentGid1"/></Record>
                                 <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>parentGid2}"/><PropertyValue Property="Value" Path="ParentGid2"/></Record>
                                 <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>foundDate}"/><PropertyValue Property="Value" Path="FoundDate"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>companyName}"/><PropertyValue Property="Value" Path="OrganizationName1"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>searchTerm}"/><PropertyValue Property="Value" Path="SearchTerm1"/></Record>
                             </Collection>
                         </PropertyValue>
                     </Record>
@@ -185,8 +187,6 @@
                     <Record>
                         <PropertyValue Property="Data">
                             <Collection>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>companyName}"/><PropertyValue Property="Value" Path="OrganizationName1"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>searchTerm}"/><PropertyValue Property="Value" Path="SearchTerm1"/></Record>
                                 <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>country}"/><PropertyValue Property="Value" Path="Country"/></Record>
                                 <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>district}"/><PropertyValue Property="Value" Path="District"/></Record>
                                 <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>city}"/><PropertyValue Property="Value" Path="City"/></Record>
