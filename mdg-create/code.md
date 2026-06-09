@@ -240,6 +240,405 @@ define view entity ZI_MDG_C_SYS
       xenh        as IsEnhanceAllowed
 }
 ```
+### ZI_MDG_REQ.bdef
+
+```abap
+managed implementation in class ZBP_I_MDG_REQ unique;
+strict ( 2 );
+with draft;
+
+define behavior for ZI_MDG_REQ alias Request
+persistent table zmdg_req
+draft table zmdg_req_d
+lock master total etag LastChangedAt
+authorization master ( global, instance )
+etag master LocalLastChangedAt
+with additional save
+{
+  create;
+  update;
+  delete ( features : instance );
+
+  static factory action CreateRequest parameter ZI_MDG_REQ_CREATE_P [1];
+
+  field ( readonly, numbering : managed ) RequestUuid;
+  field ( readonly ) RequestId;
+  field ( readonly ) RequestType, Status, Vendor, Customer, ExternalSystem, PartnerGID;
+  field ( readonly ) CreatedBy, CreatedAt, LastChangedBy, LastChangedAt, LocalLastChangedAt;
+  field ( features : instance )
+    ParentGid1, ParentGid2, FoundDate, Duns, LeiCode, Euid, PartnerId,
+    BusinessPartnerType, BusinessPartnerGroup, LegalForm,
+    TelephoneNumber, MobileNumber, EmailAddress,
+    IsInactive, InactiveReason,
+    OrganizationName1, OrganizationName2, OrganizationName3, OrganizationName4,
+    FirstName, LastName, SearchTerm1,
+    Country, District, City, PostalCode, Street, HouseNumber, HouseNumberSupplement,
+    OrganizationName, PersonName;
+
+  draft action ( features : instance ) Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  draft determine action Prepare
+  {
+    validation ValidateRequest;
+  }
+
+  determination PrepareRequestOnSave on save { create; }
+  determination ClearPartnerId on modify { field BusinessPartnerGroup; }
+  validation ValidateRequest on save { create; update; }
+
+  side effects
+  {
+    field BusinessPartnerGroup affects field PartnerId, permissions ( field PartnerId );
+  }
+
+  association _Address { create; with draft; }
+  association _Tax     { create; with draft; }
+
+  mapping for zmdg_req
+  {
+    RequestUuid          = request_uuid;
+    RequestId            = request_id;
+    RequestType          = request_type;
+    ExternalSystem       = extsys;
+    PartnerGid           = partner_gid;
+    Status               = status;
+    ParentGid1           = parent_gid1;
+    ParentGid2           = parent_gid2;
+    FoundDate            = found_date;
+    Duns                 = duns;
+    LeiCode              = lei_code;
+    Euid                 = euid;
+    PartnerId            = partner_id;
+    BusinessPartnerType  = type;
+    BusinessPartnerGroup = bu_group;
+    LegalForm            = legal_form;
+    TelephoneNumber      = tel_number;
+    MobileNumber         = mob_number;
+    EmailAddress         = smtpadress;
+    IsInactive           = inactive;
+    InactiveReason       = inactive_reason;
+    Vendor               = vendor;
+    Customer             = customer;
+    OrganizationName1    = name_org1;
+    OrganizationName2    = name_org2;
+    OrganizationName3    = name_org3;
+    OrganizationName4    = name_org4;
+    FirstName            = name_first;
+    LastName             = name_last;
+    SearchTerm1          = bu_sort1;
+    Street               = street;
+    HouseNumber          = house_num1;
+    HouseNumberSupplement = house_num2;
+    City                 = city1;
+    District             = city2;
+    PostalCode           = post_code1;
+    Country              = country;
+    OrganizationName     = name_org;
+    PersonName           = name_person;
+    CreatedBy            = created_by;
+    CreatedAt            = created_at;
+    LastChangedBy        = last_changed_by;
+    LastChangedAt        = last_changed_at;
+    LocalLastChangedAt   = locl_last_changed_at;
+  }
+}
+
+define behavior for ZI_MDG_REQADR alias Address
+persistent table zmdg_reqadr
+draft table zmdg_reqadr_d
+lock dependent by _Request
+authorization dependent by _Request
+etag dependent by _Request
+{
+  update;
+  delete;
+
+  field ( readonly ) RequestUuid;
+  field ( readonly : update ) Nation;
+
+  association _Request { with draft; }
+
+  mapping for zmdg_reqadr
+  {
+    RequestUuid           = request_uuid;
+    Nation                = nation;
+    OrganizationName1     = name_org1;
+    OrganizationName2     = name_org2;
+    OrganizationName3     = name_org3;
+    OrganizationName4     = name_org4;
+    FirstName             = name_first;
+    LastName              = name_last;
+    SearchTerm1           = bu_sort1;
+    Street                = street;
+    HouseNumber           = house_num1;
+    HouseNumberSupplement = house_num2;
+    City                  = city1;
+    District              = city2;
+    PostalCode            = post_code1;
+    Country               = country;
+    OrganizationName      = name_org;
+    PersonName            = name_person;
+  }
+}
+
+define behavior for ZI_MDG_REQTAX alias Tax
+persistent table zmdg_reqtax
+draft table zmdg_reqtax_d
+lock dependent by _Request
+authorization dependent by _Request
+etag dependent by _Request
+{
+  update;
+  delete;
+
+  field ( readonly ) RequestUuid;
+  field ( readonly : update ) TaxType;
+  association _Request { with draft; }
+
+  mapping for zmdg_reqtax
+  {
+    RequestUuid = request_uuid;
+    TaxType     = taxtype;
+    TaxNumber   = taxnum;
+  }
+}
+```
+### ZUI_MDG_REQ.srvd
+
+```abap
+@EndUserText.label: 'MDG: Create MDG Request'
+define service ZUI_MDG_REQ {
+  expose ZC_MDG_REQ                as Requests;
+  expose ZC_MDG_REQADR             as AddressVariants;
+  expose ZC_MDG_REQTAX             as TaxNumbers;
+  expose ZI_MDG_C_SYS              as ConnectedSystems;
+  expose ZI_MDG_C_SYS_CREATEVH     as CreateSystems;
+  expose ZI_MDG_C_SYS_CHANGEVH     as ChangeSystems;
+  expose ZI_MDG_USER               as Users;
+  expose ZI_MDG_DOMAIN_VALUE_TEXT  as DomainValueTexts;
+  expose ZI_MDG_COUNTRY_VH         as Countries;
+  expose ZI_MDG_NATION_VH          as Nations;
+  expose ZI_MDG_TAX_TYPE_VH         as TaxTypes;
+  expose ZI_MDG_LEGAL_FORM_VH      as LegalForms;
+  expose ZI_MDG_BU_GROUP_VH        as BusinessPartnerGroups;
+}
+```
+### ZCL_MDG_SEND_API_OP
+
+```abap
+CLASS zcl_mdg_send_api_op DEFINITION
+  PUBLIC
+  FINAL
+  CREATE PUBLIC.
+
+  PUBLIC SECTION.
+    INTERFACES if_bgmc_op_single.
+
+    METHODS constructor
+      IMPORTING
+        iv_request_uuid TYPE sysuuid_x16.
+
+  PRIVATE SECTION.
+    DATA mv_request_uuid TYPE sysuuid_x16.
+
+    TYPES:
+      BEGIN OF ty_api_payload,
+        id     TYPE string,
+        system TYPE string,
+        type   TYPE string,
+        status TYPE string,
+      END OF ty_api_payload.
+
+    METHODS build_payload
+      IMPORTING
+        is_request       TYPE zmdg_req
+      RETURNING
+        VALUE(rv_json)   TYPE string.
+
+    METHODS send_payload
+      IMPORTING
+        iv_json          TYPE string
+      RAISING
+        cx_bgmc_operation.
+ENDCLASS.
+
+CLASS zcl_mdg_send_api_op IMPLEMENTATION.
+  METHOD constructor.
+    mv_request_uuid = iv_request_uuid.
+  ENDMETHOD.
+
+  METHOD if_bgmc_op_single~execute.
+    SELECT SINGLE *
+      FROM zmdg_req
+      WHERE request_uuid = @mv_request_uuid
+      INTO @DATA(request).
+
+    IF sy-subrc <> 0.
+      RETURN.
+    ENDIF.
+
+    SELECT *
+      FROM zmdg_reqadr
+      WHERE request_uuid = @mv_request_uuid
+      INTO TABLE @DATA(addresses).
+
+    SELECT *
+      FROM zmdg_reqtax
+      WHERE request_uuid = @mv_request_uuid
+      INTO TABLE @DATA(tax_numbers).
+
+    DATA(json) = build_payload( request ).
+
+    " Addresses and tax numbers are already read here. They will be added to the
+    " payload once the external API contract is fixed.
+    send_payload( json ).
+  ENDMETHOD.
+
+  METHOD build_payload.
+    DATA(payload) = VALUE ty_api_payload(
+      id     = CONV #( is_request-request_id )
+      system = CONV #( is_request-extsys )
+      type   = CONV #( is_request-request_type )
+      status = CONV #( is_request-status )
+    ).
+
+    rv_json = /ui2/cl_json=>serialize( data = payload ).
+  ENDMETHOD.
+
+  METHOD send_payload.
+    cl_http_client=>create_by_destination(
+      EXPORTING
+        destination              = 'EXT_MDG_SYSTEM'
+      IMPORTING
+        client                   = DATA(http_client)
+      EXCEPTIONS
+        argument_not_found       = 1
+        destination_not_found    = 2
+        destination_no_authority = 3
+        plugin_not_active        = 4
+        internal_error           = 5
+        OTHERS                   = 6
+    ).
+
+    IF sy-subrc <> 0.
+      RAISE EXCEPTION NEW cx_bgmc_operation(
+        retry_settings = VALUE #(
+          delay_time = 60
+          do_retry   = abap_true
+        )
+      ).
+    ENDIF.
+
+    http_client->request->set_method( if_http_request=>co_request_method_post ).
+    http_client->request->set_header_field(
+      name  = 'Content-Type'
+      value = 'application/json'
+    ).
+    http_client->request->set_cdata( iv_json ).
+
+    http_client->send(
+      EXCEPTIONS
+        http_communication_failure = 1
+        http_invalid_state         = 2
+        http_processing_failed     = 3
+        http_invalid_timeout       = 4
+        OTHERS                     = 5
+    ).
+
+    IF sy-subrc <> 0.
+      http_client->close( ).
+      RAISE EXCEPTION NEW cx_bgmc_operation(
+        retry_settings = VALUE #(
+          delay_time = 60
+          do_retry   = abap_true
+        )
+      ).
+    ENDIF.
+
+    http_client->receive(
+      EXCEPTIONS
+        http_communication_failure = 1
+        http_invalid_state         = 2
+        http_processing_failed     = 3
+        OTHERS                     = 4
+    ).
+
+    IF sy-subrc <> 0.
+      http_client->close( ).
+      RAISE EXCEPTION NEW cx_bgmc_operation(
+        retry_settings = VALUE #(
+          delay_time = 60
+          do_retry   = abap_true
+        )
+      ).
+    ENDIF.
+
+    http_client->response->get_status(
+      IMPORTING
+        code = DATA(status_code)
+    ).
+
+    http_client->close( ).
+
+    IF status_code <> 200 AND status_code <> 201.
+      RAISE EXCEPTION NEW cx_bgmc_operation(
+          retry_settings = VALUE #(
+            delay_time = 60
+            do_retry   = abap_true
+          )
+      ).
+    ENDIF.
+  ENDMETHOD.
+ENDCLASS.
+```
+### mdgcreaterequest/README.md
+
+```markdown
+## Application Details
+|               |
+| ------------- |
+|**Generation Date and Time**<br>Mon Jun 01 2026 09:42:21 GMT+0200 (Central European Summer Time)|
+|**App Generator**<br>SAP Fiori Application Generator|
+|**App Generator Version**<br>1.24.0|
+|**Generation Platform**<br>Visual Studio Code|
+|**Template Used**<br>List Report Page V4|
+|**Service Type**<br>SAP System (ABAP On-Premise)|
+|**Service URL**<br>https://hsr.con4pas.cz/sap/opu/odata4/sap/zui_mdg_req_o4/srvd/sap/zui_mdg_req/0001/|
+|**Module Name**<br>mdgcreaterequest|
+|**Application Title**<br>MDG request - create BP|
+|**Namespace**<br>c4p.mdg|
+|**UI5 Theme**<br>sap_horizon|
+|**UI5 Version**<br>1.136.10|
+|**Enable TypeScript**<br>False|
+|**Add Eslint configuration**<br>True, see https://www.npmjs.com/package/@sap-ux/eslint-plugin-fiori-tools#rules for the eslint rules.|
+|**Value Help Metadata**<br>Downloaded for external services|
+|**Main Entity**<br>Requests|
+|**Navigation Entity**<br>None|
+
+## mdgcreaterequest
+
+MDG request - create BP
+
+### Starting the generated app
+
+-   This app has been generated using the SAP Fiori tools - App Generator, as part of the SAP Fiori tools suite.  To launch the generated application, run the following from the generated application root folder:
+
+```
+    npm start
+```
+
+- It is also possible to run the application using mock data that reflects the OData Service URL supplied during application generation.  In order to run the application with Mock Data, run the following from the generated app root folder:
+
+```
+    npm run start-mock
+```
+
+#### Pre-requisites:
+
+1. Active NodeJS LTS (Long Term Support) version and associated supported NPM version.  (See https://nodejs.org)
+```
 
 ### ZI_MDG_USER.ddls
 
@@ -542,7 +941,7 @@ where Nation.inactive <> 'X'
 ### ZI_MDG_REQ_CREATE_P.ddls
 
 ```abap
-@EndUserText.label: 'Create BP Request Parameters'
+@EndUserText.label: 'Create MDG Request Parameters'
 define abstract entity ZI_MDG_REQ_CREATE_P
 {
   @EndUserText.label: 'External System'
@@ -562,7 +961,7 @@ define abstract entity ZI_MDG_REQ_CREATE_P
 ### ZI_MDG_REQ.ddls
 
 ```abap
-@EndUserText.label: 'MDG BP Request'
+@EndUserText.label: 'MDG Request'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 @Metadata.ignorePropagatedAnnotations: true
@@ -573,7 +972,7 @@ define root view entity ZI_MDG_REQ
   composition [0..*] of ZI_MDG_REQADR as _Address
   composition [0..*] of ZI_MDG_REQTAX as _Tax
   association [0..1] to ZI_MDG_DOMAIN_VALUE_TEXT as _RequestTypeText
-    on  _RequestTypeText.DomainName   = 'ZMDG_REQ_TYPE'
+    on  _RequestTypeText.DomainName   = 'ZMDG_D_REQ_TYPE'
     and _RequestTypeText.Language     = $session.system_language
     and _RequestTypeText.DomainValue  = $projection.RequestType
   association [0..1] to ZI_MDG_DOMAIN_VALUE_TEXT as _StatusText
@@ -650,7 +1049,7 @@ define root view entity ZI_MDG_REQ
 ### ZI_MDG_REQADR.ddls
 
 ```abap
-@EndUserText.label: 'MDG BP Request Address Variant'
+@EndUserText.label: 'MDG Request Address Variant'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 @Metadata.ignorePropagatedAnnotations: true
@@ -685,7 +1084,7 @@ define view entity ZI_MDG_REQADR
 ### ZI_MDG_REQTAX.ddls
 
 ```abap
-@EndUserText.label: 'MDG BP Request Tax Number'
+@EndUserText.label: 'MDG Request Tax Number'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 @Metadata.ignorePropagatedAnnotations: true
@@ -706,7 +1105,7 @@ define view entity ZI_MDG_REQTAX
 ### ZC_MDG_REQ.ddls
 
 ```abap
-@EndUserText.label: 'MDG BP Request'
+@EndUserText.label: 'MDG Request'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 @VDM.viewType: #CONSUMPTION
@@ -716,6 +1115,9 @@ define root view entity ZC_MDG_REQ
 {
   key RequestUuid,
       RequestId,
+      @ObjectModel.virtualElement: true
+      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_MDG_REQ_TITLE_VE'
+      virtual ObjectPageTitle : abap.char(20),
       RequestType,
       ExternalSystem,
       PartnerGid,
@@ -771,7 +1173,7 @@ define root view entity ZC_MDG_REQ
 ### ZC_MDG_REQADR.ddls
 
 ```abap
-@EndUserText.label: 'MDG BP Request Address Variant'
+@EndUserText.label: 'MDG Request Address Variant'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 @VDM.viewType: #CONSUMPTION
@@ -807,7 +1209,7 @@ define view entity ZC_MDG_REQADR
 ### ZC_MDG_REQTAX.ddls
 
 ```abap
-@EndUserText.label: 'MDG BP Request Tax Number'
+@EndUserText.label: 'MDG Request Tax Number'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 @VDM.viewType: #CONSUMPTION
@@ -821,171 +1223,6 @@ define view entity ZC_MDG_REQTAX
       TaxNumber,
 
       _Request : redirected to parent ZC_MDG_REQ
-}
-```
-### ZI_MDG_REQ.bdef
-
-```abap
-managed implementation in class ZBP_I_MDG_REQ unique;
-strict ( 2 );
-with draft;
-
-define behavior for ZI_MDG_REQ alias Request
-persistent table zmdg_req
-draft table zmdg_req_d
-lock master total etag LastChangedAt
-authorization master ( global, instance )
-etag master LocalLastChangedAt
-with additional save
-{
-  create;
-  update;
-  delete ( features : instance );
-
-  static factory action CreateRequest parameter ZI_MDG_REQ_CREATE_P [1];
-
-  field ( readonly, numbering : managed ) RequestUuid;
-  field ( readonly ) RequestId;
-  field ( readonly ) RequestType, Status, Vendor, Customer, ExternalSystem, PartnerGID;
-  field ( readonly ) CreatedBy, CreatedAt, LastChangedBy, LastChangedAt, LocalLastChangedAt;
-  field ( features : instance )
-    ParentGid1, ParentGid2, FoundDate, Duns, LeiCode, Euid, PartnerId,
-    BusinessPartnerType, BusinessPartnerGroup, LegalForm,
-    TelephoneNumber, MobileNumber, EmailAddress,
-    IsInactive, InactiveReason,
-    OrganizationName1, OrganizationName2, OrganizationName3, OrganizationName4,
-    FirstName, LastName, SearchTerm1,
-    Country, District, City, PostalCode, Street, HouseNumber, HouseNumberSupplement,
-    OrganizationName, PersonName;
-
-  draft action ( features : instance ) Edit;
-  draft action Activate optimized;
-  draft action Discard;
-  draft action Resume;
-  draft determine action Prepare
-  {
-    validation ValidateRequest;
-  }
-
-  determination PrepareRequestOnSave on save { create; }
-  determination ClearPartnerId on modify { field BusinessPartnerGroup; }
-  validation ValidateRequest on save { create; update; }
-
-  side effects
-  {
-    field BusinessPartnerGroup affects field PartnerId, permissions ( field PartnerId );
-  }
-
-  association _Address { create; with draft; }
-  association _Tax     { create; with draft; }
-
-  mapping for zmdg_req
-  {
-    RequestUuid          = request_uuid;
-    RequestId            = request_id;
-    RequestType          = request_type;
-    ExternalSystem       = extsys;
-    PartnerGid           = partner_gid;
-    Status               = status;
-    ParentGid1           = parent_gid1;
-    ParentGid2           = parent_gid2;
-    FoundDate            = found_date;
-    Duns                 = duns;
-    LeiCode              = lei_code;
-    Euid                 = euid;
-    PartnerId            = partner_id;
-    BusinessPartnerType  = type;
-    BusinessPartnerGroup = bu_group;
-    LegalForm            = legal_form;
-    TelephoneNumber      = tel_number;
-    MobileNumber         = mob_number;
-    EmailAddress         = smtpadress;
-    IsInactive           = inactive;
-    InactiveReason       = inactive_reason;
-    Vendor               = vendor;
-    Customer             = customer;
-    OrganizationName1    = name_org1;
-    OrganizationName2    = name_org2;
-    OrganizationName3    = name_org3;
-    OrganizationName4    = name_org4;
-    FirstName            = name_first;
-    LastName             = name_last;
-    SearchTerm1          = bu_sort1;
-    Street               = street;
-    HouseNumber          = house_num1;
-    HouseNumberSupplement = house_num2;
-    City                 = city1;
-    District             = city2;
-    PostalCode           = post_code1;
-    Country              = country;
-    OrganizationName     = name_org;
-    PersonName           = name_person;
-    CreatedBy            = created_by;
-    CreatedAt            = created_at;
-    LastChangedBy        = last_changed_by;
-    LastChangedAt        = last_changed_at;
-    LocalLastChangedAt   = locl_last_changed_at;
-  }
-}
-
-define behavior for ZI_MDG_REQADR alias Address
-persistent table zmdg_reqadr
-draft table zmdg_reqadr_d
-lock dependent by _Request
-authorization dependent by _Request
-etag dependent by _Request
-{
-  update;
-  delete;
-
-  field ( readonly ) RequestUuid;
-  field ( readonly : update ) Nation;
-
-  association _Request { with draft; }
-
-  mapping for zmdg_reqadr
-  {
-    RequestUuid           = request_uuid;
-    Nation                = nation;
-    OrganizationName1     = name_org1;
-    OrganizationName2     = name_org2;
-    OrganizationName3     = name_org3;
-    OrganizationName4     = name_org4;
-    FirstName             = name_first;
-    LastName              = name_last;
-    SearchTerm1           = bu_sort1;
-    Street                = street;
-    HouseNumber           = house_num1;
-    HouseNumberSupplement = house_num2;
-    City                  = city1;
-    District              = city2;
-    PostalCode            = post_code1;
-    Country               = country;
-    OrganizationName      = name_org;
-    PersonName            = name_person;
-  }
-}
-
-define behavior for ZI_MDG_REQTAX alias Tax
-persistent table zmdg_reqtax
-draft table zmdg_reqtax_d
-lock dependent by _Request
-authorization dependent by _Request
-etag dependent by _Request
-{
-  update;
-  delete;
-
-  field ( readonly ) RequestUuid;
-  field ( readonly : update ) TaxType;
-  association _Request { with draft; }
-
-  mapping for zmdg_reqtax
-  {
-    RequestUuid = request_uuid;
-    TaxType     = taxtype;
-    TaxNumber   = taxnum;
-  }
 }
 ```
 
@@ -1030,35 +1267,15 @@ define behavior for ZC_MDG_REQTAX alias Tax
   use association _Request { with draft; }
 }
 ```
-### ZUI_MDG_REQ.srvd
-
-```abap
-@EndUserText.label: 'MDG: Create BP Request'
-define service ZUI_MDG_REQ {
-  expose ZC_MDG_REQ                as Requests;
-  expose ZC_MDG_REQADR             as AddressVariants;
-  expose ZC_MDG_REQTAX             as TaxNumbers;
-  expose ZI_MDG_C_SYS              as ConnectedSystems;
-  expose ZI_MDG_C_SYS_CREATEVH     as CreateSystems;
-  expose ZI_MDG_C_SYS_CHANGEVH     as ChangeSystems;
-  expose ZI_MDG_USER               as Users;
-  expose ZI_MDG_DOMAIN_VALUE_TEXT  as DomainValueTexts;
-  expose ZI_MDG_COUNTRY_VH         as Countries;
-  expose ZI_MDG_NATION_VH          as Nations;
-  expose ZI_MDG_TAX_TYPE_VH         as TaxTypes;
-  expose ZI_MDG_LEGAL_FORM_VH      as LegalForms;
-  expose ZI_MDG_BU_GROUP_VH        as BusinessPartnerGroups;
-}
-```
 
 ### ZC_MDG_REQ_UI.ddlx
 
 ```abap
 @Metadata.layer: #CUSTOMER
 @UI.headerInfo: {
-  typeName: 'BP Request',
-  typeNamePlural: 'BP Requests',
-  title: { type: #STANDARD, value: 'RequestId' },
+  typeName: 'MDG Request',
+  typeNamePlural: 'MDG Requests',
+  title: { type: #STANDARD, value: 'ObjectPageTitle' },
   description: { type: #STANDARD, value: 'Status' }
 }
 @UI.createHidden: true
@@ -1066,6 +1283,7 @@ annotate entity ZC_MDG_REQ with
 {
   @UI.hidden: true
   RequestUuid;
+
 
   @UI.hidden: true
   LocalLastChangedAt;
@@ -2560,171 +2778,64 @@ CLASS zcl_mdg_reqtax_ve IMPLEMENTATION.
   ENDMETHOD.
 ENDCLASS.
 ```
-### ZCL_MDG_SEND_API_OP
+
+### ZCL_MDG_REQ_TITLE_VE
 
 ```abap
-CLASS zcl_mdg_send_api_op DEFINITION
+CLASS zcl_mdg_req_title_ve DEFINITION
   PUBLIC
   FINAL
   CREATE PUBLIC.
 
   PUBLIC SECTION.
-    INTERFACES if_bgmc_op_single.
-
-    METHODS constructor
-      IMPORTING
-        iv_request_uuid TYPE sysuuid_x16.
+    INTERFACES if_sadl_exit.
+    INTERFACES if_sadl_exit_calc_element_read.
 
   PRIVATE SECTION.
-    DATA mv_request_uuid TYPE sysuuid_x16.
-
     TYPES:
-      BEGIN OF ty_api_payload,
-        id     TYPE string,
-        system TYPE string,
-        type   TYPE string,
-        status TYPE string,
-      END OF ty_api_payload.
+      BEGIN OF ty_virtual_property,
+        ObjectPageTitle TYPE c LENGTH 20,
+      END OF ty_virtual_property.
 
-    METHODS build_payload
-      IMPORTING
-        is_request       TYPE zmdg_req
-      RETURNING
-        VALUE(rv_json)   TYPE string.
-
-    METHODS send_payload
-      IMPORTING
-        iv_json          TYPE string
-      RAISING
-        cx_bgmc_operation.
+    CONSTANTS:
+      c_request_id        TYPE string VALUE 'REQUESTID',
+      c_object_page_title TYPE string VALUE 'OBJECTPAGETITLE'.
 ENDCLASS.
 
-CLASS zcl_mdg_send_api_op IMPLEMENTATION.
-  METHOD constructor.
-    mv_request_uuid = iv_request_uuid.
+CLASS zcl_mdg_req_title_ve IMPLEMENTATION.
+  METHOD if_sadl_exit_calc_element_read~get_calculation_info.
+    LOOP AT it_requested_calc_elements ASSIGNING FIELD-SYMBOL(<calc_element>).
+      CASE <calc_element>.
+        WHEN c_object_page_title.
+          INSERT c_request_id INTO TABLE et_requested_orig_elements.
+      ENDCASE.
+    ENDLOOP.
   ENDMETHOD.
 
-  METHOD if_bgmc_op_single~execute.
-    SELECT SINGLE *
-      FROM zmdg_req
-      WHERE request_uuid = @mv_request_uuid
-      INTO @DATA(request).
+  METHOD if_sadl_exit_calc_element_read~calculate.
+    DATA records TYPE STANDARD TABLE OF zc_mdg_req WITH EMPTY KEY.
+    DATA virtual_properties TYPE STANDARD TABLE OF ty_virtual_property WITH EMPTY KEY.
+    DATA virtual_property TYPE ty_virtual_property.
 
-    IF sy-subrc <> 0.
-      RETURN.
-    ENDIF.
+    records = CORRESPONDING #( it_original_data ).
 
-    SELECT *
-      FROM zmdg_reqadr
-      WHERE request_uuid = @mv_request_uuid
-      INTO TABLE @DATA(addresses).
+    LOOP AT records ASSIGNING FIELD-SYMBOL(<record>).
+      CLEAR virtual_property.
 
-    SELECT *
-      FROM zmdg_reqtax
-      WHERE request_uuid = @mv_request_uuid
-      INTO TABLE @DATA(tax_numbers).
+      IF <record>-RequestId IS INITIAL OR <record>-RequestId = '0000000000'.
+        IF sy-langu = 'C'.
+          virtual_property-ObjectPageTitle = 'Nový požadavek'.
+        ELSE.
+          virtual_property-ObjectPageTitle = 'New request'.
+        ENDIF.
+      ELSE.
+        virtual_property-ObjectPageTitle = <record>-RequestId.
+      ENDIF.
 
-    DATA(json) = build_payload( request ).
+      APPEND virtual_property TO virtual_properties.
+    ENDLOOP.
 
-    " Addresses and tax numbers are already read here. They will be added to the
-    " payload once the external API contract is fixed.
-    send_payload( json ).
-  ENDMETHOD.
-
-  METHOD build_payload.
-    DATA(payload) = VALUE ty_api_payload(
-      id     = CONV #( is_request-request_id )
-      system = CONV #( is_request-extsys )
-      type   = CONV #( is_request-request_type )
-      status = CONV #( is_request-status )
-    ).
-
-    rv_json = /ui2/cl_json=>serialize( data = payload ).
-  ENDMETHOD.
-
-  METHOD send_payload.
-    cl_http_client=>create_by_destination(
-      EXPORTING
-        destination              = 'EXT_MDG_SYSTEM'
-      IMPORTING
-        client                   = DATA(http_client)
-      EXCEPTIONS
-        argument_not_found       = 1
-        destination_not_found    = 2
-        destination_no_authority = 3
-        plugin_not_active        = 4
-        internal_error           = 5
-        OTHERS                   = 6
-    ).
-
-    IF sy-subrc <> 0.
-      RAISE EXCEPTION NEW cx_bgmc_operation(
-        retry_settings = VALUE #(
-          delay_time = 60
-          do_retry   = abap_true
-        )
-      ).
-    ENDIF.
-
-    http_client->request->set_method( if_http_request=>co_request_method_post ).
-    http_client->request->set_header_field(
-      name  = 'Content-Type'
-      value = 'application/json'
-    ).
-    http_client->request->set_cdata( iv_json ).
-
-    http_client->send(
-      EXCEPTIONS
-        http_communication_failure = 1
-        http_invalid_state         = 2
-        http_processing_failed     = 3
-        http_invalid_timeout       = 4
-        OTHERS                     = 5
-    ).
-
-    IF sy-subrc <> 0.
-      http_client->close( ).
-      RAISE EXCEPTION NEW cx_bgmc_operation(
-        retry_settings = VALUE #(
-          delay_time = 60
-          do_retry   = abap_true
-        )
-      ).
-    ENDIF.
-
-    http_client->receive(
-      EXCEPTIONS
-        http_communication_failure = 1
-        http_invalid_state         = 2
-        http_processing_failed     = 3
-        OTHERS                     = 4
-    ).
-
-    IF sy-subrc <> 0.
-      http_client->close( ).
-      RAISE EXCEPTION NEW cx_bgmc_operation(
-        retry_settings = VALUE #(
-          delay_time = 60
-          do_retry   = abap_true
-        )
-      ).
-    ENDIF.
-
-    http_client->response->get_status(
-      IMPORTING
-        code = DATA(status_code)
-    ).
-
-    http_client->close( ).
-
-    IF status_code <> 200 AND status_code <> 201.
-      RAISE EXCEPTION NEW cx_bgmc_operation(
-          retry_settings = VALUE #(
-            delay_time = 60
-            do_retry   = abap_true
-          )
-      ).
-    ENDIF.
+    ct_calculated_data = CORRESPONDING #( virtual_properties ).
   ENDMETHOD.
 ENDCLASS.
 ```
@@ -3002,7 +3113,7 @@ sap.ui.define(
       "config": {
         "routerClass": "sap.f.routing.Router",
         "flexibleColumnLayout": {
-          "defaultTwoColumnLayoutType": "TwoColumnsMidExpanded",
+          "defaultTwoColumnLayoutType": "TwoColumnsBeginExpanded",
           "defaultThreeColumnLayoutType": "ThreeColumnsMidExpanded"
         }
       },
@@ -3134,9 +3245,537 @@ sap.ui.define(
   }
 }
 ```
+
+### mdgcreaterequest/webapp/annotations/annotation.xml
+
+```xml
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
+        <edmx:Include Namespace="com.sap.vocabularies.Common.v1" Alias="Common"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
+        <edmx:Include Namespace="com.sap.vocabularies.UI.v1" Alias="UI"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Communication.xml">
+        <edmx:Include Namespace="com.sap.vocabularies.Communication.v1" Alias="Communication"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="/sap/opu/odata4/sap/zui_mdg_req_o4/srvd/sap/zui_mdg_req/0001/$metadata">
+        <edmx:Include Namespace="com.sap.gateway.srvd.zui_mdg_req.v0001" Alias="SAP__self"/>
+    </edmx:Reference>
+    <edmx:DataServices>
+        <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="local">
+            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))">
+                <Annotation Term="Common.Label" String="{@i18n>create}"/>
+            </Annotations>
+            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/ExternalSystem">
+                <Annotation Term="Common.Label" String="{@i18n>externalSystem}"/>
+            </Annotations>
+            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/PartnerGID">
+                <Annotation Term="Common.Label" String="{@i18n>partnerGid}"/>
+            </Annotations>
+            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/ResultIsActiveEntity">
+                <Annotation Term="Common.Label" String="{@i18n>resultIsActiveEntity}"/>
+            </Annotations>
+<Annotations Target="SAP__self.RequestsType">
+                <Annotation Term="Common.Label" String="{@i18n>bpRequest}"/>
+                <Annotation Term="UI.HeaderInfo">
+                    <Record>
+                        <PropertyValue Property="TypeName" String="{@i18n>bpRequest}"/>
+                        <PropertyValue Property="TypeNamePlural" String="{@i18n>bpRequests}"/>
+                        <PropertyValue Property="Title">
+                            <Record Type="UI.DataField">
+                                <PropertyValue Property="Value" Path="ObjectPageTitle"/>
+                            </Record>
+                        </PropertyValue>
+                        <PropertyValue Property="Description">
+                            <Record Type="UI.DataField">
+                                <PropertyValue Property="Value" Path="Status"/>
+                            </Record>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.Facets">
+                    <Collection>
+                        <Record Type="UI.CollectionFacet">
+                            <PropertyValue Property="ID" String="General"/>
+                            <PropertyValue Property="Label" String="{@i18n>general}"/>
+                            <PropertyValue Property="Facets">
+                                <Collection>
+                                    <Record Type="UI.ReferenceFacet">
+                                        <PropertyValue Property="ID" String="GlobalData"/>
+                                        <PropertyValue Property="Label" String="{@i18n>globalData}"/>
+                                        <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#GlobalData"/>
+                                    </Record>
+                                    <Record Type="UI.ReferenceFacet">
+                                        <PropertyValue Property="ID" String="MainData"/>
+                                        <PropertyValue Property="Label" String="{@i18n>mainData}"/>
+                                        <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#MainData"/>
+                                    </Record>
+                                    <Record Type="UI.ReferenceFacet">
+                                        <PropertyValue Property="ID" String="IdentificationData"/>
+                                        <PropertyValue Property="Label" String="{@i18n>identificationData}"/>
+                                        <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#IdentificationData"/>
+                                    </Record>
+                                </Collection>
+                            </PropertyValue>
+                        </Record>
+                        <Record Type="UI.ReferenceFacet">
+                            <PropertyValue Property="ID" String="CountrySpecificData"/>
+                            <PropertyValue Property="Label" String="{@i18n>countrySpecificDataDetail}"/>
+                            <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#CountrySpecificData"/>
+                        </Record>
+                        <Record Type="UI.ReferenceFacet">
+                            <PropertyValue Property="ID" String="Address"/>
+                            <PropertyValue Property="Label" String="{@i18n>address}"/>
+                            <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#Address"/>
+                        </Record>
+                        <Record Type="UI.ReferenceFacet">
+                            <PropertyValue Property="ID" String="AddressVariants"/>
+                            <PropertyValue Property="Label" String="{@i18n>addressVariants}"/>
+                            <PropertyValue Property="Target" AnnotationPath="_Address/@UI.LineItem"/>
+                        </Record>
+                        <Record Type="UI.ReferenceFacet">
+                            <PropertyValue Property="ID" String="TaxNumbers"/>
+                            <PropertyValue Property="Label" String="{@i18n>additionalTaxData}"/>
+                            <PropertyValue Property="Target" AnnotationPath="_Tax/@UI.LineItem"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.LineItem">
+                    <Collection>
+                        <Record Type="UI.DataFieldForAction">
+                            <PropertyValue Property="Label" String="{@i18n>create}"/>
+                            <PropertyValue Property="Action" String="com.sap.gateway.srvd.zui_mdg_req.v0001.CreateRequest"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="{@i18n>requestId}"/>
+                            <PropertyValue Property="Value" Path="RequestId"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="{@i18n>requestType}"/>
+                            <PropertyValue Property="Value" Path="RequestType"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="{@i18n>requestOrigin}"/>
+                            <PropertyValue Property="Value" Path="ExternalSystem"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="{@i18n>status}"/>
+                            <PropertyValue Property="Value" Path="Status"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="{@i18n>createdBy}"/>
+                            <PropertyValue Property="Value" Path="CreatedBy"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="{@i18n>partnerGid}"/>
+                            <PropertyValue Property="Value" Path="PartnerGid"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="{@i18n>dunsNumber}"/>
+                            <PropertyValue Property="Value" Path="Duns"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.FieldGroup" Qualifier="GlobalData">
+                    <Record>
+                        <PropertyValue Property="Data">
+                            <Collection>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>requestType}"/><PropertyValue Property="Value" Path="RequestType"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>requestOrigin}"/><PropertyValue Property="Value" Path="ExternalSystem"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>status}"/><PropertyValue Property="Value" Path="Status"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>createdBy}"/><PropertyValue Property="Value" Path="CreatedBy"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>createdAt}"/><PropertyValue Property="Value" Path="CreatedAt"/></Record>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.FieldGroup" Qualifier="MainData">
+                    <Record>
+                        <PropertyValue Property="Data">
+                            <Collection>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>partnerGid}"/><PropertyValue Property="Value" Path="PartnerGid"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>parentGid1}"/><PropertyValue Property="Value" Path="ParentGid1"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>parentGid2}"/><PropertyValue Property="Value" Path="ParentGid2"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>foundDate}"/><PropertyValue Property="Value" Path="FoundDate"/></Record>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.FieldGroup" Qualifier="IdentificationData">
+                    <Record>
+                        <PropertyValue Property="Data">
+                            <Collection>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>leiCode}"/><PropertyValue Property="Value" Path="LeiCode"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>dunsNumber}"/><PropertyValue Property="Value" Path="Duns"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>euid}"/><PropertyValue Property="Value" Path="Euid"/></Record>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.FieldGroup" Qualifier="CountrySpecificData">
+                    <Record>
+                        <PropertyValue Property="Data">
+                            <Collection>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>partnerGroup}"/><PropertyValue Property="Value" Path="BusinessPartnerGroup"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>partnerId}"/><PropertyValue Property="Value" Path="PartnerId"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>partnerCategory}"/><PropertyValue Property="Value" Path="BusinessPartnerType"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>legalForm}"/><PropertyValue Property="Value" Path="LegalForm"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>telephoneNo}"/><PropertyValue Property="Value" Path="TelephoneNumber"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>mobileTelNo}"/><PropertyValue Property="Value" Path="MobileNumber"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>emailAddress}"/><PropertyValue Property="Value" Path="EmailAddress"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>vendor}"/><PropertyValue Property="Value" Path="Vendor"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>customer}"/><PropertyValue Property="Value" Path="Customer"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>inactive}"/><PropertyValue Property="Value" Path="IsInactive"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>inactiveReason}"/><PropertyValue Property="Value" Path="InactiveReason"/></Record>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.FieldGroup" Qualifier="Address">
+                    <Record>
+                        <PropertyValue Property="Data">
+                            <Collection>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>companyName}"/><PropertyValue Property="Value" Path="OrganizationName1"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>searchTerm}"/><PropertyValue Property="Value" Path="SearchTerm1"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>country}"/><PropertyValue Property="Value" Path="Country"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>district}"/><PropertyValue Property="Value" Path="District"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>city}"/><PropertyValue Property="Value" Path="City"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>postalCode}"/><PropertyValue Property="Value" Path="PostalCode"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>street}"/><PropertyValue Property="Value" Path="Street"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>houseNo}"/><PropertyValue Property="Value" Path="HouseNumber"/></Record>
+                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>houseNoSuppl}"/><PropertyValue Property="Value" Path="HouseNumberSupplement"/></Record>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="SAP__self.TaxNumbersType/TaxType">
+                <Annotation Term="Common.Text" Path="TaxTypeText"/>
+                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextFirst"/>
+            </Annotations>
+            <Annotations Target="SAP__self.TaxNumbersType">
+                <Annotation Term="Common.Label" String="{@i18n>taxNumber}"/>
+                <Annotation Term="UI.HeaderInfo">
+                    <Record>
+                        <PropertyValue Property="TypeName" String="{@i18n>taxNumber}"/>
+                        <PropertyValue Property="TypeNamePlural" String="{@i18n>taxNumbers}"/>
+                        <PropertyValue Property="Title"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="TaxTypeText"/></Record></PropertyValue>
+                        <PropertyValue Property="Description"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="TaxNumber"/></Record></PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.Facets">
+                    <Collection>
+                        <Record Type="UI.ReferenceFacet">
+                            <PropertyValue Property="ID" String="TaxNumberDetail"/>
+                            <PropertyValue Property="Label" String="{@i18n>taxNumberDetails}"/>
+                            <PropertyValue Property="Target" AnnotationPath="@UI.Identification"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.Identification">
+                    <Collection>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxType}"/><PropertyValue Property="Value" Path="TaxType"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxNumber}"/><PropertyValue Property="Value" Path="TaxNumber"/></Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.LineItem">
+                    <Collection>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxType}"/><PropertyValue Property="Value" Path="TaxType"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxNumber}"/><PropertyValue Property="Value" Path="TaxNumber"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
+                    </Collection>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="SAP__self.AddressVariantsType/Nation">
+                <Annotation Term="Common.Text" Path="NationText"/>
+                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextFirst"/>
+            </Annotations>
+            <Annotations Target="SAP__self.AddressVariantsType/Country">
+                <Annotation Term="Common.Text" Path="CountryName"/>
+                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextLast"/>
+            </Annotations>
+            <Annotations Target="SAP__self.AddressVariantsType">
+                <Annotation Term="Common.Label" String="{@i18n>addressVariant}"/>
+                <Annotation Term="UI.HeaderInfo">
+                    <Record>
+                        <PropertyValue Property="TypeName" String="{@i18n>addressVariant}"/>
+                        <PropertyValue Property="TypeNamePlural" String="{@i18n>addressVariants}"/>
+                        <PropertyValue Property="Title"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="NationText"/></Record></PropertyValue>
+                        <PropertyValue Property="Description"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="OrganizationName1"/></Record></PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.Facets">
+                    <Collection>
+                        <Record Type="UI.ReferenceFacet">
+                            <PropertyValue Property="ID" String="AddressVariantDetail"/>
+                            <PropertyValue Property="Label" String="{@i18n>addressDetails}"/>
+                            <PropertyValue Property="Target" AnnotationPath="@UI.Identification"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.Identification">
+                    <Collection>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>nation}"/><PropertyValue Property="Value" Path="Nation"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>companyName}"/><PropertyValue Property="Value" Path="OrganizationName1"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>country}"/><PropertyValue Property="Value" Path="Country"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>city}"/><PropertyValue Property="Value" Path="City"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>postalCode}"/><PropertyValue Property="Value" Path="PostalCode"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>street}"/><PropertyValue Property="Value" Path="Street"/></Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.LineItem">
+                    <Collection>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>nation}"/><PropertyValue Property="Value" Path="Nation"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>companyName}"/><PropertyValue Property="Value" Path="OrganizationName1"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>country}"/><PropertyValue Property="Value" Path="Country"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>city}"/><PropertyValue Property="Value" Path="City"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>postalCode}"/><PropertyValue Property="Value" Path="PostalCode"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>street}"/><PropertyValue Property="Value" Path="Street"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
+                    </Collection>
+                </Annotation>
+            </Annotations>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>
+```
+
+### mdgcreaterequest/webapp/i18n/i18n.properties
+
+```properties
+# This is the resource bundle for c4p.mdg.mdgcreaterequest
+
+#Texts for manifest.json
+
+#XTIT: Application name
+appTitle=MDG Request
+
+#YDES: Application description
+appDescription=MDG Request
+
+#XMSG: Startup create request error
+createRequestDraftFailed=MDG request draft could not be created.
+
+#XTIT: Request object names
+bpRequest=MDG Request
+bpRequests=MDG Requests
+
+#XTIT: Object page sections
+general=General
+globalData=Global Data (KID)
+mainData=Main Data
+identificationData=Identification Data
+countrySpecificDataDetail=Country Specific Data Detail
+address=Address
+addressVariants=Address Variants
+additionalTaxData=Additional Tax Data
+addressDetails=Address Details
+taxNumberDetails=Tax Number Details
+
+#XBUT: Create request action
+create=Create
+
+#XFLD: Field labels
+requestId=Request ID
+requestType=Request Type
+requestOrigin=Request Origin
+status=Status
+createdBy=Created By
+createdAt=Created At
+partnerGid=Partner GID
+parentGid1=Parent GID 1
+parentGid2=Parent GID 2
+foundDate=Found Date
+leiCode=LEI Code
+dunsNumber=DUNS Number
+euid=EUID
+partnerGroup=Partner Group
+partnerId=Partner ID
+partnerCategory=Partner Category
+legalForm=Legal Form
+telephoneNo=Telephone No
+mobileTelNo=Mobile Tel. No
+emailAddress=E-mail Address
+vendor=Vendor
+customer=Customer
+inactive=Inactive
+inactiveReason=Inactive Reason
+companyName=Company Name
+searchTerm=Search Term
+country=Country
+district=District
+city=City
+postalCode=Postal Code
+street=Street
+houseNo=House No
+houseNoSuppl=House No Suppl.
+addressVariant=Address Variant
+nation=Nation
+taxNumber=Tax Number
+taxNumbers=Tax Numbers
+taxType=Tax Type
+externalSystem=External System
+resultIsActiveEntity=Result Is Active Entity
+```
+
+### mdgcreaterequest/webapp/i18n/i18n_en.properties
+
+```properties
+# This is the resource bundle for c4p.mdg.mdgcreaterequest
+
+#Texts for manifest.json
+
+#XTIT: Application name
+appTitle=MDG Request
+
+#YDES: Application description
+appDescription=MDG Request
+
+#XMSG: Startup create request error
+createRequestDraftFailed=MDG request draft could not be created.
+
+#XTIT: Request object names
+bpRequest=MDG Request
+bpRequests=MDG Requests
+
+#XTIT: Object page sections
+general=General
+globalData=Global Data (KID)
+mainData=Main Data
+identificationData=Identification Data
+countrySpecificDataDetail=Country Specific Data Detail
+address=Address
+addressVariants=Address Variants
+additionalTaxData=Tax Data
+addressDetails=Address Details
+taxNumberDetails=Tax Number Details
+
+#XBUT: Create request action
+create=Create
+
+#XFLD: Field labels
+requestId=Request ID
+requestType=Request Type
+requestOrigin=Request Origin
+status=Status
+createdBy=Created By
+createdAt=Created At
+partnerGid=Partner GID
+parentGid1=Parent GID 1
+parentGid2=Parent GID 2
+foundDate=Found Date
+leiCode=LEI Code
+dunsNumber=DUNS Number
+euid=EUID
+partnerGroup=Partner Group
+partnerId=Partner ID
+partnerCategory=Partner Category
+legalForm=Legal Form
+telephoneNo=Telephone No
+mobileTelNo=Mobile Tel. No
+emailAddress=E-mail Address
+vendor=Vendor
+customer=Customer
+inactive=Inactive
+inactiveReason=Inactive Reason
+companyName=Company Name
+searchTerm=Search Term
+country=Country
+district=District
+city=City
+postalCode=Postal Code
+street=Street
+houseNo=House No
+houseNoSuppl=House No Suppl.
+addressVariant=Address Variant
+nation=Nation
+taxNumber=Tax Number
+taxNumbers=Tax Numbers
+taxType=Tax Type
+externalSystem=Country/Region
+resultIsActiveEntity=Result Is Active Entity
+```
+
+### mdgcreaterequest/webapp/i18n/i18n_cs.properties
+
+```properties
+# This is the resource bundle for c4p.mdg.mdgcreaterequest
+
+#Texts for manifest.json
+
+#XTIT: Application name
+appTitle=MDG požadavek
+
+#YDES: Application description
+appDescription=MDG požadavek
+
+#XMSG: Startup create request error
+createRequestDraftFailed=Draft MDG požadavku se nepodařilo vytvořit.
+
+#XTIT: Request object names
+bpRequest=MDG požadavek
+bpRequests=MDG požadavky
+
+#XTIT: Object page sections
+general=Všeobecné
+globalData=Globální data (KID)
+mainData=Hlavní data
+identificationData=Identifikační data
+countrySpecificDataDetail=Detail dat pro danou zemi
+address=Adresa
+addressVariants=Varianty adres
+additionalTaxData=Daňová data
+addressDetails=Detaily adresy
+taxNumberDetails=Detaily daňového čísla
+
+#XBUT: Create request action
+create=Vytvořit
+
+#XFLD: Field labels
+requestId=ID požadavku
+requestType=Typ požadavku
+requestOrigin=Původ požadavku
+status=Status
+createdBy=Vytvořil
+createdAt=Vytvořeno
+partnerGid=Partner GID
+parentGid1=Nadřazený GID 1
+parentGid2=Nadřazený GID 2
+foundDate=Datum založení
+leiCode=LEI kód
+dunsNumber=Číslo D-U-N-S
+euid=EUID
+partnerGroup=Skupina partnera
+partnerId=ID partnera
+partnerCategory=Kategorie partnera
+legalForm=Právní forma
+telephoneNo=Telefon
+mobileTelNo=Mobilní telefon
+emailAddress=E-mailová adresa
+vendor=Dodavatel
+customer=Zákazník
+inactive=Neaktivní
+inactiveReason=Důvod neaktivity
+companyName=Název organizace
+searchTerm=Hledaný výraz 1
+country=Klíč státu/regionu
+district=Místní část
+city=Město
+postalCode=PSČ
+street=Ulice
+houseNo=Číslo domu
+houseNoSuppl=Dodatek
+addressVariant=Varianta adresy
+nation=Text verze
+taxNumber=Daňové číslo
+taxNumbers=Daňová čísla
+taxType=Typ daně
+externalSystem=Země/Region
+resultIsActiveEntity=Výsledek je aktivní
+```
+
 ### mdgcreaterequest/package.json
 
-````json
+```json
 {
   "name": "mdgcreaterequest",
   "version": "0.0.1",
@@ -3179,7 +3818,7 @@ sap.ui.define(
 
 ### mdgcreaterequest/tsconfig.json
 
-````json
+```json
 {
   "compilerOptions": {
     "target": "ES2022",
@@ -3392,7 +4031,7 @@ export default [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>MDG request - create BP</title>
+    <title>MDG Request</title>
     <style>
         html, body, body > div, #container, #container-uiarea {
             height: 100%;
@@ -3425,7 +4064,7 @@ export default [
 
 ### mdgcreaterequest/.appGenInfo.json
 
-````json
+```json
 {
   "generationParameters": {
     "generationDate": "Mon Jun 01 2026 09:42:21 GMT+0200 (Central European Summer Time)",
@@ -3459,51 +4098,4 @@ export default [
     "valueHelpDownloaded": true
   }
 }
-```
-
-### mdgcreaterequest/README.md
-
-```markdown
-## Application Details
-|               |
-| ------------- |
-|**Generation Date and Time**<br>Mon Jun 01 2026 09:42:21 GMT+0200 (Central European Summer Time)|
-|**App Generator**<br>SAP Fiori Application Generator|
-|**App Generator Version**<br>1.24.0|
-|**Generation Platform**<br>Visual Studio Code|
-|**Template Used**<br>List Report Page V4|
-|**Service Type**<br>SAP System (ABAP On-Premise)|
-|**Service URL**<br>https://hsr.con4pas.cz/sap/opu/odata4/sap/zui_mdg_req_o4/srvd/sap/zui_mdg_req/0001/|
-|**Module Name**<br>mdgcreaterequest|
-|**Application Title**<br>MDG request - create BP|
-|**Namespace**<br>c4p.mdg|
-|**UI5 Theme**<br>sap_horizon|
-|**UI5 Version**<br>1.136.10|
-|**Enable TypeScript**<br>False|
-|**Add Eslint configuration**<br>True, see https://www.npmjs.com/package/@sap-ux/eslint-plugin-fiori-tools#rules for the eslint rules.|
-|**Value Help Metadata**<br>Downloaded for external services|
-|**Main Entity**<br>Requests|
-|**Navigation Entity**<br>None|
-
-## mdgcreaterequest
-
-MDG request - create BP
-
-### Starting the generated app
-
--   This app has been generated using the SAP Fiori tools - App Generator, as part of the SAP Fiori tools suite.  To launch the generated application, run the following from the generated application root folder:
-
-```
-    npm start
-```
-
-- It is also possible to run the application using mock data that reflects the OData Service URL supplied during application generation.  In order to run the application with Mock Data, run the following from the generated app root folder:
-
-```
-    npm run start-mock
-```
-
-#### Pre-requisites:
-
-1. Active NodeJS LTS (Long Term Support) version and associated supported NPM version.  (See https://nodejs.org)
 ```
