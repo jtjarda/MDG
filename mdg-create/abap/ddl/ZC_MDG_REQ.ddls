@@ -1,4 +1,4 @@
-﻿@EndUserText.label: 'MDG BP Request'
+@EndUserText.label: 'MDG Request'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 @VDM.viewType: #CONSUMPTION

@@ -3,7 +3,14 @@
   "sap.app": {
     "id": "c4p.mdg.mdgcreaterequest",
     "type": "application",
-    "i18n": "i18n/i18n.properties",
+    "i18n": {
+      "bundleUrl": "i18n/i18n.properties",
+      "supportedLocales": [
+        "",
+        "cs",
+        "en"
+      ]
+    },
     "applicationVersion": {
       "version": "0.0.1"
     },
@@ -100,7 +107,12 @@
       "i18n": {
         "type": "sap.ui.model.resource.ResourceModel",
         "settings": {
-          "bundleName": "c4p.mdg.mdgcreaterequest.i18n.i18n"
+          "bundleName": "c4p.mdg.mdgcreaterequest.i18n.i18n",
+          "supportedLocales": [
+            "",
+            "cs",
+            "en"
+          ]
         }
       },
       "": {
@@ -114,7 +126,14 @@
       },
       "@i18n": {
         "type": "sap.ui.model.resource.ResourceModel",
-        "uri": "i18n/i18n.properties"
+        "uri": "i18n/i18n.properties",
+        "settings": {
+          "supportedLocales": [
+            "",
+            "cs",
+            "en"
+          ]
+        }
       }
     },
     "resources": {
@@ -124,7 +143,7 @@
       "config": {
         "routerClass": "sap.f.routing.Router",
         "flexibleColumnLayout": {
-          "defaultTwoColumnLayoutType": "TwoColumnsMidExpanded",
+          "defaultTwoColumnLayoutType": "TwoColumnsBeginExpanded",
           "defaultThreeColumnLayoutType": "ThreeColumnsMidExpanded"
         }
       },
@@ -140,7 +159,6 @@
           "pattern": "Requests({key}):?query:",
           "name": "RequestsObjectPage",
           "target": [
-            "RequestsList",
             "RequestsObjectPage"
           ]
         },
@@ -148,7 +166,6 @@
           "pattern": "Requests({key})/_Address({key2}):?query:",
           "name": "AddressVariantsObjectPage",
           "target": [
-            "RequestsList",
             "RequestsObjectPage",
             "AddressVariantsObjectPage"
           ]
@@ -157,7 +174,6 @@
           "pattern": "Requests({key})/_Tax({key2}):?query:",
           "name": "TaxNumbersObjectPage",
           "target": [
-            "RequestsList",
             "RequestsObjectPage",
             "TaxNumbersObjectPage"
           ]
@@ -195,7 +211,7 @@
           "type": "Component",
           "id": "RequestsObjectPage",
           "name": "sap.fe.templates.ObjectPage",
-          "controlAggregation": "midColumnPages",
+          "controlAggregation": "beginColumnPages",
           "contextPattern": "/Requests({key})",
           "options": {
             "settings": {
@@ -220,7 +236,7 @@
           "type": "Component",
           "id": "AddressVariantsObjectPage",
           "name": "sap.fe.templates.ObjectPage",
-          "controlAggregation": "endColumnPages",
+          "controlAggregation": "midColumnPages",
           "contextPattern": "/Requests({key})/_Address({key2})",
           "options": {
             "settings": {
@@ -234,7 +250,7 @@
           "type": "Component",
           "id": "TaxNumbersObjectPage",
           "name": "sap.fe.templates.ObjectPage",
-          "controlAggregation": "endColumnPages",
+          "controlAggregation": "midColumnPages",
           "contextPattern": "/Requests({key})/_Tax({key2})",
           "options": {
             "settings": {
@@ -245,7 +261,8 @@
           }
         }
       }
-    }
+    },
+    "flexBundle": false
   },
   "sap.fiori": {
     "registrationIds": [],

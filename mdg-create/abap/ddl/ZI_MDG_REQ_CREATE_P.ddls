@@ -1,4 +1,4 @@
-@EndUserText.label: 'Create BP Request Parameters'
+@EndUserText.label: 'Create MDG Request Parameters'
 define abstract entity ZI_MDG_REQ_CREATE_P
 {
   @EndUserText.label: 'External System'

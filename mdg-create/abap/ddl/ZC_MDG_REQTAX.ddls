@@ -1,4 +1,4 @@
-@EndUserText.label: 'MDG BP Request Tax Number'
+@EndUserText.label: 'MDG Request Tax Number'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 @VDM.viewType: #CONSUMPTION

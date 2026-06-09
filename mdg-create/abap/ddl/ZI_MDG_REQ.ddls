@@ -1,4 +1,4 @@
-﻿@EndUserText.label: 'MDG BP Request'
+@EndUserText.label: 'MDG Request'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 @Metadata.ignorePropagatedAnnotations: true
@@ -9,7 +9,7 @@ define root view entity ZI_MDG_REQ
   composition [0..*] of ZI_MDG_REQADR as _Address
   composition [0..*] of ZI_MDG_REQTAX as _Tax
   association [0..1] to ZI_MDG_DOMAIN_VALUE_TEXT as _RequestTypeText
-    on  _RequestTypeText.DomainName   = 'ZMDG_REQ_TYPE'
+    on  _RequestTypeText.DomainName   = 'ZMDG_D_REQ_TYPE'
     and _RequestTypeText.Language     = $session.system_language
     and _RequestTypeText.DomainValue  = $projection.RequestType
   association [0..1] to ZI_MDG_DOMAIN_VALUE_TEXT as _StatusText

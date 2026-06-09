@@ -2862,7 +2862,14 @@ sap.ui.define(
   "sap.app": {
     "id": "c4p.mdg.mdgcreaterequest",
     "type": "application",
-    "i18n": "i18n/i18n.properties",
+    "i18n": {
+      "bundleUrl": "i18n/i18n.properties",
+      "supportedLocales": [
+        "",
+        "cs",
+        "en"
+      ]
+    },
     "applicationVersion": {
       "version": "0.0.1"
     },
@@ -2959,7 +2966,12 @@ sap.ui.define(
       "i18n": {
         "type": "sap.ui.model.resource.ResourceModel",
         "settings": {
-          "bundleName": "c4p.mdg.mdgcreaterequest.i18n.i18n"
+          "bundleName": "c4p.mdg.mdgcreaterequest.i18n.i18n",
+          "supportedLocales": [
+            "",
+            "cs",
+            "en"
+          ]
         }
       },
       "": {
@@ -2973,7 +2985,14 @@ sap.ui.define(
       },
       "@i18n": {
         "type": "sap.ui.model.resource.ResourceModel",
-        "uri": "i18n/i18n.properties"
+        "uri": "i18n/i18n.properties",
+        "settings": {
+          "supportedLocales": [
+            "",
+            "cs",
+            "en"
+          ]
+        }
       }
     },
     "resources": {
@@ -2999,7 +3018,6 @@ sap.ui.define(
           "pattern": "Requests({key}):?query:",
           "name": "RequestsObjectPage",
           "target": [
-            "RequestsList",
             "RequestsObjectPage"
           ]
         },
@@ -3007,7 +3025,6 @@ sap.ui.define(
           "pattern": "Requests({key})/_Address({key2}):?query:",
           "name": "AddressVariantsObjectPage",
           "target": [
-            "RequestsList",
             "RequestsObjectPage",
             "AddressVariantsObjectPage"
           ]
@@ -3016,7 +3033,6 @@ sap.ui.define(
           "pattern": "Requests({key})/_Tax({key2}):?query:",
           "name": "TaxNumbersObjectPage",
           "target": [
-            "RequestsList",
             "RequestsObjectPage",
             "TaxNumbersObjectPage"
           ]
@@ -3054,7 +3070,7 @@ sap.ui.define(
           "type": "Component",
           "id": "RequestsObjectPage",
           "name": "sap.fe.templates.ObjectPage",
-          "controlAggregation": "midColumnPages",
+          "controlAggregation": "beginColumnPages",
           "contextPattern": "/Requests({key})",
           "options": {
             "settings": {
@@ -3079,7 +3095,7 @@ sap.ui.define(
           "type": "Component",
           "id": "AddressVariantsObjectPage",
           "name": "sap.fe.templates.ObjectPage",
-          "controlAggregation": "endColumnPages",
+          "controlAggregation": "midColumnPages",
           "contextPattern": "/Requests({key})/_Address({key2})",
           "options": {
             "settings": {
@@ -3093,7 +3109,7 @@ sap.ui.define(
           "type": "Component",
           "id": "TaxNumbersObjectPage",
           "name": "sap.fe.templates.ObjectPage",
-          "controlAggregation": "endColumnPages",
+          "controlAggregation": "midColumnPages",
           "contextPattern": "/Requests({key})/_Tax({key2})",
           "options": {
             "settings": {
@@ -3104,7 +3120,8 @@ sap.ui.define(
           }
         }
       }
-    }
+    },
+    "flexBundle": false
   },
   "sap.fiori": {
     "registrationIds": [],
@@ -3117,538 +3134,9 @@ sap.ui.define(
   }
 }
 ```
-
-### mdgcreaterequest/webapp/annotations/annotation.xml
-
-```xml
-<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
-    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
-        <edmx:Include Namespace="com.sap.vocabularies.Common.v1" Alias="Common"/>
-    </edmx:Reference>
-    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
-        <edmx:Include Namespace="com.sap.vocabularies.UI.v1" Alias="UI"/>
-    </edmx:Reference>
-    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Communication.xml">
-        <edmx:Include Namespace="com.sap.vocabularies.Communication.v1" Alias="Communication"/>
-    </edmx:Reference>
-    <edmx:Reference Uri="/sap/opu/odata4/sap/zui_mdg_req_o4/srvd/sap/zui_mdg_req/0001/$metadata">
-        <edmx:Include Namespace="com.sap.gateway.srvd.zui_mdg_req.v0001" Alias="SAP__self"/>
-    </edmx:Reference>
-    <edmx:DataServices>
-        <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="local">
-            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))">
-                <Annotation Term="Common.Label" String="{@i18n>create}"/>
-            </Annotations>
-            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/ExternalSystem">
-                <Annotation Term="Common.Label" String="{@i18n>externalSystem}"/>
-            </Annotations>
-            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/PartnerGID">
-                <Annotation Term="Common.Label" String="{@i18n>partnerGid}"/>
-            </Annotations>
-            <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/ResultIsActiveEntity">
-                <Annotation Term="Common.Label" String="{@i18n>resultIsActiveEntity}"/>
-            </Annotations>
-
-            <Annotations Target="SAP__self.RequestsType">
-                <Annotation Term="Common.Label" String="{@i18n>bpRequest}"/>
-                <Annotation Term="UI.HeaderInfo">
-                    <Record>
-                        <PropertyValue Property="TypeName" String="{@i18n>bpRequest}"/>
-                        <PropertyValue Property="TypeNamePlural" String="{@i18n>bpRequests}"/>
-                        <PropertyValue Property="Title">
-                            <Record Type="UI.DataField">
-                                <PropertyValue Property="Value" Path="RequestId"/>
-                            </Record>
-                        </PropertyValue>
-                        <PropertyValue Property="Description">
-                            <Record Type="UI.DataField">
-                                <PropertyValue Property="Value" Path="Status"/>
-                            </Record>
-                        </PropertyValue>
-                    </Record>
-                </Annotation>
-                <Annotation Term="UI.Facets">
-                    <Collection>
-                        <Record Type="UI.CollectionFacet">
-                            <PropertyValue Property="ID" String="General"/>
-                            <PropertyValue Property="Label" String="{@i18n>general}"/>
-                            <PropertyValue Property="Facets">
-                                <Collection>
-                                    <Record Type="UI.ReferenceFacet">
-                                        <PropertyValue Property="ID" String="GlobalData"/>
-                                        <PropertyValue Property="Label" String="{@i18n>globalData}"/>
-                                        <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#GlobalData"/>
-                                    </Record>
-                                    <Record Type="UI.ReferenceFacet">
-                                        <PropertyValue Property="ID" String="MainData"/>
-                                        <PropertyValue Property="Label" String="{@i18n>mainData}"/>
-                                        <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#MainData"/>
-                                    </Record>
-                                    <Record Type="UI.ReferenceFacet">
-                                        <PropertyValue Property="ID" String="IdentificationData"/>
-                                        <PropertyValue Property="Label" String="{@i18n>identificationData}"/>
-                                        <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#IdentificationData"/>
-                                    </Record>
-                                </Collection>
-                            </PropertyValue>
-                        </Record>
-                        <Record Type="UI.ReferenceFacet">
-                            <PropertyValue Property="ID" String="CountrySpecificData"/>
-                            <PropertyValue Property="Label" String="{@i18n>countrySpecificDataDetail}"/>
-                            <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#CountrySpecificData"/>
-                        </Record>
-                        <Record Type="UI.ReferenceFacet">
-                            <PropertyValue Property="ID" String="Address"/>
-                            <PropertyValue Property="Label" String="{@i18n>address}"/>
-                            <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#Address"/>
-                        </Record>
-                        <Record Type="UI.ReferenceFacet">
-                            <PropertyValue Property="ID" String="AddressVariants"/>
-                            <PropertyValue Property="Label" String="{@i18n>addressVariants}"/>
-                            <PropertyValue Property="Target" AnnotationPath="_Address/@UI.LineItem"/>
-                        </Record>
-                        <Record Type="UI.ReferenceFacet">
-                            <PropertyValue Property="ID" String="TaxNumbers"/>
-                            <PropertyValue Property="Label" String="{@i18n>additionalTaxData}"/>
-                            <PropertyValue Property="Target" AnnotationPath="_Tax/@UI.LineItem"/>
-                        </Record>
-                    </Collection>
-                </Annotation>
-                <Annotation Term="UI.LineItem">
-                    <Collection>
-                        <Record Type="UI.DataFieldForAction">
-                            <PropertyValue Property="Label" String="{@i18n>create}"/>
-                            <PropertyValue Property="Action" String="com.sap.gateway.srvd.zui_mdg_req.v0001.CreateRequest"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Label" String="{@i18n>requestId}"/>
-                            <PropertyValue Property="Value" Path="RequestId"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Label" String="{@i18n>requestType}"/>
-                            <PropertyValue Property="Value" Path="RequestType"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Label" String="{@i18n>requestOrigin}"/>
-                            <PropertyValue Property="Value" Path="ExternalSystem"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Label" String="{@i18n>status}"/>
-                            <PropertyValue Property="Value" Path="Status"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Label" String="{@i18n>createdBy}"/>
-                            <PropertyValue Property="Value" Path="CreatedBy"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Label" String="{@i18n>partnerGid}"/>
-                            <PropertyValue Property="Value" Path="PartnerGid"/>
-                        </Record>
-                        <Record Type="UI.DataField">
-                            <PropertyValue Property="Label" String="{@i18n>dunsNumber}"/>
-                            <PropertyValue Property="Value" Path="Duns"/>
-                        </Record>
-                    </Collection>
-                </Annotation>
-                <Annotation Term="UI.FieldGroup" Qualifier="GlobalData">
-                    <Record>
-                        <PropertyValue Property="Data">
-                            <Collection>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>requestType}"/><PropertyValue Property="Value" Path="RequestType"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>requestOrigin}"/><PropertyValue Property="Value" Path="ExternalSystem"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>status}"/><PropertyValue Property="Value" Path="Status"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>createdBy}"/><PropertyValue Property="Value" Path="CreatedBy"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>createdAt}"/><PropertyValue Property="Value" Path="CreatedAt"/></Record>
-                            </Collection>
-                        </PropertyValue>
-                    </Record>
-                </Annotation>
-                <Annotation Term="UI.FieldGroup" Qualifier="MainData">
-                    <Record>
-                        <PropertyValue Property="Data">
-                            <Collection>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>partnerGid}"/><PropertyValue Property="Value" Path="PartnerGid"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>parentGid1}"/><PropertyValue Property="Value" Path="ParentGid1"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>parentGid2}"/><PropertyValue Property="Value" Path="ParentGid2"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>foundDate}"/><PropertyValue Property="Value" Path="FoundDate"/></Record>
-                            </Collection>
-                        </PropertyValue>
-                    </Record>
-                </Annotation>
-                <Annotation Term="UI.FieldGroup" Qualifier="IdentificationData">
-                    <Record>
-                        <PropertyValue Property="Data">
-                            <Collection>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>leiCode}"/><PropertyValue Property="Value" Path="LeiCode"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>dunsNumber}"/><PropertyValue Property="Value" Path="Duns"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>euid}"/><PropertyValue Property="Value" Path="Euid"/></Record>
-                            </Collection>
-                        </PropertyValue>
-                    </Record>
-                </Annotation>
-                <Annotation Term="UI.FieldGroup" Qualifier="CountrySpecificData">
-                    <Record>
-                        <PropertyValue Property="Data">
-                            <Collection>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>partnerGroup}"/><PropertyValue Property="Value" Path="BusinessPartnerGroup"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>partnerId}"/><PropertyValue Property="Value" Path="PartnerId"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>partnerCategory}"/><PropertyValue Property="Value" Path="BusinessPartnerType"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>legalForm}"/><PropertyValue Property="Value" Path="LegalForm"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>telephoneNo}"/><PropertyValue Property="Value" Path="TelephoneNumber"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>mobileTelNo}"/><PropertyValue Property="Value" Path="MobileNumber"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>emailAddress}"/><PropertyValue Property="Value" Path="EmailAddress"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>vendor}"/><PropertyValue Property="Value" Path="Vendor"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>customer}"/><PropertyValue Property="Value" Path="Customer"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>inactive}"/><PropertyValue Property="Value" Path="IsInactive"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>inactiveReason}"/><PropertyValue Property="Value" Path="InactiveReason"/></Record>
-                            </Collection>
-                        </PropertyValue>
-                    </Record>
-                </Annotation>
-                <Annotation Term="UI.FieldGroup" Qualifier="Address">
-                    <Record>
-                        <PropertyValue Property="Data">
-                            <Collection>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>companyName}"/><PropertyValue Property="Value" Path="OrganizationName1"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>searchTerm}"/><PropertyValue Property="Value" Path="SearchTerm1"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>country}"/><PropertyValue Property="Value" Path="Country"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>district}"/><PropertyValue Property="Value" Path="District"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>city}"/><PropertyValue Property="Value" Path="City"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>postalCode}"/><PropertyValue Property="Value" Path="PostalCode"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>street}"/><PropertyValue Property="Value" Path="Street"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>houseNo}"/><PropertyValue Property="Value" Path="HouseNumber"/></Record>
-                                <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>houseNoSuppl}"/><PropertyValue Property="Value" Path="HouseNumberSupplement"/></Record>
-                            </Collection>
-                        </PropertyValue>
-                    </Record>
-                </Annotation>
-            </Annotations>
-            <Annotations Target="SAP__self.TaxNumbersType/TaxType">
-                <Annotation Term="Common.Text" Path="TaxTypeText"/>
-                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextFirst"/>
-            </Annotations>
-            <Annotations Target="SAP__self.TaxNumbersType">
-                <Annotation Term="Common.Label" String="{@i18n>taxNumber}"/>
-                <Annotation Term="UI.HeaderInfo">
-                    <Record>
-                        <PropertyValue Property="TypeName" String="{@i18n>taxNumber}"/>
-                        <PropertyValue Property="TypeNamePlural" String="{@i18n>taxNumbers}"/>
-                        <PropertyValue Property="Title"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="TaxTypeText"/></Record></PropertyValue>
-                        <PropertyValue Property="Description"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="TaxNumber"/></Record></PropertyValue>
-                    </Record>
-                </Annotation>
-                <Annotation Term="UI.Facets">
-                    <Collection>
-                        <Record Type="UI.ReferenceFacet">
-                            <PropertyValue Property="ID" String="TaxNumberDetail"/>
-                            <PropertyValue Property="Label" String="{@i18n>taxNumberDetails}"/>
-                            <PropertyValue Property="Target" AnnotationPath="@UI.Identification"/>
-                        </Record>
-                    </Collection>
-                </Annotation>
-                <Annotation Term="UI.Identification">
-                    <Collection>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxType}"/><PropertyValue Property="Value" Path="TaxType"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxNumber}"/><PropertyValue Property="Value" Path="TaxNumber"/></Record>
-                    </Collection>
-                </Annotation>
-                <Annotation Term="UI.LineItem">
-                    <Collection>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxType}"/><PropertyValue Property="Value" Path="TaxType"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>taxNumber}"/><PropertyValue Property="Value" Path="TaxNumber"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                    </Collection>
-                </Annotation>
-            </Annotations>
-            <Annotations Target="SAP__self.AddressVariantsType/Nation">
-                <Annotation Term="Common.Text" Path="NationText"/>
-                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextFirst"/>
-            </Annotations>
-            <Annotations Target="SAP__self.AddressVariantsType/Country">
-                <Annotation Term="Common.Text" Path="CountryName"/>
-                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextLast"/>
-            </Annotations>
-            <Annotations Target="SAP__self.AddressVariantsType">
-                <Annotation Term="Common.Label" String="{@i18n>addressVariant}"/>
-                <Annotation Term="UI.HeaderInfo">
-                    <Record>
-                        <PropertyValue Property="TypeName" String="{@i18n>addressVariant}"/>
-                        <PropertyValue Property="TypeNamePlural" String="{@i18n>addressVariants}"/>
-                        <PropertyValue Property="Title"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="NationText"/></Record></PropertyValue>
-                        <PropertyValue Property="Description"><Record Type="UI.DataField"><PropertyValue Property="Value" Path="OrganizationName1"/></Record></PropertyValue>
-                    </Record>
-                </Annotation>
-                <Annotation Term="UI.Facets">
-                    <Collection>
-                        <Record Type="UI.ReferenceFacet">
-                            <PropertyValue Property="ID" String="AddressVariantDetail"/>
-                            <PropertyValue Property="Label" String="{@i18n>addressDetails}"/>
-                            <PropertyValue Property="Target" AnnotationPath="@UI.Identification"/>
-                        </Record>
-                    </Collection>
-                </Annotation>
-                <Annotation Term="UI.Identification">
-                    <Collection>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>nation}"/><PropertyValue Property="Value" Path="Nation"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>companyName}"/><PropertyValue Property="Value" Path="OrganizationName1"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>country}"/><PropertyValue Property="Value" Path="Country"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>city}"/><PropertyValue Property="Value" Path="City"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>postalCode}"/><PropertyValue Property="Value" Path="PostalCode"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>street}"/><PropertyValue Property="Value" Path="Street"/></Record>
-                    </Collection>
-                </Annotation>
-                <Annotation Term="UI.LineItem">
-                    <Collection>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>nation}"/><PropertyValue Property="Value" Path="Nation"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>companyName}"/><PropertyValue Property="Value" Path="OrganizationName1"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>country}"/><PropertyValue Property="Value" Path="Country"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>city}"/><PropertyValue Property="Value" Path="City"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>postalCode}"/><PropertyValue Property="Value" Path="PostalCode"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>street}"/><PropertyValue Property="Value" Path="Street"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
-                    </Collection>
-                </Annotation>
-            </Annotations>
-        </Schema>
-    </edmx:DataServices>
-</edmx:Edmx>
-```
-
-### mdgcreaterequest/webapp/i18n/i18n.properties
-
-```properties
-# This is the resource bundle for c4p.mdg.mdgcreaterequest
-
-#Texts for manifest.json
-
-#XTIT: Application name
-appTitle=MDG request - create BP
-
-#YDES: Application description
-appDescription=MDG request - create BP
-
-#XMSG: Startup create request error
-createRequestDraftFailed=BP request draft could not be created.
-
-#XTIT: Request object names
-bpRequest=BP Request
-bpRequests=BP Requests
-
-#XTIT: Object page sections
-general=General
-globalData=Global Data (KID)
-mainData=Main Data
-identificationData=Identification Data
-countrySpecificDataDetail=Country Specific Data Detail
-address=Address
-addressVariants=Address Variants
-additionalTaxData=Additional Tax Data
-addressDetails=Address Details
-taxNumberDetails=Tax Number Details
-
-#XBUT: Create request action
-create=Create
-
-#XFLD: Field labels
-requestId=Request ID
-requestType=Request Type
-requestOrigin=Request Origin
-status=Status
-createdBy=Created By
-createdAt=Created At
-partnerGid=Partner GID
-parentGid1=Parent GID 1
-parentGid2=Parent GID 2
-foundDate=Found Date
-leiCode=LEI Code
-dunsNumber=DUNS Number
-euid=EUID
-partnerGroup=Partner Group
-partnerId=Partner ID
-partnerCategory=Partner Category
-legalForm=Legal Form
-telephoneNo=Telephone No
-mobileTelNo=Mobile Tel. No
-emailAddress=E-mail Address
-vendor=Vendor
-customer=Customer
-inactive=Inactive
-inactiveReason=Inactive Reason
-companyName=Company Name
-searchTerm=Search Term
-country=Country
-district=District
-city=City
-postalCode=Postal Code
-street=Street
-houseNo=House No
-houseNoSuppl=House No Suppl.
-addressVariant=Address Variant
-nation=Nation
-taxNumber=Tax Number
-taxNumbers=Tax Numbers
-taxType=Tax Type
-externalSystem=External System
-resultIsActiveEntity=Result Is Active Entity
-```
-
-### mdgcreaterequest/webapp/i18n/i18n_cs.properties
-
-```properties
-# This is the resource bundle for c4p.mdg.mdgcreaterequest
-
-#Texts for manifest.json
-
-#XTIT: Application name
-appTitle=MDG poÄąÄľadavek - zaloÄąÄľenÄ‚Â­ BP
-
-#YDES: Application description
-appDescription=MDG poÄąÄľadavek - zaloÄąÄľenÄ‚Â­ BP
-
-#XMSG: Startup create request error
-createRequestDraftFailed=Draft BP poÄąÄľadavku se nepodaÄąâ„˘ilo vytvoÄąâ„˘it.
-
-#XTIT: Request object names
-bpRequest=BP poÄąÄľadavek
-bpRequests=BP poÄąÄľadavky
-
-#XTIT: Object page sections
-general=VÄąË‡eobecnÄ‚Â©
-globalData=GlobÄ‚Ë‡lnÄ‚Â­ data (KID)
-mainData=HlavnÄ‚Â­ data
-identificationData=IdentifikaĂ„Ĺ¤nÄ‚Â­ data
-countrySpecificDataDetail=Detail dat pro danou zemi
-address=Adresa
-addressVariants=Varianty adres
-additionalTaxData=DaÄąÂovÄ‚Ë‡ data
-addressDetails=Detaily adresy
-taxNumberDetails=Detaily daÄąÂovÄ‚Â©ho Ă„Ĺ¤Ä‚Â­sla
-
-#XBUT: Create request action
-create=VytvoÄąâ„˘it
-
-#XFLD: Field labels
-requestId=ID poÄąÄľadavku
-requestType=Typ poÄąÄľadavku
-requestOrigin=PÄąĹ»vod poÄąÄľadavku
-status=Status
-createdBy=VytvoÄąâ„˘il
-createdAt=VytvoÄąâ„˘eno
-partnerGid=Partner GID
-parentGid1=NadÄąâ„˘azenÄ‚Ëť GID 1
-parentGid2=NadÄąâ„˘azenÄ‚Ëť GID 2
-foundDate=Datum zaloÄąÄľenÄ‚Â­
-leiCode=LEI kÄ‚Ĺ‚d
-dunsNumber=Ă„ĹšÄ‚Â­slo D-U-N-S
-euid=EUID
-partnerGroup=Skupina partnera
-partnerId=ID partnera
-partnerCategory=Kategorie partnera
-legalForm=PrÄ‚Ë‡vnÄ‚Â­ forma
-telephoneNo=Telefon
-mobileTelNo=MobilnÄ‚Â­ telefon
-emailAddress=E-mailovÄ‚Ë‡ adresa
-vendor=Dodavatel
-customer=ZÄ‚Ë‡kaznÄ‚Â­k
-inactive=NeaktivnÄ‚Â­
-inactiveReason=DÄąĹ»vod neaktivity
-companyName=NÄ‚Ë‡zev organizace
-searchTerm=HledanÄ‚Ëť vÄ‚Ëťraz 1
-country=KlÄ‚Â­Ă„Ĺ¤ stÄ‚Ë‡tu/regionu
-district=MÄ‚Â­stnÄ‚Â­ Ă„Ĺ¤Ä‚Ë‡st
-city=MĂ„â€şsto
-postalCode=PSĂ„Ĺš
-street=Ulice
-houseNo=Ă„ĹšÄ‚Â­slo domu
-houseNoSuppl=Dodatek
-addressVariant=Varianta adresy
-nation=Text verze
-taxNumber=DaÄąÂovÄ‚Â© Ă„Ĺ¤Ä‚Â­slo
-taxNumbers=DaÄąÂovÄ‚Ë‡ Ă„Ĺ¤Ä‚Â­sla
-taxType=Typ danĂ„â€ş
-externalSystem=ZemĂ„â€ş/Region
-resultIsActiveEntity=VÄ‚Ëťsledek je aktivnÄ‚Â­
-```
-
-### mdgcreaterequest/webapp/i18n/i18n_en.properties
-
-```properties
-# This is the resource bundle for c4p.mdg.mdgcreaterequest
-
-#Texts for manifest.json
-
-#XTIT: Application name
-appTitle=MDG request - create BP
-
-#YDES: Application description
-appDescription=MDG request - create BP
-
-#XMSG: Startup create request error
-createRequestDraftFailed=BP request draft could not be created.
-
-#XTIT: Request object names
-bpRequest=BP Request
-bpRequests=BP Requests
-
-#XTIT: Object page sections
-general=General
-globalData=Global Data (KID)
-mainData=Main Data
-identificationData=Identification Data
-countrySpecificDataDetail=Country Specific Data Detail
-address=Address
-addressVariants=Address Variants
-additionalTaxData=Tax Data
-addressDetails=Address Details
-taxNumberDetails=Tax Number Details
-
-#XBUT: Create request action
-create=Create
-
-#XFLD: Field labels
-requestId=Request ID
-requestType=Request Type
-requestOrigin=Request Origin
-status=Status
-createdBy=Created By
-createdAt=Created At
-partnerGid=Partner GID
-parentGid1=Parent GID 1
-parentGid2=Parent GID 2
-foundDate=Found Date
-leiCode=LEI Code
-dunsNumber=DUNS Number
-euid=EUID
-partnerGroup=Partner Group
-partnerId=Partner ID
-partnerCategory=Partner Category
-legalForm=Legal Form
-telephoneNo=Telephone No
-mobileTelNo=Mobile Tel. No
-emailAddress=E-mail Address
-vendor=Vendor
-customer=Customer
-inactive=Inactive
-inactiveReason=Inactive Reason
-companyName=Company Name
-searchTerm=Search Term
-country=Country
-district=District
-city=City
-postalCode=Postal Code
-street=Street
-houseNo=House No
-houseNoSuppl=House No Suppl.
-addressVariant=Address Variant
-nation=Nation
-taxNumber=Tax Number
-taxNumbers=Tax Numbers
-taxType=Tax Type
-externalSystem=Country/Region
-resultIsActiveEntity=Result Is Active Entity
-```
-
 ### mdgcreaterequest/package.json
 
-```json
+````json
 {
   "name": "mdgcreaterequest",
   "version": "0.0.1",
@@ -3691,7 +3179,7 @@ resultIsActiveEntity=Result Is Active Entity
 
 ### mdgcreaterequest/tsconfig.json
 
-```json
+````json
 {
   "compilerOptions": {
     "target": "ES2022",
@@ -3937,7 +3425,7 @@ export default [
 
 ### mdgcreaterequest/.appGenInfo.json
 
-```json
+````json
 {
   "generationParameters": {
     "generationDate": "Mon Jun 01 2026 09:42:21 GMT+0200 (Central European Summer Time)",

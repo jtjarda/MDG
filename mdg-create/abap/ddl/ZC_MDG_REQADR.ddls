@@ -1,4 +1,4 @@
-﻿@EndUserText.label: 'MDG BP Request Address Variant'
+@EndUserText.label: 'MDG Request Address Variant'
 @AccessControl.authorizationCheck: #NOT_REQUIRED
 @Metadata.allowExtensions: true
 @VDM.viewType: #CONSUMPTION

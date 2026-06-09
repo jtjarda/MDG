@@ -25,7 +25,8 @@
             <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/ResultIsActiveEntity">
                 <Annotation Term="Common.Label" String="{@i18n>resultIsActiveEntity}"/>
             </Annotations>
-<Annotations Target="SAP__self.RequestsType">
+
+            <Annotations Target="SAP__self.RequestsType">
                 <Annotation Term="Common.Label" String="{@i18n>bpRequest}"/>
                 <Annotation Term="UI.HeaderInfo">
                     <Record>

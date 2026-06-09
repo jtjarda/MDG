@@ -1,7 +1,7 @@
 @Metadata.layer: #CUSTOMER
 @UI.headerInfo: {
-  typeName: 'BP Request',
-  typeNamePlural: 'BP Requests',
+  typeName: 'MDG Request',
+  typeNamePlural: 'MDG Requests',
   title: { type: #STANDARD, value: 'RequestId' },
   description: { type: #STANDARD, value: 'Status' }
 }
