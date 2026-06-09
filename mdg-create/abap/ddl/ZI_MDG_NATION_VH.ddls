@@ -6,9 +6,17 @@
 @VDM.viewType: #BASIC
 define view entity ZI_MDG_NATION_VH
   as select from tsadv as NationVersion
+  association [0..1] to tsadvt as _Text
+    on  _Text.nation = NationVersion.nation
+    and _Text.langu  = $session.system_language
 {
       @Search.defaultSearchElement: true
       @Search.fuzzinessThreshold: 0.8
-  key NationVersion.nation as Nation
+      @ObjectModel.text.element: [ 'NationText' ]
+  key NationVersion.nation as Nation,
 
+      @Search.defaultSearchElement: true
+      @Search.fuzzinessThreshold: 0.8
+      @Semantics.text: true
+      _Text.nation_tex as NationText
 }

@@ -26,7 +26,5 @@ define view entity ZI_MDG_REQADR
       country      as Country,
       name_org     as OrganizationName,
       name_person  as PersonName,
-
       _Request
 }
-

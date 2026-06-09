@@ -1,4 +1,4 @@
-managed implementation in class ZBP_I_MDG_REQ unique;
+﻿managed implementation in class ZBP_I_MDG_REQ unique;
 strict ( 2 );
 with draft;
 

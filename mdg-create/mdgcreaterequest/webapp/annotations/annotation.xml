@@ -1,4 +1,4 @@
-<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+﻿<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
     <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
         <edmx:Include Namespace="com.sap.vocabularies.Common.v1" Alias="Common"/>
     </edmx:Reference>
@@ -24,22 +24,6 @@
             </Annotations>
             <Annotations Target="SAP__self.CreateRequest(Collection(SAP__self.RequestsType))/ResultIsActiveEntity">
                 <Annotation Term="Common.Label" String="{@i18n>resultIsActiveEntity}"/>
-            </Annotations>
-            <Annotations Target="SAP__self.AddressVariantsType/Nation">
-                <Annotation Term="Common.ValueList">
-                    <Record Type="Common.ValueListType">
-                        <PropertyValue Property="SearchSupported" Bool="true"/>
-                        <PropertyValue Property="CollectionPath" String="Nations"/>
-                        <PropertyValue Property="Parameters">
-                            <Collection>
-                                <Record Type="Common.ValueListParameterInOut">
-                                    <PropertyValue Property="LocalDataProperty" PropertyPath="Nation"/>
-                                    <PropertyValue Property="ValueListProperty" String="Nation"/>
-                                </Record>
-                            </Collection>
-                        </PropertyValue>
-                    </Record>
-                </Annotation>
             </Annotations>
 
             <Annotations Target="SAP__self.RequestsType">
@@ -216,7 +200,6 @@
                     </Record>
                 </Annotation>
             </Annotations>
-
             <Annotations Target="SAP__self.TaxNumbersType">
                 <Annotation Term="Common.Label" String="{@i18n>taxNumber}"/>
                 <Annotation Term="UI.HeaderInfo">
@@ -249,7 +232,10 @@
                     </Collection>
                 </Annotation>
             </Annotations>
-
+            <Annotations Target="SAP__self.AddressVariantsType/Nation">
+                <Annotation Term="Common.Text" Path="NationText"/>
+                <Annotation Term="Common.TextArrangement" EnumMember="Common.TextArrangementType/TextFirst"/>
+            </Annotations>
             <Annotations Target="SAP__self.AddressVariantsType">
                 <Annotation Term="Common.Label" String="{@i18n>addressVariant}"/>
                 <Annotation Term="UI.HeaderInfo">
@@ -281,12 +267,12 @@
                 </Annotation>
                 <Annotation Term="UI.LineItem">
                     <Collection>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>nation}"/><PropertyValue Property="Value" Path="Nation"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>companyName}"/><PropertyValue Property="Value" Path="OrganizationName1"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>country}"/><PropertyValue Property="Value" Path="Country"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>city}"/><PropertyValue Property="Value" Path="City"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>postalCode}"/><PropertyValue Property="Value" Path="PostalCode"/></Record>
-                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>street}"/><PropertyValue Property="Value" Path="Street"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>nation}"/><PropertyValue Property="Value" Path="Nation"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>companyName}"/><PropertyValue Property="Value" Path="OrganizationName1"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>country}"/><PropertyValue Property="Value" Path="Country"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>city}"/><PropertyValue Property="Value" Path="City"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>postalCode}"/><PropertyValue Property="Value" Path="PostalCode"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
+                        <Record Type="UI.DataField"><PropertyValue Property="Label" String="{@i18n>street}"/><PropertyValue Property="Value" Path="Street"/><Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly"/></Record>
                     </Collection>
                 </Annotation>
             </Annotations>
