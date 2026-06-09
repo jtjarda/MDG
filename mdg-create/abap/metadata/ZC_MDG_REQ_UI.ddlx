@@ -2,7 +2,7 @@
 @UI.headerInfo: {
   typeName: 'MDG Request',
   typeNamePlural: 'MDG Requests',
-  title: { type: #STANDARD, value: 'RequestId' },
+  title: { type: #STANDARD, value: 'ObjectPageTitle' },
   description: { type: #STANDARD, value: 'Status' }
 }
 @UI.createHidden: true
@@ -10,6 +10,7 @@ annotate entity ZC_MDG_REQ with
 {
   @UI.hidden: true
   RequestUuid;
+
 
   @UI.hidden: true
   LocalLastChangedAt;

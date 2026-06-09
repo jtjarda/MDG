@@ -8,6 +8,9 @@ define root view entity ZC_MDG_REQ
 {
   key RequestUuid,
       RequestId,
+      @ObjectModel.virtualElement: true
+      @ObjectModel.virtualElementCalculatedBy: 'ABAP:ZCL_MDG_REQ_TITLE_VE'
+      virtual ObjectPageTitle : abap.char(20),
       RequestType,
       ExternalSystem,
       PartnerGid,
