@@ -6,7 +6,9 @@ define view entity ZC_MDG_REQADR
   as projection on ZI_MDG_REQADR
 {
   key RequestUuid,
+      @ObjectModel.text.element: [ 'NationText' ]
   key Nation,
+      _NationText.NationText as NationText,
       OrganizationName1,
       OrganizationName2,
       OrganizationName3,
@@ -20,12 +22,12 @@ define view entity ZC_MDG_REQADR
       City,
       District,
       PostalCode,
+      @ObjectModel.text.element: [ 'CountryName' ]
       Country,
+      _CountryText.CountryName as CountryName,
       OrganizationName,
       PersonName,
       _NationText,
       _CountryText,
       _Request : redirected to parent ZC_MDG_REQ
 }
-
-

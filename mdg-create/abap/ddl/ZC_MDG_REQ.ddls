@@ -45,7 +45,9 @@ define root view entity ZC_MDG_REQ
       City,
       District,
       PostalCode,
+      @ObjectModel.text.element: [ 'CountryName' ]
       Country,
+      _CountryText.CountryName as CountryName,
       OrganizationName,
       PersonName,
       CreatedBy,
@@ -62,3 +64,4 @@ define root view entity ZC_MDG_REQ
       _Address : redirected to composition child ZC_MDG_REQADR,
       _Tax     : redirected to composition child ZC_MDG_REQTAX
 }
+

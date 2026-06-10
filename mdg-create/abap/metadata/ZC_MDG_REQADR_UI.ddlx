@@ -1,4 +1,4 @@
-﻿@Metadata.layer: #CUSTOMER
+@Metadata.layer: #CUSTOMER
 @UI.headerInfo: {
   typeName: 'Address Variant',
   typeNamePlural: 'Address Variants',
@@ -25,7 +25,7 @@ annotate entity ZC_MDG_REQADR with
       entity: { name: 'ZI_MDG_NATION_VH', element: 'Nation' }
     }
   ]
-  @UI.textArrangement: #TEXT_FIRST
+  @UI.textArrangement: #TEXT_ONLY
   @UI.lineItem: [{ position: 10, label: 'Nation' }]
   @UI.identification: [{ position: 10, label: 'Nation' }]
   Nation;
@@ -55,4 +55,11 @@ annotate entity ZC_MDG_REQADR with
   @UI.lineItem: [{ position: 60, label: 'Street' }]
   @UI.identification: [{ position: 60, label: 'Street' }]
   Street;
+  @UI.lineItem: [{ position: 70, label: 'House No' }]
+  @UI.identification: [{ position: 70, label: 'House No' }]
+  HouseNumber;
+
+  @UI.lineItem: [{ position: 80, label: 'House No Suppl.' }]
+  @UI.identification: [{ position: 80, label: 'House No Suppl.' }]
+  HouseNumberSupplement;
 }

@@ -15,7 +15,6 @@ define view entity ZI_MDG_REQADR
     and _CountryText.Language = $session.system_language
 {
   key request_uuid as RequestUuid,
-      @ObjectModel.text.association: '_NationText'
   key nation       as Nation,
       name_org1    as OrganizationName1,
       name_org2    as OrganizationName2,
@@ -30,7 +29,6 @@ define view entity ZI_MDG_REQADR
       city1        as City,
       city2        as District,
       post_code1   as PostalCode,
-      @ObjectModel.text.association: '_CountryText'
       country      as Country,
       name_org     as OrganizationName,
       name_person  as PersonName,
@@ -38,7 +36,3 @@ define view entity ZI_MDG_REQADR
       _CountryText,
       _Request
 }
-
-
-
-

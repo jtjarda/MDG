@@ -2,8 +2,7 @@
 @UI.headerInfo: {
   typeName: 'MDG Request',
   typeNamePlural: 'MDG Requests',
-  title: { type: #STANDARD, value: 'ObjectPageTitle' },
-  description: { type: #STANDARD, value: 'Status' }
+  title: { type: #STANDARD, value: 'ObjectPageTitle' }
 }
 @UI.createHidden: true
 annotate entity ZC_MDG_REQ with
@@ -17,11 +16,36 @@ annotate entity ZC_MDG_REQ with
 
   @UI.facet: [
     {
-      id: 'GlobalData',
+      id: 'HeaderRequestType',
+      purpose: #HEADER,
       type: #FIELDGROUP_REFERENCE,
-      label: 'Global Data (KID)',
+      label: '',
       position: 10,
-      targetQualifier: 'GlobalData'
+      targetQualifier: 'HeaderRequestType'
+    },
+    {
+      id: 'HeaderRequestOrigin',
+      purpose: #HEADER,
+      type: #FIELDGROUP_REFERENCE,
+      label: '',
+      position: 20,
+      targetQualifier: 'HeaderRequestOrigin'
+    },
+    {
+      id: 'HeaderStatus',
+      purpose: #HEADER,
+      type: #FIELDGROUP_REFERENCE,
+      label: '',
+      position: 30,
+      targetQualifier: 'HeaderStatus'
+    },
+    {
+      id: 'HeaderCreatedBy',
+      purpose: #HEADER,
+      type: #FIELDGROUP_REFERENCE,
+      label: '',
+      position: 40,
+      targetQualifier: 'HeaderCreatedBy'
     },
     {
       id: 'MainData',
@@ -99,25 +123,25 @@ annotate entity ZC_MDG_REQ with
   RequestId;
 
   @UI.lineItem: [{ position: 20, label: 'Request Type' }]
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 10, label: 'Request Type' }]
+  @UI.fieldGroup: [{ qualifier: 'HeaderRequestType', position: 10, label: 'Request Type' }]
   @UI.selectionField: [{ position: 20 }]
   @UI.textArrangement: #TEXT_ONLY
   RequestType;
 
   @UI.lineItem: [{ position: 30, label: 'Request Origin' }]
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 20, label: 'Request Origin' }]
+  @UI.fieldGroup: [{ qualifier: 'HeaderRequestOrigin', position: 10, label: 'Request Origin' }]
   @UI.selectionField: [{ position: 30 }]
   @UI.textArrangement: #TEXT_ONLY
   ExternalSystem;
 
   @UI.lineItem: [{ position: 40, label: 'Status' }]
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 30, label: 'Status' }]
+  @UI.fieldGroup: [{ qualifier: 'HeaderStatus', position: 10, label: 'Status' }]
   @UI.selectionField: [{ position: 40 }]
   @UI.textArrangement: #TEXT_ONLY
   Status;
 
   @UI.lineItem: [{ position: 50, label: 'Created By' }]
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 40, label: 'Created By' }]
+  @UI.fieldGroup: [{ qualifier: 'HeaderCreatedBy', position: 10, label: 'Created By' }]
   @UI.textArrangement: #TEXT_ONLY
   CreatedBy;
 
@@ -128,8 +152,6 @@ annotate entity ZC_MDG_REQ with
   @UI.lineItem: [{ position: 70, label: 'DUNS Number' }]
   @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 30, label: 'DUNS Number' }]
   Duns;
-
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 50, label: 'Created At' }]
   @UI.hidden: true
   CreatedAt;
 
@@ -228,3 +250,4 @@ annotate entity ZC_MDG_REQ with
   @UI.fieldGroup: [{ qualifier: 'Address', position: 70, label: 'House No Suppl.' }]
   HouseNumberSupplement;
 }
+

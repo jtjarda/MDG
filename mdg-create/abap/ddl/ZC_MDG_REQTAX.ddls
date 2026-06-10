@@ -6,10 +6,11 @@ define view entity ZC_MDG_REQTAX
   as projection on ZI_MDG_REQTAX
 {
   key RequestUuid,
+      @ObjectModel.text.element: [ 'TaxTypeText' ]
   key TaxType,
+      _TaxTypeText.TaxTypeText as TaxTypeText,
       TaxNumber,
 
       _TaxTypeText,
       _Request : redirected to parent ZC_MDG_REQ
 }
-

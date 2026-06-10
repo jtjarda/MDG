@@ -1,4 +1,4 @@
-﻿# MDG Create - Working Code
+# MDG Create - Working Code
 
 Vychozi datovy model pro novou RAP aplikaci pozadavku na zalozeni BP.
 
@@ -1037,7 +1037,6 @@ define root view entity ZI_MDG_REQ
       city1                as City,
       city2                as District,
       post_code1           as PostalCode,
-      @ObjectModel.text.association: '_CountryText'
       country              as Country,
       name_org             as OrganizationName,
       name_person          as PersonName,
@@ -1057,6 +1056,7 @@ define root view entity ZI_MDG_REQ
       _Address,
       _Tax
 }
+
 
 ```
 
@@ -1079,7 +1079,6 @@ define view entity ZI_MDG_REQADR
     and _CountryText.Language = $session.system_language
 {
   key request_uuid as RequestUuid,
-      @ObjectModel.text.association: '_NationText'
   key nation       as Nation,
       name_org1    as OrganizationName1,
       name_org2    as OrganizationName2,
@@ -1094,7 +1093,6 @@ define view entity ZI_MDG_REQADR
       city1        as City,
       city2        as District,
       post_code1   as PostalCode,
-      @ObjectModel.text.association: '_CountryText'
       country      as Country,
       name_org     as OrganizationName,
       name_person  as PersonName,
@@ -1102,10 +1100,6 @@ define view entity ZI_MDG_REQADR
       _CountryText,
       _Request
 }
-
-
-
-
 
 ```
 
@@ -1125,7 +1119,6 @@ define view entity ZI_MDG_REQTAX
     and _TaxTypeText.Language = $session.system_language
 {
   key request_uuid as RequestUuid,
-      @ObjectModel.text.association: '_TaxTypeText'
   key taxtype      as TaxType,
       taxnum       as TaxNumber,
 
@@ -1184,7 +1177,9 @@ define root view entity ZC_MDG_REQ
       City,
       District,
       PostalCode,
+      @ObjectModel.text.element: [ 'CountryName' ]
       Country,
+      _CountryText.CountryName as CountryName,
       OrganizationName,
       PersonName,
       CreatedBy,
@@ -1202,6 +1197,7 @@ define root view entity ZC_MDG_REQ
       _Tax     : redirected to composition child ZC_MDG_REQTAX
 }
 
+
 ```
 
 ### ZC_MDG_REQADR.ddls
@@ -1214,7 +1210,9 @@ define view entity ZC_MDG_REQADR
   as projection on ZI_MDG_REQADR
 {
   key RequestUuid,
+      @ObjectModel.text.element: [ 'NationText' ]
   key Nation,
+      _NationText.NationText as NationText,
       OrganizationName1,
       OrganizationName2,
       OrganizationName3,
@@ -1228,15 +1226,15 @@ define view entity ZC_MDG_REQADR
       City,
       District,
       PostalCode,
+      @ObjectModel.text.element: [ 'CountryName' ]
       Country,
+      _CountryText.CountryName as CountryName,
       OrganizationName,
       PersonName,
       _NationText,
       _CountryText,
       _Request : redirected to parent ZC_MDG_REQ
 }
-
-
 
 ```
 
@@ -1250,13 +1248,14 @@ define view entity ZC_MDG_REQTAX
   as projection on ZI_MDG_REQTAX
 {
   key RequestUuid,
+      @ObjectModel.text.element: [ 'TaxTypeText' ]
   key TaxType,
+      _TaxTypeText.TaxTypeText as TaxTypeText,
       TaxNumber,
 
       _TaxTypeText,
       _Request : redirected to parent ZC_MDG_REQ
 }
-
 
 ```
 
@@ -1308,8 +1307,7 @@ define behavior for ZC_MDG_REQTAX alias Tax
 @UI.headerInfo: {
   typeName: 'MDG Request',
   typeNamePlural: 'MDG Requests',
-  title: { type: #STANDARD, value: 'ObjectPageTitle' },
-  description: { type: #STANDARD, value: 'Status' }
+  title: { type: #STANDARD, value: 'ObjectPageTitle' }
 }
 @UI.createHidden: true
 annotate entity ZC_MDG_REQ with
@@ -1323,11 +1321,36 @@ annotate entity ZC_MDG_REQ with
 
   @UI.facet: [
     {
-      id: 'GlobalData',
+      id: 'HeaderRequestType',
+      purpose: #HEADER,
       type: #FIELDGROUP_REFERENCE,
-      label: 'Global Data (KID)',
+      label: '',
       position: 10,
-      targetQualifier: 'GlobalData'
+      targetQualifier: 'HeaderRequestType'
+    },
+    {
+      id: 'HeaderRequestOrigin',
+      purpose: #HEADER,
+      type: #FIELDGROUP_REFERENCE,
+      label: '',
+      position: 20,
+      targetQualifier: 'HeaderRequestOrigin'
+    },
+    {
+      id: 'HeaderStatus',
+      purpose: #HEADER,
+      type: #FIELDGROUP_REFERENCE,
+      label: '',
+      position: 30,
+      targetQualifier: 'HeaderStatus'
+    },
+    {
+      id: 'HeaderCreatedBy',
+      purpose: #HEADER,
+      type: #FIELDGROUP_REFERENCE,
+      label: '',
+      position: 40,
+      targetQualifier: 'HeaderCreatedBy'
     },
     {
       id: 'MainData',
@@ -1405,25 +1428,25 @@ annotate entity ZC_MDG_REQ with
   RequestId;
 
   @UI.lineItem: [{ position: 20, label: 'Request Type' }]
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 10, label: 'Request Type' }]
+  @UI.fieldGroup: [{ qualifier: 'HeaderRequestType', position: 10, label: 'Request Type' }]
   @UI.selectionField: [{ position: 20 }]
   @UI.textArrangement: #TEXT_ONLY
   RequestType;
 
   @UI.lineItem: [{ position: 30, label: 'Request Origin' }]
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 20, label: 'Request Origin' }]
+  @UI.fieldGroup: [{ qualifier: 'HeaderRequestOrigin', position: 10, label: 'Request Origin' }]
   @UI.selectionField: [{ position: 30 }]
   @UI.textArrangement: #TEXT_ONLY
   ExternalSystem;
 
   @UI.lineItem: [{ position: 40, label: 'Status' }]
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 30, label: 'Status' }]
+  @UI.fieldGroup: [{ qualifier: 'HeaderStatus', position: 10, label: 'Status' }]
   @UI.selectionField: [{ position: 40 }]
   @UI.textArrangement: #TEXT_ONLY
   Status;
 
   @UI.lineItem: [{ position: 50, label: 'Created By' }]
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 40, label: 'Created By' }]
+  @UI.fieldGroup: [{ qualifier: 'HeaderCreatedBy', position: 10, label: 'Created By' }]
   @UI.textArrangement: #TEXT_ONLY
   CreatedBy;
 
@@ -1434,8 +1457,6 @@ annotate entity ZC_MDG_REQ with
   @UI.lineItem: [{ position: 70, label: 'DUNS Number' }]
   @UI.fieldGroup: [{ qualifier: 'IdentificationData', position: 30, label: 'DUNS Number' }]
   Duns;
-
-  @UI.fieldGroup: [{ qualifier: 'GlobalData', position: 50, label: 'Created At' }]
   @UI.hidden: true
   CreatedAt;
 
@@ -1534,7 +1555,6 @@ annotate entity ZC_MDG_REQ with
   @UI.fieldGroup: [{ qualifier: 'Address', position: 70, label: 'House No Suppl.' }]
   HouseNumberSupplement;
 }
-
 ```
 
 ### ZC_MDG_REQADR_UI.ddlx
@@ -1566,7 +1586,7 @@ annotate entity ZC_MDG_REQADR with
       entity: { name: 'ZI_MDG_NATION_VH', element: 'Nation' }
     }
   ]
-  @UI.textArrangement: #TEXT_FIRST
+  @UI.textArrangement: #TEXT_ONLY
   @UI.lineItem: [{ position: 10, label: 'Nation' }]
   @UI.identification: [{ position: 10, label: 'Nation' }]
   Nation;
@@ -1596,8 +1616,14 @@ annotate entity ZC_MDG_REQADR with
   @UI.lineItem: [{ position: 60, label: 'Street' }]
   @UI.identification: [{ position: 60, label: 'Street' }]
   Street;
-}
+  @UI.lineItem: [{ position: 70, label: 'House No' }]
+  @UI.identification: [{ position: 70, label: 'House No' }]
+  HouseNumber;
 
+  @UI.lineItem: [{ position: 80, label: 'House No Suppl.' }]
+  @UI.identification: [{ position: 80, label: 'House No Suppl.' }]
+  HouseNumberSupplement;
+}
 ```
 
 ### ZC_MDG_REQTAX_UI.ddlx
@@ -2948,7 +2974,7 @@ sap.ui.define(
     },
     "contentDensities": {
       "compact": true,
-      "cozy": true
+      "cozy": false
     },
     "models": {
       "i18n": {
@@ -3121,7 +3147,6 @@ sap.ui.define(
     }
   }
 }
-
 ```
 
 ### mdgcreaterequest/webapp/annotations/annotation.xml
@@ -3216,13 +3241,22 @@ sap.ui.define(
               <PropertyValue Property="Value" Path="Street" />
               <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly" />
             </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Label" String="{@i18n>houseNo}" />
+              <PropertyValue Property="Value" Path="HouseNumber" />
+              <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly" />
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Label" String="{@i18n>houseNoSuppl}" />
+              <PropertyValue Property="Value" Path="HouseNumberSupplement" />
+              <Annotation Term="Common.FieldControl" EnumMember="Common.FieldControlType/ReadOnly" />
+            </Record>
           </Collection>
         </Annotation>
       </Annotations>
     </Schema>
   </edmx:DataServices>
 </edmx:Edmx>
-
 ```
 
 ### mdgcreaterequest/webapp/i18n/i18n.properties
@@ -3847,4 +3881,10 @@ define view entity ZI_MDG_TAX_TYPE_TEXT
 
 
 ```
+
+
+
+
+
+
 

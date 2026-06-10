@@ -66,7 +66,6 @@ define root view entity ZI_MDG_REQ
       city1                as City,
       city2                as District,
       post_code1           as PostalCode,
-      @ObjectModel.text.association: '_CountryText'
       country              as Country,
       name_org             as OrganizationName,
       name_person          as PersonName,
@@ -86,3 +85,4 @@ define root view entity ZI_MDG_REQ
       _Address,
       _Tax
 }
+

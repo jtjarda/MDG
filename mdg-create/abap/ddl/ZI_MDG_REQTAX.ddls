@@ -12,7 +12,6 @@ define view entity ZI_MDG_REQTAX
     and _TaxTypeText.Language = $session.system_language
 {
   key request_uuid as RequestUuid,
-      @ObjectModel.text.association: '_TaxTypeText'
   key taxtype      as TaxType,
       taxnum       as TaxNumber,
 
