@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
+
+specVersion: "4.0"
+metadata:
+  name: c4s.mdg.mdgsearch
+type: application
+builder:
+  customTasks:
+    - name: deploy-to-abap
+      afterTask: generateCachebusterInfo
+      configuration:
+        ignoreCertErrors: true
+        target:
+          url: https://hsr.con4pas.cz
+          client: "140"
+          auth: basic
+        app:
+          name: ZMDG_BP_SEARCH
+          package: ZMDG
+          transport: HSRK900682
+          description: Search business partners in MDG
+        exclude:
+          - /test/
