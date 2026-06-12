@@ -46,13 +46,11 @@ CLASS lhc_request IMPLEMENTATION.
       FOR request IN requests
       ( %tky    = request-%tky
         %update = COND #(
-          WHEN request-Status = 'DRA'
-            OR request-Status = 'ERR'
+          WHEN zcl_mdg_req_service=>is_editable_status( request-Status ) = abap_true
             THEN if_abap_behv=>auth-allowed
           ELSE if_abap_behv=>auth-unauthorized )
         %delete = COND #(
-          WHEN request-Status = 'DRA'
-            OR request-Status = 'ERR'
+          WHEN zcl_mdg_req_service=>is_editable_status( request-Status ) = abap_true
             THEN if_abap_behv=>auth-allowed
           ELSE if_abap_behv=>auth-unauthorized ) )
     ).
@@ -84,14 +82,12 @@ CLASS lhc_request IMPLEMENTATION.
       APPEND INITIAL LINE TO result ASSIGNING FIELD-SYMBOL(<features>).
       <features>-%tky = <request>-%tky.
       <features>-%action-Edit = COND #(
-        WHEN <request>-Status = 'DRA'
-          OR <request>-Status = 'ERR'
+        WHEN zcl_mdg_req_service=>is_editable_status( <request>-Status ) = abap_true
           THEN if_abap_behv=>fc-o-enabled
         ELSE if_abap_behv=>fc-o-disabled
       ).
       <features>-%delete = COND #(
-        WHEN <request>-Status = 'DRA'
-          OR <request>-Status = 'ERR'
+        WHEN zcl_mdg_req_service=>is_editable_status( <request>-Status ) = abap_true
           THEN if_abap_behv=>fc-o-enabled
         ELSE if_abap_behv=>fc-o-disabled
       ).
@@ -163,7 +159,7 @@ CLASS lhc_request IMPLEMENTATION.
       APPEND VALUE #(
         %tky      = <request>-%tky
         RequestId = request_id
-        Status    = 'INP'
+        Status    = zcl_mdg_req_service=>gc_status_in_process
       ) TO update_requests.
     ENDLOOP.
 
@@ -290,24 +286,21 @@ CLASS lhc_request IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD create_request.
+    TYPES:
+      BEGIN OF ty_create_context,
+        cid     TYPE abp_behv_cid,
+        request TYPE zcl_mdg_req_service=>ty_request,
+      END OF ty_create_context.
+
     DATA create_requests  TYPE TABLE FOR CREATE zi_mdg_req.
     DATA create_addresses TYPE TABLE FOR CREATE zi_mdg_req\_Address.
     DATA create_taxes     TYPE TABLE FOR CREATE zi_mdg_req\_Tax.
-    DATA business_partner TYPE zmdg_bp.
-    DATA system_data      TYPE zmdg_bpsys.
-    DATA display_address  TYPE zmdg_bpadr.
-    DATA addresses        TYPE STANDARD TABLE OF zmdg_bpadr WITH EMPTY KEY.
-    DATA tax_numbers      TYPE STANDARD TABLE OF zmdg_bptax WITH EMPTY KEY.
+    DATA create_contexts  TYPE STANDARD TABLE OF ty_create_context WITH EMPTY KEY.
     DATA partner_gid      TYPE zmdg_partner_gid.
     DATA external_system  TYPE zmdg_extsys.
 
     LOOP AT keys ASSIGNING FIELD-SYMBOL(<key>).
       CLEAR:
-        business_partner,
-        system_data,
-        display_address,
-        addresses,
-        tax_numbers,
         partner_gid,
         external_system.
 
@@ -324,78 +317,80 @@ CLASS lhc_request IMPLEMENTATION.
         partner_gid = CONV #( <partner_gid> ).
       ENDIF.
 
-      DATA(request_type) = COND #( WHEN partner_gid IS INITIAL THEN 'C' ELSE 'U' ).
+      DATA(create_result) = zcl_mdg_req_service=>build_create_request(
+        iv_external_system = external_system
+        iv_partner_gid     = partner_gid
+      ).
 
-      IF partner_gid IS NOT INITIAL.
-        SELECT SINGLE *
-          FROM zmdg_bp
-          WHERE partner_gid = @partner_gid
-          INTO @business_partner.
+      LOOP AT create_result-messages ASSIGNING FIELD-SYMBOL(<create_message>).
+        APPEND INITIAL LINE TO reported-request ASSIGNING FIELD-SYMBOL(<reported_create_request>).
+        <reported_create_request>-%cid = <key>-%cid.
+        <reported_create_request>-%msg = new_message_with_text(
+          severity = <create_message>-severity
+          text     = <create_message>-text
+        ).
 
-        SELECT SINGLE *
-          FROM zmdg_bpsys
-          WHERE partner_gid = @partner_gid
-            AND extsys      = @external_system
-          INTO @system_data.
-
-        SELECT SINGLE *
-          FROM zmdg_bpadr
-          WHERE partner_gid = @partner_gid
-            AND nation      = @space
-          INTO @display_address.
-
-        SELECT *
-          FROM zmdg_bpadr
-          WHERE partner_gid = @partner_gid
-            AND nation      <> @space
-          INTO TABLE @addresses.
-
-        IF display_address IS INITIAL AND addresses IS NOT INITIAL.
-          display_address = addresses[ 1 ].
+        ASSIGN COMPONENT <create_message>-field_name OF STRUCTURE <reported_create_request>-%element TO FIELD-SYMBOL(<create_element>).
+        IF sy-subrc = 0.
+          <create_element> = if_abap_behv=>mk-on.
         ENDIF.
+      ENDLOOP.
+
+      IF create_result-messages IS NOT INITIAL.
+        APPEND VALUE #( %cid = <key>-%cid ) TO failed-request.
+        CONTINUE.
       ENDIF.
+
+      APPEND VALUE #(
+        cid     = <key>-%cid
+        request = create_result-request
+      ) TO create_contexts.
 
       APPEND VALUE #(
         %cid                  = <key>-%cid
         %is_draft             = if_abap_behv=>mk-on
-        RequestType           = request_type
-        ExternalSystem        = external_system
-        PartnerGid            = partner_gid
-        Status                = 'DRA'
-        CreatedBy             = cl_abap_context_info=>get_user_technical_name( )
-        ParentGid1            = business_partner-parent_gid1
-        ParentGid2            = business_partner-parent_gid2
-        FoundDate             = business_partner-found_date
-        Duns                  = business_partner-duns
-        LeiCode               = business_partner-lei_code
-        Euid                  = business_partner-euid
-        PartnerId             = system_data-partner_id
-        BusinessPartnerType   = system_data-type
-        BusinessPartnerGroup  = system_data-bu_group
-        LegalForm             = system_data-legal_form
-        TelephoneNumber       = system_data-tel_number
-        MobileNumber          = system_data-mob_number
-        EmailAddress          = system_data-smtpadress
-        IsInactive            = system_data-inactive
-        InactiveReason        = system_data-inactive_reason
-        OrganizationName1     = display_address-name_org1
-        OrganizationName2     = display_address-name_org2
-        OrganizationName3     = display_address-name_org3
-        OrganizationName4     = display_address-name_org4
-        FirstName             = display_address-name_first
-        LastName              = display_address-name_last
-        SearchTerm1           = display_address-bu_sort1
-        Country               = display_address-country
-        District              = display_address-city2
-        City                  = display_address-city1
-        PostalCode            = display_address-post_code1
-        Street                = display_address-street
-        HouseNumber           = display_address-house_num1
-        HouseNumberSupplement = display_address-house_num2
-        OrganizationName      = display_address-name_org
-        PersonName            = display_address-name_person
+        RequestType           = create_result-request-request_type
+        ExternalSystem        = create_result-request-extsys
+        PartnerGid            = create_result-request-partner_gid
+        Status                = zcl_mdg_req_service=>gc_status_draft
+        CreatedBy             = create_result-request-created_by
+        ParentGid1            = create_result-request-parent_gid1
+        ParentGid2            = create_result-request-parent_gid2
+        FoundDate             = create_result-request-found_date
+        Duns                  = create_result-request-duns
+        LeiCode               = create_result-request-lei_code
+        Euid                  = create_result-request-euid
+        PartnerId             = create_result-request-partner_id
+        BusinessPartnerType   = create_result-request-type
+        BusinessPartnerGroup  = create_result-request-bu_group
+        LegalForm             = create_result-request-legal_form
+        TelephoneNumber       = create_result-request-tel_number
+        MobileNumber          = create_result-request-mob_number
+        EmailAddress          = create_result-request-smtpadress
+        IsInactive            = create_result-request-inactive
+        InactiveReason        = create_result-request-inactive_reason
+        OrganizationName1     = create_result-request-name_org1
+        OrganizationName2     = create_result-request-name_org2
+        OrganizationName3     = create_result-request-name_org3
+        OrganizationName4     = create_result-request-name_org4
+        FirstName             = create_result-request-name_first
+        LastName              = create_result-request-name_last
+        SearchTerm1           = create_result-request-bu_sort1
+        Country               = create_result-request-country
+        District              = create_result-request-city2
+        City                  = create_result-request-city1
+        PostalCode            = create_result-request-post_code1
+        Street                = create_result-request-street
+        HouseNumber           = create_result-request-house_num1
+        HouseNumberSupplement = create_result-request-house_num2
+        OrganizationName      = create_result-request-name_org
+        PersonName            = create_result-request-name_person
       ) TO create_requests.
     ENDLOOP.
+
+    IF create_requests IS INITIAL.
+      RETURN.
+    ENDIF.
 
     MODIFY ENTITIES OF zi_mdg_req IN LOCAL MODE
       ENTITY Request
@@ -414,28 +409,22 @@ CLASS lhc_request IMPLEMENTATION.
       REPORTED reported.
 
     IF mapped-request IS NOT INITIAL.
-      READ ENTITIES OF zi_mdg_req IN LOCAL MODE
-        ENTITY Request
-          FIELDS ( RequestUuid PartnerGid )
-          WITH CORRESPONDING #( mapped-request )
-        RESULT DATA(created_requests).
-
-      LOOP AT created_requests ASSIGNING FIELD-SYMBOL(<created_request>).
-        IF <created_request>-PartnerGid IS INITIAL.
+      LOOP AT mapped-request ASSIGNING FIELD-SYMBOL(<mapped_request>).
+        READ TABLE create_contexts ASSIGNING FIELD-SYMBOL(<create_context>)
+          WITH KEY cid = <mapped_request>-%cid.
+        IF sy-subrc <> 0.
           CONTINUE.
         ENDIF.
 
-        SELECT *
-          FROM zmdg_bpadr
-          WHERE partner_gid = @<created_request>-PartnerGid
-            AND nation      <> @space
-          INTO TABLE @addresses.
+        IF <create_context>-request-partner_gid IS INITIAL.
+          CONTINUE.
+        ENDIF.
 
-        IF addresses IS NOT INITIAL.
+        IF <create_context>-request-address IS NOT INITIAL.
           APPEND VALUE #(
-            %tky    = <created_request>-%tky
+            %tky    = <mapped_request>-%tky
             %target = VALUE #(
-              FOR address IN addresses INDEX INTO address_index
+              FOR address IN <create_context>-request-address INDEX INTO address_index
               ( %cid                  = |ADR{ address_index }|
                 %is_draft             = if_abap_behv=>mk-on
                 Nation                = address-nation
@@ -459,16 +448,11 @@ CLASS lhc_request IMPLEMENTATION.
           ) TO create_addresses.
         ENDIF.
 
-        SELECT *
-          FROM zmdg_bptax
-          WHERE partner_gid = @<created_request>-PartnerGid
-          INTO TABLE @tax_numbers.
-
-        IF tax_numbers IS NOT INITIAL.
+        IF <create_context>-request-tax IS NOT INITIAL.
           APPEND VALUE #(
-            %tky    = <created_request>-%tky
+            %tky    = <mapped_request>-%tky
             %target = VALUE #(
-              FOR tax_number IN tax_numbers INDEX INTO tax_index
+              FOR tax_number IN <create_context>-request-tax INDEX INTO tax_index
               ( %cid      = |TAX{ tax_index }|
                 %is_draft = if_abap_behv=>mk-on
                 TaxType   = tax_number-taxtype

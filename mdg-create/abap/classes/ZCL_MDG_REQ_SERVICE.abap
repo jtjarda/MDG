@@ -39,9 +39,31 @@ CLASS zcl_mdg_req_service DEFINITION
         return_code TYPE i,
       END OF ty_save_result.
 
+    TYPES:
+      BEGIN OF ty_create_request_result,
+        request  TYPE ty_request,
+        messages TYPE tt_message,
+      END OF ty_create_request_result.
+
+    CONSTANTS gc_status_draft      TYPE zmdg_req-status VALUE 'DRA'.
+    CONSTANTS gc_status_in_process TYPE zmdg_req-status VALUE 'INP'.
+    CONSTANTS gc_status_error      TYPE zmdg_req-status VALUE 'ERR'.
+
     CLASS-METHODS check_request
       IMPORTING is_request         TYPE ty_request
       RETURNING VALUE(rt_message) TYPE tt_message.
+
+    CLASS-METHODS check_create_request
+      IMPORTING
+        iv_external_system TYPE zmdg_extsys
+        iv_partner_gid     TYPE zmdg_partner_gid OPTIONAL
+      RETURNING VALUE(rt_message) TYPE tt_message.
+
+    CLASS-METHODS build_create_request
+      IMPORTING
+        iv_external_system TYPE zmdg_extsys
+        iv_partner_gid     TYPE zmdg_partner_gid OPTIONAL
+      RETURNING VALUE(rs_result) TYPE ty_create_request_result.
 
     CLASS-METHODS save_request
       IMPORTING is_request         TYPE ty_request
@@ -57,6 +79,10 @@ CLASS zcl_mdg_req_service DEFINITION
 
     CLASS-METHODS is_partner_id_required
       IMPORTING is_request       TYPE ty_request
+      RETURNING VALUE(rv_result) TYPE abap_boolean.
+
+    CLASS-METHODS is_editable_status
+      IMPORTING iv_status        TYPE zmdg_req-status
       RETURNING VALUE(rv_result) TYPE abap_boolean.
 
     CLASS-METHODS request_created
@@ -185,6 +211,223 @@ CLASS zcl_mdg_req_service IMPLEMENTATION.
         ).
       ENDIF.
     ENDIF.
+  ENDMETHOD.
+
+  METHOD check_create_request.
+    IF iv_external_system IS INITIAL.
+      add_error(
+        EXPORTING
+          iv_field_name = 'ExternalSystem'
+          iv_text       = 'External system is required.'
+        CHANGING
+          ct_message    = rt_message
+      ).
+      RETURN.
+    ENDIF.
+
+    SELECT SINGLE xcrea, xenh
+      FROM zmdg_c_sys
+      WHERE extsys = @iv_external_system
+      INTO @DATA(system_config).
+
+    IF sy-subrc <> 0.
+      add_error(
+        EXPORTING
+          iv_field_name = 'ExternalSystem'
+          iv_text       = 'External system does not exist.'
+        CHANGING
+          ct_message    = rt_message
+      ).
+      RETURN.
+    ENDIF.
+
+    IF iv_partner_gid IS INITIAL.
+      IF system_config-xcrea <> 'X'.
+        add_error(
+          EXPORTING
+            iv_field_name = 'ExternalSystem'
+            iv_text       = 'External system is not allowed for create requests.'
+          CHANGING
+            ct_message    = rt_message
+        ).
+      ENDIF.
+      RETURN.
+    ENDIF.
+
+    SELECT SINGLE partner_gid
+      FROM zmdg_bp
+      WHERE partner_gid = @iv_partner_gid
+      INTO @DATA(existing_partner_gid).
+
+    IF sy-subrc <> 0.
+      add_error(
+        EXPORTING
+          iv_field_name = 'PartnerGid'
+          iv_text       = 'Business partner does not exist.'
+        CHANGING
+          ct_message    = rt_message
+      ).
+    ENDIF.
+
+    IF system_config-xenh <> 'X'.
+      SELECT SINGLE partner_gid
+        FROM zmdg_bpsys
+        WHERE partner_gid = @iv_partner_gid
+          AND extsys      = @iv_external_system
+        INTO @DATA(system_partner_gid).
+
+      IF sy-subrc <> 0.
+        add_error(
+          EXPORTING
+            iv_field_name = 'ExternalSystem'
+            iv_text       = 'External system is not allowed for change requests for selected business partner.'
+          CHANGING
+            ct_message    = rt_message
+        ).
+      ENDIF.
+    ENDIF.
+
+    SELECT SINGLE request_uuid
+      FROM zmdg_req
+      WHERE request_type = 'U'
+        AND extsys       = @iv_external_system
+        AND partner_gid  = @iv_partner_gid
+        AND (    status = @gc_status_in_process
+              OR status = @gc_status_error )
+      INTO @DATA(open_request_uuid).
+
+    IF sy-subrc = 0.
+      add_error(
+        EXPORTING
+          iv_field_name = 'PartnerGid'
+          iv_text       = 'An open MDG change request already exists for selected business partner and external system.'
+        CHANGING
+          ct_message    = rt_message
+      ).
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD build_create_request.
+    rs_result-messages = check_create_request(
+      iv_external_system = iv_external_system
+      iv_partner_gid     = iv_partner_gid
+    ).
+
+    IF rs_result-messages IS NOT INITIAL.
+      RETURN.
+    ENDIF.
+
+    rs_result-request-mandt       = sy-mandt.
+    rs_result-request-request_type = COND #(
+      WHEN iv_partner_gid IS INITIAL THEN 'C'
+      ELSE 'U'
+    ).
+    rs_result-request-extsys      = iv_external_system.
+    rs_result-request-partner_gid = iv_partner_gid.
+    rs_result-request-status      = gc_status_draft.
+
+    TRY.
+        rs_result-request-created_by = cl_abap_context_info=>get_user_technical_name( ).
+      CATCH cx_root.
+        rs_result-request-created_by = sy-uname.
+    ENDTRY.
+
+    IF iv_partner_gid IS INITIAL.
+      RETURN.
+    ENDIF.
+
+    SELECT SINGLE *
+      FROM zmdg_bp
+      WHERE partner_gid = @iv_partner_gid
+      INTO @DATA(business_partner).
+
+    SELECT SINGLE *
+      FROM zmdg_bpsys
+      WHERE partner_gid = @iv_partner_gid
+        AND extsys      = @iv_external_system
+      INTO @DATA(system_data).
+
+    SELECT SINGLE *
+      FROM zmdg_bpadr
+      WHERE partner_gid = @iv_partner_gid
+        AND nation      = @space
+      INTO @DATA(display_address).
+
+    SELECT *
+      FROM zmdg_bpadr
+      WHERE partner_gid = @iv_partner_gid
+        AND nation      <> @space
+      INTO TABLE @DATA(addresses).
+
+    IF display_address IS INITIAL AND addresses IS NOT INITIAL.
+      display_address = addresses[ 1 ].
+    ENDIF.
+
+    SELECT *
+      FROM zmdg_bptax
+      WHERE partner_gid = @iv_partner_gid
+      INTO TABLE @DATA(tax_numbers).
+
+    rs_result-request-parent_gid1     = business_partner-parent_gid1.
+    rs_result-request-parent_gid2     = business_partner-parent_gid2.
+    rs_result-request-found_date      = business_partner-found_date.
+    rs_result-request-duns            = business_partner-duns.
+    rs_result-request-lei_code        = business_partner-lei_code.
+    rs_result-request-euid            = business_partner-euid.
+    rs_result-request-partner_id      = system_data-partner_id.
+    rs_result-request-type            = system_data-type.
+    rs_result-request-bu_group        = system_data-bu_group.
+    rs_result-request-legal_form      = system_data-legal_form.
+    rs_result-request-tel_number      = system_data-tel_number.
+    rs_result-request-mob_number      = system_data-mob_number.
+    rs_result-request-smtpadress      = system_data-smtpadress.
+    rs_result-request-inactive        = system_data-inactive.
+    rs_result-request-inactive_reason = system_data-inactive_reason.
+    rs_result-request-name_org1       = display_address-name_org1.
+    rs_result-request-name_org2       = display_address-name_org2.
+    rs_result-request-name_org3       = display_address-name_org3.
+    rs_result-request-name_org4       = display_address-name_org4.
+    rs_result-request-name_first      = display_address-name_first.
+    rs_result-request-name_last       = display_address-name_last.
+    rs_result-request-bu_sort1        = display_address-bu_sort1.
+    rs_result-request-country         = display_address-country.
+    rs_result-request-city2           = display_address-city2.
+    rs_result-request-city1           = display_address-city1.
+    rs_result-request-post_code1      = display_address-post_code1.
+    rs_result-request-street          = display_address-street.
+    rs_result-request-house_num1      = display_address-house_num1.
+    rs_result-request-house_num2      = display_address-house_num2.
+    rs_result-request-name_org        = display_address-name_org.
+    rs_result-request-name_person     = display_address-name_person.
+
+    rs_result-request-address = VALUE #(
+      FOR address IN addresses
+      ( mandt       = sy-mandt
+        nation      = address-nation
+        name_org1   = address-name_org1
+        name_org2   = address-name_org2
+        name_org3   = address-name_org3
+        name_org4   = address-name_org4
+        name_first  = address-name_first
+        name_last   = address-name_last
+        bu_sort1    = address-bu_sort1
+        street      = address-street
+        house_num1  = address-house_num1
+        house_num2  = address-house_num2
+        city1       = address-city1
+        city2       = address-city2
+        post_code1  = address-post_code1
+        country     = address-country
+        name_org    = address-name_org
+        name_person = address-name_person )
+    ).
+
+    rs_result-request-tax = VALUE #(
+      FOR tax_number IN tax_numbers
+      ( mandt    = sy-mandt
+        taxtype  = tax_number-taxtype
+        taxnum   = tax_number-taxnum )
+    ).
   ENDMETHOD.
 
   METHOD save_request.
@@ -335,6 +578,13 @@ CLASS zcl_mdg_req_service IMPLEMENTATION.
       INTO @DATA(number_assignment).
 
     rv_result = xsdbool( number_assignment = abap_true ).
+  ENDMETHOD.
+
+  METHOD is_editable_status.
+    rv_result = xsdbool(
+      iv_status = gc_status_draft
+      OR iv_status = gc_status_error
+    ).
   ENDMETHOD.
 
   METHOD request_created.

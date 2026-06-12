@@ -4,6 +4,62 @@ Vychozi datovy model pro novou RAP aplikaci pozadavku na zalozeni BP.
 
 Model pouziva technicky klic `request_uuid` pro draft/kompozice. Pole `request_id` zustava semanticke cislo pozadavku a bude se plnit az pri ulozeni.
 
+## Architecture notes
+
+Pravidlo mini-suite: UI pomaha, backend rozhoduje.
+
+Frontend a value helps slouzi jako UX filtr a orchestrace. Tvrdou business validaci pro zalozeni draftu drzi ABAP servisni trida `ZCL_MDG_REQ_SERVICE`, aby stejna pravidla slo pouzit z Fiori, jobu i pripadne externi integrace.
+
+### CreateRequest responsibility split
+
+RAP factory action `CreateRequest(...)` je deklarovana v `ZI_MDG_REQ.bdef` a implementovana v `ZBP_I_MDG_REQ.locals.abap`.
+
+Behavior handler zustava RAP-technicka vrstva:
+
+- precte parametry akce `ExternalSystem` a `PartnerGID`
+- zavola `ZCL_MDG_REQ_SERVICE=>build_create_request`
+- prevede `tt_message` na RAP `reported-request` a `failed-request`
+- vytvori draft hlavicky pres `MODIFY ENTITIES`
+- vytvori child adresy a tax numbers pres RAP asociace
+
+Domenu drzi `ZCL_MDG_REQ_SERVICE`:
+
+- `check_create_request` kontroluje povoleni create/change, existenci systemu, existenci BP, otevreny change request a vazbu BP-system
+- `build_create_request` sestavi pocatecni data requestu z BP, systemovych dat, adres a tax cisel
+- `check_request` validuje ulozeny draft podle field catalogu a formatovych pravidel
+- `gc_status_draft`, `gc_status_in_process`, `gc_status_error` centralizuji statusy `DRA`, `INP`, `ERR`
+- `is_editable_status` centralizuje pravidlo, ze edit/delete je povoleno pro draft a error status
+
+Prevod `tt_message` do RAP struktur zustava v behavior handleru, protoze `%cid`, `%tky`, `%element`, `reported-request`, `failed-request` a `new_message_with_text` jsou RAP-specific kontrakt.
+
+### Value helps for system selection
+
+Service `ZUI_MDG_REQ` exposes:
+
+```abap
+expose ZI_MDG_C_SYS_CREATEVH as CreateSystems;
+expose ZI_MDG_C_SYS_CHANGEVH as ChangeSystems;
+```
+
+`CreateSystems` vychazi z `ZI_MDG_C_SYS_CREATEVH` a nabizi jen systemy s:
+
+```abap
+where IsCreateAllowed = 'X'
+```
+
+`ChangeSystems` vychazi z `ZI_MDG_C_SYS_CHANGEVH` a nabizi:
+
+- globalne povolene change systemy `IsEnhanceAllowed = 'X'`
+- plus BP-specificke systemy z `zmdg_bpsys`, pokud system neni globalne enhance
+
+V `mdg-search` dialog pro create cte entity set `create>/CreateSystems`. Dialog pro change cte `create>/ChangeSystems` a doplni UX filtr:
+
+```text
+PartnerGID = '' OR PartnerGID = selected BP
+```
+
+Tyto value helps obsahuji business pravidla pro vyber, ale v runtime jsou pouze UX filtr. Definitivni guard je `ZCL_MDG_REQ_SERVICE=>check_create_request`, ktery stejna pravidla overi znovu na backendu.
+
 ## TypeScript support
 
 Fiori aplikace `mdgcreaterequest` byla dodatecne prepnuta na TypeScript bez regenerovani projektu.
@@ -12,9 +68,12 @@ Runtime zdroj aplikace je nyni:
 
 ```text
 mdgcreaterequest/webapp/Component.ts
+mdgcreaterequest/webapp/ext/controller/ListReportExt.ts
 ```
 
-Soubor obsahuje startup logiku pro parametr `ExternalSystem`, volani RAP factory action `CreateForSystem(...)` a navigaci na vytvoreny draft request.
+Soubor je nyni cisty Fiori Elements `AppComponent`. Zalozeni draftu pres RAP factory action `CreateRequest(...)` vlastni zdrojova aplikace `mdg-search`, ktera po navratu `RequestUuid` naviguje rovnou na Object Page draftu.
+
+`ListReportExt.ts` pridava do List Reportu tlacitko pro navigaci bez parametru zpet do aplikace `mdg-search` pres FLP intent `#ZMDGBusinessPartner-search`.
 
 Build a lokalni server prekladaji TypeScript pres `ui5-tooling-transpile`.
 Konfigurace je v:
@@ -25,6 +84,7 @@ mdgcreaterequest/tsconfig.json
 mdgcreaterequest/ui5.yaml
 mdgcreaterequest/ui5-local.yaml
 mdgcreaterequest/ui5-mock.yaml
+mdgcreaterequest/ui5-deploy.yaml
 ```
 
 Kontrolni prikazy z adresare `mdgcreaterequest`:
@@ -32,6 +92,7 @@ Kontrolni prikazy z adresare `mdgcreaterequest`:
 ```bash
 npm run typecheck
 npm run build
+npm run deploy
 ```
 
 OPA/QUnit testy v `mdgcreaterequest/webapp/test` zustavaji v JavaScriptu. TypeScript podpora se tyka aplikacnich runtime modulu.
@@ -2746,122 +2807,15 @@ ENDCLASS.
 
 ### mdgcreaterequest/webapp/Component.ts
 ```typescript
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 sap.ui.define(
-    ["sap/fe/core/AppComponent", "sap/m/MessageBox"],
-    function (Component: any, MessageBox: any) {
+    ["sap/fe/core/AppComponent"],
+    function (Component: any) {
         "use strict";
 
         return Component.extend("c4p.mdg.mdgcreaterequest.Component", {
             metadata: {
                 manifest: "json"
-            },
-
-            init: function () {
-                Component.prototype.init.apply(this, arguments);
-                this._handleStartupCreateRequest();
-            },
-
-            _getStartupParameter: function (sParameterName: string): string | null {
-                const oComponentData = this.getComponentData && this.getComponentData();
-                const oStartupParameters = oComponentData && oComponentData.startupParameters;
-                const vParameter = oStartupParameters && oStartupParameters[sParameterName];
-
-                if (Array.isArray(vParameter)) {
-                    return vParameter[0];
-                }
-
-                if (vParameter) {
-                    return vParameter;
-                }
-
-                return new URLSearchParams(window.location.search).get(sParameterName) ||
-                    new URLSearchParams(window.location.hash.split("?")[1] || "").get(sParameterName);
-            },
-
-            _handleStartupCreateRequest: function (): void {
-                const sExternalSystem = this._getStartupParameter("ExternalSystem");
-                const sPartnerGid = this._getStartupParameter("PartnerGID") ||
-                    this._getStartupParameter("PartnerGid");
-
-                if ((!sExternalSystem && !sPartnerGid) || this._bStartupCreateRequestHandled || window.location.hash.indexOf("&/Requests(") > -1) {
-                    return;
-                }
-
-                this._bStartupCreateRequestHandled = true;
-
-                this.getModel().getMetaModel().requestObject("/")
-                    .then(function () {
-                        return this._createRequest(sExternalSystem, sPartnerGid);
-                    }.bind(this))
-                    .catch(function (oError: Error) {
-                        MessageBox.error(
-                            this._getText("createRequestDraftFailed"),
-                            {
-                                details: oError && (oError.message || String(oError))
-                            }
-                        );
-                    }.bind(this));
-            },
-
-            _getText: function (sKey: string): string {
-                const oResourceBundle = this.getModel("i18n")?.getResourceBundle?.();
-
-                return oResourceBundle?.getText?.(sKey) || sKey;
-            },
-
-            _createRequest: function (sExternalSystem?: string, sPartnerGid?: string): Promise<void> {
-                return this._executeCreateRequest(sExternalSystem, sPartnerGid);
-            },
-
-            _executeCreateRequest: function (sExternalSystem?: string, sPartnerGid?: string): Promise<void> {
-                const oModel = this.getModel();
-                const oRequestsBinding = oModel.bindList("/Requests");
-                const oOperation = oModel.bindContext(
-                    "com.sap.gateway.srvd.zui_mdg_req.v0001.CreateRequest(...)",
-                    oRequestsBinding.getHeaderContext()
-                );
-
-                oOperation.setParameter("ExternalSystem", sExternalSystem || "");
-                oOperation.setParameter("PartnerGID", sPartnerGid || "");
-                oOperation.setParameter("ResultIsActiveEntity", false);
-
-                return oOperation.execute().then(function () {
-                    const oContext = oOperation.getBoundContext();
-
-                    if (!oContext) {
-                        throw new Error("CreateRequest did not return a request context.");
-                    }
-
-                    return oContext.requestObject().then(function (oRequest: { RequestUuid?: string; IsActiveEntity?: boolean }) {
-                        if (!oRequest || !oRequest.RequestUuid) {
-                            throw new Error("CreateRequest did not return RequestUuid.");
-                        }
-
-                        this._navigateToRequestByKey(oRequest.RequestUuid, oRequest.IsActiveEntity);
-                    }.bind(this));
-                }.bind(this));
-            },
-
-            _navigateToRequestByKey: function (sRequestUuid: string, bIsActiveEntity?: boolean): void {
-                this._navigateToRequest(
-                    "/Requests(RequestUuid=" + sRequestUuid +
-                    ",IsActiveEntity=" + (bIsActiveEntity === true ? "true" : "false") + ")"
-                );
-            },
-
-            _navigateToRequest: function (sCanonicalPath: string): void {
-                const sKeyPredicate = sCanonicalPath
-                    .replace(/^\/Requests\(/, "")
-                    .replace(/\)$/, "");
-                const oRouter = this.getRouter && this.getRouter();
-
-                if (oRouter) {
-                    oRouter.navTo("RequestsObjectPage", {
-                        key: sKeyPredicate
-                    }, true);
-                }
             }
         });
     }
@@ -3524,7 +3478,7 @@ resultIsActiveEntity=VĂ˝sledek je aktivnĂ­
     "typecheck": "tsc --noEmit",
     "lint": "eslint ./",
     "start-mock": "fiori run --config ./ui5-mock.yaml --open \"test/flp.html#app-preview\"",
-    "deploy": "fiori verify",
+    "deploy": "npm run build && fiori deploy --config ui5-deploy.yaml",
     "deploy-config": "fiori add deploy-config",
     "start-noflp": "fiori run --open \"/index.html?sap-ui-xx-viewCache=false\"",
     "int-test": "fiori run --config ./ui5-mock.yaml --open \"/test/integration/opaTests.qunit.html\"",
@@ -3534,6 +3488,34 @@ resultIsActiveEntity=VĂ˝sledek je aktivnĂ­
   "sapux": true
 }
 
+```
+
+### mdgcreaterequest/ui5-deploy.yaml
+```yaml
+# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
+
+specVersion: "4.0"
+metadata:
+  name: c4p.mdg.mdgcreaterequest
+type: application
+builder:
+  customTasks:
+    - name: deploy-to-abap
+      afterTask: generateCachebusterInfo
+      configuration:
+        ignoreCertErrors: true
+        target:
+          url: https://hsr.con4pas.cz
+          client: "140"
+          auth: basic
+        app:
+          name: ZMDG_CREATE_REQ
+          package: ZMDG
+          transport: HSRK900682
+          description: MDG request - create BP
+        exclude:
+          - /localService/
+          - /test/
 ```
 
 ### mdgcreaterequest/tsconfig.json
@@ -3881,10 +3863,5 @@ define view entity ZI_MDG_TAX_TYPE_TEXT
 
 
 ```
-
-
-
-
-
 
 

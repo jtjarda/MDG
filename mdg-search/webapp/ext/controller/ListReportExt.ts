@@ -7,13 +7,13 @@ sap.ui.define(
         "sap/m/MessageBox",
         "sap/m/SelectDialog",
         "sap/m/StandardListItem",
+        "sap/ui/core/BusyIndicator",
         "sap/ui/model/Filter",
         "sap/ui/model/FilterOperator"
     ],
-    function (MessageBox, SelectDialog, StandardListItem, Filter, FilterOperator) {
+    function (MessageBox, SelectDialog, StandardListItem, BusyIndicator, Filter, FilterOperator) {
     "use strict";
 
-    let oCreateForSystemDialog: any;
     let sSelectedPartnerGidForRequest = "";
     let sSelectedSystemPath = "/CreateSystems";
     const sLocalCreateAppUrl = "http://localhost:8080/test/flp.html?sap-ui-xx-viewCache=false#app-preview";
@@ -24,73 +24,86 @@ sap.ui.define(
         return oResourceBundle?.getText?.(sKey) || sKey;
     }
 
-    function navigateToCreateApp(oController: any, sExternalSystem?: string, sPartnerGid?: string) {
+    function createRequestDraft(oController: any, sExternalSystem?: string, sPartnerGid?: string): void {
         if (!sExternalSystem && !sPartnerGid) {
             return;
         }
 
+        const oCreateModel = getView(oController)?.getModel?.("create");
+
+        if (!oCreateModel) {
+            MessageBox.error(getText(oController, "createRequestDraftFailed"));
+            return;
+        }
+
+        const oRequestsBinding = oCreateModel.bindList("/Requests");
+        const oOperation = oCreateModel.bindContext(
+            "com.sap.gateway.srvd.zui_mdg_req.v0001.CreateRequest(...)",
+            oRequestsBinding.getHeaderContext()
+        );
+
+        oOperation.setParameter("ExternalSystem", sExternalSystem || "");
+        oOperation.setParameter("PartnerGID", sPartnerGid || "");
+        oOperation.setParameter("ResultIsActiveEntity", false);
+
+        BusyIndicator.show(0);
+
+        oOperation.execute()
+            .then(function () {
+                const oContext = oOperation.getBoundContext();
+
+                if (!oContext) {
+                    throw new Error("CreateRequest did not return a request context.");
+                }
+
+                return oContext.requestObject();
+            })
+            .then(function (oRequest: { RequestUuid?: string; IsActiveEntity?: boolean }) {
+                if (!oRequest || !oRequest.RequestUuid) {
+                    throw new Error("CreateRequest did not return RequestUuid.");
+                }
+
+                navigateToCreatedDraft(oController, oRequest.RequestUuid, oRequest.IsActiveEntity);
+            })
+            .catch(function (oError: Error): void {
+                MessageBox.error(getText(oController, "createRequestDraftFailed"), {
+                    details: oError && (oError.message || String(oError))
+                });
+            })
+            .finally(function (): void {
+                BusyIndicator.hide();
+            });
+    }
+
+    function navigateToCreatedDraft(oController: any, sRequestUuid: string, bIsActiveEntity?: boolean): void {
+        const sAppSpecificRoute = "&/Requests(RequestUuid=" + sRequestUuid +
+            ",IsActiveEntity=" + (bIsActiveEntity === true ? "true" : "false") + ")";
+
         if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-            window.location.href = addRequestParameters(sLocalCreateAppUrl, sExternalSystem, sPartnerGid);
+            window.location.href = sLocalCreateAppUrl + sAppSpecificRoute;
             return;
         }
 
         const oShellContainer = (sap as any).ushell?.Container;
 
         if (!oShellContainer) {
-            window.location.hash = "MDGBpRequest-create" + getRequestParameterQuery(sExternalSystem, sPartnerGid);
+            window.location.hash = "#MDGBpRequest-create" + sAppSpecificRoute;
             return;
         }
 
         oShellContainer.getServiceAsync("CrossApplicationNavigation")
             .then(function (oCrossAppNavigation: any) {
-                const mParams: Record<string, string[]> = {};
-
-                if (sExternalSystem) {
-                    mParams.ExternalSystem = [sExternalSystem];
-                }
-
-                if (sPartnerGid) {
-                    mParams.PartnerGID = [sPartnerGid];
-                }
-
                 oCrossAppNavigation.toExternal({
                     target: {
                         semanticObject: "MDGBpRequest",
                         action: "create"
                     },
-                    params: mParams
+                    appSpecificRoute: sAppSpecificRoute
                 });
             })
             .catch(function (): void {
                 MessageBox.error(getText(oController, "navigationToCreateFailed"));
             });
-    }
-
-    function addRequestParameters(sUrl: string, sExternalSystem?: string, sPartnerGid?: string): string {
-        const aParts = sUrl.split("#");
-        const sBaseUrl = aParts[0];
-        const sHash = aParts[1] ? "#" + aParts[1] : "";
-        const sQuery = getRequestParameterQuery(sExternalSystem, sPartnerGid);
-
-        if (!sQuery) {
-            return sUrl;
-        }
-
-        return sBaseUrl + (sBaseUrl.indexOf("?") === -1 ? "?" : "&") + sQuery.substring(1) + sHash;
-    }
-
-    function getRequestParameterQuery(sExternalSystem?: string, sPartnerGid?: string): string {
-        const aParameters: string[] = [];
-
-        if (sExternalSystem) {
-            aParameters.push("ExternalSystem=" + encodeURIComponent(sExternalSystem));
-        }
-
-        if (sPartnerGid) {
-            aParameters.push("PartnerGID=" + encodeURIComponent(sPartnerGid));
-        }
-
-        return aParameters.length ? "?" + aParameters.join("&") : "";
     }
 
     function getView(oController: any): any {
@@ -147,11 +160,7 @@ sap.ui.define(
     }
 
     function getCreateForSystemDialog(oController: any): any {
-        if (oCreateForSystemDialog) {
-            return oCreateForSystemDialog;
-        }
-
-        oCreateForSystemDialog = new SelectDialog({
+        const oCreateForSystemDialog = new SelectDialog({
             title: getText(oController, "selectExternalSystem"),
             noDataText: getText(oController, "noSystemsAvailable"),
             search: function (oEvent: any): void {
@@ -167,11 +176,14 @@ sap.ui.define(
                     return;
                 }
 
-                navigateToCreateApp(
+                createRequestDraft(
                     oController,
                     oSelectedItem.getBindingContext("create").getProperty("ExternalSystem"),
                     sSelectedPartnerGidForRequest
                 );
+            },
+            afterClose: function (oEvent: any): void {
+                oEvent.getSource().destroy();
             }
         });
 

@@ -199,6 +199,15 @@
               },
               "controlConfiguration": {
                 "@com.sap.vocabularies.UI.v1.LineItem": {
+                  "actions": {
+                    "NavigateToSearch": {
+                      "press": "c4p.mdg.mdgcreaterequest.ext.controller.ListReportExt.onNavigateToSearch",
+                      "visible": true,
+                      "enabled": true,
+                      "requiresSelection": false,
+                      "text": "{i18n>navigateToSearch}"
+                    }
+                  },
                   "tableSettings": {
                     "type": "ResponsiveTable"
                   }

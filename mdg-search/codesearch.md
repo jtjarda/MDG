@@ -22,6 +22,8 @@ c4s.mdg.mdgsearch.ext.AddressNameSearch
 c4s.mdg.mdgsearch.ext.controller.ListReportExt.onCreateForSystem
 ```
 
+`ListReportExt.ts` vlastni integraci na `mdg-create`: po vyberu systemu zavola RAP factory action `CreateRequest(...)` pres pojmenovany OData V4 model `create` a pote naviguje pres FLP intent `#MDGBpRequest-create` rovnou na Object Page vytvoreneho draftu.
+
 Build a lokalni server prekladaji TypeScript pres `ui5-tooling-transpile`.
 Konfigurace je v:
 
@@ -1256,7 +1258,7 @@ Prelozit service definition label.
     "build": "ui5 build --config=ui5.yaml --clean-dest --dest dist",
     "lint": "eslint ./",
     "start-mock": "fiori run --config ./ui5-mock.yaml --open \"test/flp.html#app-preview\"",
-    "deploy": "fiori verify",
+    "deploy": "npm run build && fiori deploy --config ui5-deploy.yaml",
     "deploy-config": "fiori add deploy-config",
     "start-noflp": "fiori run --open \"/index.html?sap-ui-xx-viewCache=false\"",
     "int-test": "fiori run --config ./ui5-mock.yaml --open \"/test/integration/opaTests.qunit.html\"",
@@ -1264,6 +1266,37 @@ Prelozit service definition label.
   }
 }
 ```
+
+## ui5-deploy.yaml
+
+Deploy konfigurace pro ABAP UI5 repository:
+
+```yaml
+# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
+
+specVersion: "4.0"
+metadata:
+  name: c4s.mdg.mdgsearch
+type: application
+builder:
+  customTasks:
+    - name: deploy-to-abap
+      afterTask: generateCachebusterInfo
+      configuration:
+        ignoreCertErrors: true
+        target:
+          url: https://hsr.con4pas.cz
+          client: "140"
+          auth: basic
+        app:
+          name: ZMDG_BP_SEARCH
+          package: ZMDG
+          transport: HSRK900682
+          description: Search business partners in MDG
+        exclude:
+          - /test/
+```
+
 
 Poznámka: projekt nemá script `start-backend`. Pro lokální spuštění používej hlavně `npm run start` nebo `npm run start-local`.
 
@@ -1541,7 +1574,7 @@ sap.ui.define(["sap/ui/model/Filter", "sap/ui/model/FilterOperator"], function (
 
 ## Custom action: Create for System
 
-Tlačítko je přidané do toolbaru tabulky List Reportu přes `controlConfiguration`:
+Tlacitko je pridane do toolbaru tabulky List Reportu pres `controlConfiguration`:
 
 ```json
 "@com.sap.vocabularies.UI.v1.LineItem": {
@@ -1553,138 +1586,108 @@ Tlačítko je přidané do toolbaru tabulky List Reportu přes `controlConfigura
       "requiresSelection": false,
       "text": "{i18n>createForSystem}"
     }
-  },
-  "tableSettings": {
-    "type": "ResponsiveTable",
-    "personalization": {
-      "column": true,
-      "sort": true,
-      "filter": true
-    }
   }
 }
 ```
 
-Aktuální handler:
-
-```js
-sap.ui.define(
-    [
-        "sap/m/MessageBox",
-        "sap/m/SelectDialog",
-        "sap/m/StandardListItem",
-        "sap/ui/model/Filter",
-        "sap/ui/model/FilterOperator"
-    ],
-    function (MessageBox, SelectDialog, StandardListItem, Filter, FilterOperator) {
-    "use strict";
-
-    var oCreateForSystemDialog;
-
-    return {
-        onCreateForSystem: function () {
-            getCreateForSystemDialog().open();
-        }
-    };
-});
-```
-
-Soubor handleru musí být přesně:
+Soubor handleru musi byt presne:
 
 ```text
-webapp/ext/controller/ListReportExt.js
+webapp/ext/controller/ListReportExt.ts
 ```
 
-Ne `ListReportExt.controller.js`, protože manifest odkazuje modul:
+Ne `ListReportExt.controller.ts`, protoze manifest odkazuje UI5 modul:
 
 ```text
 c4s.mdg.mdgsearch.ext.controller.ListReportExt
 ```
 
-Handler aktuálně:
+Aktualni flow:
 
-1. otevře `sap.m.SelectDialog`,
-2. nechá uživatele vybrat externí systém,
-3. na `localhost` použije přímou vývojovou URL aplikace `mdg-create`,
-4. mimo lokální běh zavolá FLP navigaci:
+1. `onCreateForSystem` otevre `sap.m.SelectDialog` nad modelem `create`.
+2. Dialog nacita systemy z entity setu `create>/CreateSystems`.
+3. `onChange` pro vybraneho BP pouzije `create>/ChangeSystems` a filtruje podle `PartnerGID`.
+4. Po potvrzeni dialogu `ListReportExt.ts` zavola RAP factory action `CreateRequest(...)` primo pres OData V4 model `create`.
+5. Backend vrati draft request s `RequestUuid`.
+6. `mdg-search` zavola FLP navigaci na existujici draft detail v aplikaci `mdg-create`.
 
-```js
+Volani factory action:
+
+```typescript
+const oRequestsBinding = oCreateModel.bindList("/Requests");
+const oOperation = oCreateModel.bindContext(
+    "com.sap.gateway.srvd.zui_mdg_req.v0001.CreateRequest(...)",
+    oRequestsBinding.getHeaderContext()
+);
+
+oOperation.setParameter("ExternalSystem", sExternalSystem || "");
+oOperation.setParameter("PartnerGID", sPartnerGid || "");
+oOperation.setParameter("ResultIsActiveEntity", false);
+```
+
+Navigace na draft Object Page pouziva existujici Launchpad intent `#MDGBpRequest-create` a pripojuje app-specific route jako string:
+
+```typescript
 oCrossAppNavigation.toExternal({
     target: {
         semanticObject: "MDGBpRequest",
         action: "create"
     },
-    params: {
-        ExternalSystem: [sExternalSystem]
-    }
+    appSpecificRoute: "&/Requests(RequestUuid=" + sRequestUuid + ",IsActiveEntity=false)"
 });
 ```
 
-Poznámka: Seznam systémů je v handleru zatím klientský prototyp. Až bude ve službě dostupný entity set pro `ZMDG_C_SYS` / create value help, nahradí se lokální `JSONModel` čtením z OData.
-
-Dialog je vytvořen singleton patternem v proměnné `oCreateForSystemDialog`, takže se při každém kliknutí nezakládá nová instance. Při prvním vytvoření je připojen přes `oView.addDependent(oCreateForSystemDialog)`, aby sdílel lifecycle stránky a UI5 ho korektně uklidil spolu s view.
-
-Lokální fallback používá:
+Vysledny hash ma tvar:
 
 ```text
-http://localhost:8080/test/flp.html?sap-ui-xx-viewCache=false#app-preview
+#MDGBpRequest-create&/Requests(RequestUuid=<uuid>,IsActiveEntity=false)
 ```
 
-Při výběru systému se parametr doplní před hash:
+Dulezite: `mdg-create` uz draft nezaklada pri startu aplikace. Je to cista Fiori Elements aplikace a otevre Object Page podle route, kterou dostane z FLP navigace.
+
+Dialog se vytvari cerstvy pri kazdem kliknuti na `Vytvorit` nebo `Zmenit` a po `afterClose` se ihned znici. Je to zamerne: FLP umi po cross-app navigaci vratit stejnou app instanci z cache, a dlouho zijici singleton dialog pak muze zustat ve stale stavu po predchozim potvrzeni.
+
+Lokalni fallback pouziva:
 
 ```text
-http://localhost:8080/test/flp.html?sap-ui-xx-viewCache=false&ExternalSystem=S4HCLNT140#app-preview
+http://localhost:8080/test/flp.html?sap-ui-xx-viewCache=false#app-preview&/Requests(RequestUuid=<uuid>,IsActiveEntity=false)
 ```
 
-V reálném FLP se tento fallback nepoužije; tam musí existovat target mapping pro `#MDGBpRequest-create`.
+V realnem FLP musi existovat target mapping pro:
+
+```text
+Semantic Object: MDGBpRequest
+Action: create
+Component ID: c4p.mdg.mdgcreaterequest
+```
 
 ## i18n
 
-Soubor:
-
-```text
-webapp/i18n/i18n.properties
-```
+Relevantni texty v `webapp/i18n/i18n.properties`:
 
 ```properties
-appTitle=Business Partner Search
-appDescription=Search business partners in MDG
-addressNameSearch=Address Name
-addressNameSearchPlaceholder=Search name org or name person
-createForSystem=Create for System
+createForSystem=Create
+change=Change
+selectExternalSystem=Select: Country/Region
+noSystemsAvailable=No systems available.
+navigationToCreateFailed=Navigation to BP request creation could not be started.
+createRequestDraftFailed=MDG request draft could not be created.
+partnerGidMissing=Business partner ID could not be determined.
 ```
 
-## Další krok pro Create for System
-
-Cílové chování:
-
-1. Uživatel v `mdg-search` klikne na `Create for System`.
-2. Vybere externí systém.
-3. Aplikace otevře nezávislou aplikaci `mdg-create`.
-4. `mdg-create` založí draft požadavku přes vlastní `CreateForSystem`.
-5. Object Page se otevře s předvyplněnými poli:
-   - `RequestType = C`
-   - `ExternalSystem = vybraný systém`
-   - `Status = DRA`
-   - `CreatedBy = aktuální uživatel`
-
-Technicky jsou dvě rozumné cesty:
-
-1. Navigovat do `mdg-create` se startup parametrem `ExternalSystem` a v `mdg-create` aplikační extension spustí factory action.
-2. Volat backend akci pro vytvoření draftu přímo z `mdg-search` a po návratu klíče navigovat na Object Page v `mdg-create`.
-
-Pro čistou UX integraci preferuji první variantu, protože `mdg-search` zůstane jen spouštěčem a vlastní tvorbu požadavku bude vlastnit aplikace `mdg-create`.
+Ceska varianta je v `webapp/i18n/i18n_cs.properties`.
 
 ## Aktualni stav Create for System dialogu
 
-Dialog uz nepouziva klientsky `JSONModel` s pevnymi hodnotami. `manifest.json` definuje druhy OData data source `createService` nad sluzbou `ZUI_MDG_REQ` z aplikace `mdg-create` a pojmenovany model `create`.
+Dialog nepouziva klientsky `JSONModel` s pevnymi hodnotami. `manifest.json` definuje druhy OData data source `createService` nad sluzbou `ZUI_MDG_REQ` z aplikace `mdg-create` a pojmenovany model `create`.
 
-`ListReportExt.js` nacita systemy z entity setu:
+Pouzite entity sety:
 
 ```text
 create>/CreateSystems
+create>/ChangeSystems
 ```
 
-Dialog zobrazuje pouze pole `Description`. Pri potvrzeni se z binding contextu precte technicky klic `ExternalSystem`, ktery se preda cilove aplikaci `mdg-create`.
+Dialog zobrazuje pole `Description`. Pri potvrzeni se z binding contextu precte `ExternalSystem`; pro zmenu existujiciho BP se predava take `PartnerGID`.
 
-Entity set `CreateSystems` vychazi z CDS `ZI_MDG_C_SYS_CREATEVH`, kde jsou uz jen systemy povolene pro zalozeni.
+Entity set `CreateSystems` vychazi z CDS `ZI_MDG_C_SYS_CREATEVH`, kde jsou jen systemy povolene pro zalozeni. Entity set `ChangeSystems` vraci systemy pouzitelne pro zalozeni change requestu k existujicimu BP.

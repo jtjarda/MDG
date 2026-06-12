@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
+
+specVersion: "4.0"
+metadata:
+  name: c4p.mdg.mdgcreaterequest
+type: application
+builder:
+  customTasks:
+    - name: deploy-to-abap
+      afterTask: generateCachebusterInfo
+      configuration:
+        ignoreCertErrors: true
+        target:
+          url: https://hsr.con4pas.cz
+          client: "140"
+          auth: basic
+        app:
+          name: ZMDG_CREATE_REQ
+          package: ZMDG
+          transport: HSRK900682
+          description: MDG request - create BP
+        exclude:
+          - /localService/
+          - /test/
