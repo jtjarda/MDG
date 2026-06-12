@@ -305,17 +305,7 @@ CLASS lhc_request IMPLEMENTATION.
         external_system.
 
       external_system = <key>-%param-ExternalSystem.
-
-      ASSIGN COMPONENT 'PartnerGid' OF STRUCTURE <key>-%param TO FIELD-SYMBOL(<partner_gid>).
-      IF sy-subrc <> 0.
-        ASSIGN COMPONENT 'PartnerGID' OF STRUCTURE <key>-%param TO <partner_gid>.
-      ENDIF.
-      IF sy-subrc <> 0.
-        ASSIGN COMPONENT 'PARTNERGID' OF STRUCTURE <key>-%param TO <partner_gid>.
-      ENDIF.
-      IF sy-subrc = 0 AND <partner_gid> IS ASSIGNED.
-        partner_gid = CONV #( <partner_gid> ).
-      ENDIF.
+      partner_gid     = <key>-%param-PartnerGID.
 
       DATA(create_result) = zcl_mdg_req_service=>build_create_request(
         iv_external_system = external_system
